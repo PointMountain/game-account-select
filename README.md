@@ -1,41 +1,48 @@
 <p align="center">
-  <img src="assets/readme-banner.svg" alt="Game Account Select - community-grounded game account valuation skill pack" width="100%" />
+  <img src="assets/readme-banner.svg" alt="Game Account Select - 基于社区证据的游戏账号估值 Skill Pack" width="100%" />
 </p>
 
 # Game Account Select
 
 <p align="center">
-  <em>Community-grounded account valuation skills for game buyers.</em>
+  <em>基于社区证据的游戏账号筛选与估值 Agent Skills。</em>
 </p>
 
 <p align="center">
-  <a href="#install"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="Install with npx skills add" /></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/skills-10-f0c96a?style=for-the-badge&labelColor=101624" alt="10 agent skills" /></a>
-  <a href="#automatic-preflight"><img src="https://img.shields.io/badge/preflight-automatic-e27d60?style=for-the-badge&labelColor=101624" alt="Automatic preflight" /></a>
+  <a href="README.md"><strong>简体中文</strong></a>
+  ·
+  <a href="README.en.md">English</a>
 </p>
 
-Game Account Select is a portable Agent Skills pack for buying game accounts more carefully. It turns account listings, screenshots, seller descriptions, and community guide evidence into structured recommendations with visible risk, missing-field, and rule-update notes.
+<p align="center">
+  <a href="#安装"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="使用 npx skills add 安装" /></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/skills-10-f0c96a?style=for-the-badge&labelColor=101624" alt="10 个 Agent Skills" /></a>
+  <a href="#自动-preflight"><img src="https://img.shields.io/badge/preflight-automatic-e27d60?style=for-the-badge&labelColor=101624" alt="自动 preflight" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=for-the-badge&labelColor=101624" alt="MIT License" /></a>
+</p>
 
-It is not a trading platform and does not place orders. The goal is to help an agent explain which listings deserve attention, which listings are weak despite impressive-looking asset counts, and which claims need manual verification before purchase.
+Game Account Select 是一个面向游戏账号购买决策的 Agent Skills 包。它把账号挂牌、截图、卖家描述和社区攻略证据转成结构化推荐，并明确展示风险、缺失字段和规则更新建议。
 
-<p align="center"><sub><a href="#install">Install</a> · <a href="#skills">Skills</a> · <a href="#workflow">Workflow</a> · <a href="#standard-io">I/O</a> · <a href="#maintenance">Maintenance</a> · <a href="#safety">Safety</a></sub></p>
+它不是交易撮合平台，也不会自动下单。它的目标是帮助 Agent 判断哪些账号值得继续看、哪些账号只是资产数量看起来好看、哪些卖家信息必须人工核验后才能考虑购买。
 
-## Install
+<p align="center"><sub><a href="#安装">安装</a> · <a href="#skills">Skills</a> · <a href="#执行流程">执行流程</a> · <a href="#标准输入输出">标准输入输出</a> · <a href="#维护验证">维护验证</a> · <a href="#安全边界">安全边界</a> · <a href="#协议">协议</a></sub></p>
 
-Install every skill in the repository:
+## 安装
+
+安装仓库内所有 skill：
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-Install only the skills you need by passing the exact install name from the `name:` field in each `SKILL.md`:
+只安装需要的单个 skill。`--skill` 后面传的是每个 `SKILL.md` frontmatter 里的 `name:`，不是目录名：
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
 npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-zenless-zone-zero"
 ```
 
-List the available install names from a local checkout:
+在本地 checkout 中列出所有可安装名称：
 
 ```bash
 npm run list:skills
@@ -43,84 +50,84 @@ npm run list:skills
 
 ## Skills
 
-| Install name | Role | Use when |
+| 安装名 | 角色 | 适用场景 |
 | --- | --- | --- |
-| `game-account-select` | Main selector | You want the full account screening workflow from user requirements to ranked recommendations. |
-| `game-account-preflight` | Automatic preparation | Another account skill starts execution and needs to verify tools, browser access, and missing dependencies. |
-| `game-account-toolkit` | Shared toolkit | A game skill needs the common I/O contract, platform access policy, community research protocol, or dependency helpers. |
-| `game-account-skill-generator` | Game skill generator | The requested game is not supported yet and needs a conservative baseline buying skill. |
-| `game-account-skill-evaluator` | Quality gate | A generated or edited game skill must be checked before real account recommendations. |
-| `game-account-community-updater` | Evidence refresh | Current community consensus is stale, missing, or version-sensitive. |
-| `game-account-wuthering-waves` | Wuthering Waves / Mingchao | Listings for Wuthering Waves accounts need role, weapon, resonance, resource, and binding-risk scoring. |
-| `game-account-arknights` | Arknights | Listings need operator, limited/collab, mastery/module, resource, skin, and real-name risk scoring. |
-| `game-account-neverness-to-everness` | Neverness to Everness | Listings need named S-character, arc, awakening, resource, and account-type scoring. |
-| `game-account-zenless-zone-zero` | Zenless Zone Zero / ZZZ | Listings need limited agent, signature W-Engine, team, Polychrome/tape, Bangboo, and binding-risk scoring. |
+| `game-account-select` | 主筛选编排 | 从用户预算、游戏目标、风险偏好和账号来源出发，输出候选账号排序与解释。 |
+| `game-account-preflight` | 自动执行前准备 | 其它账号 skill 开始执行时，先检查工具、浏览器访问和缺失依赖。 |
+| `game-account-toolkit` | 通用工具层 | 游戏 skill 需要共享 I/O 契约、平台访问策略、社区调研协议或依赖检查工具。 |
+| `game-account-skill-generator` | 游戏 skill 生成器 | 用户请求的游戏还未支持，需要生成保守的买号估值基线 skill。 |
+| `game-account-skill-evaluator` | 质量门禁 | 新生成或修改过的游戏 skill 需要在真实推荐前做结构、证据、规则和验证检查。 |
+| `game-account-community-updater` | 社区证据刷新 | 当前版本社区共识过期、缺失，或用户要求更新攻略/避坑证据。 |
+| `game-account-wuthering-waves` | 鸣潮 / Wuthering Waves | 评估限定角色、版本价值、专武、抽卡资源和 TAP/Wegame/PS5 绑定风险。 |
+| `game-account-arknights` | 明日方舟 | 评估限定/联动干员、关键练度、专精/模组、资源、收藏价值和实名找回风险。 |
+| `game-account-neverness-to-everness` | 异环 / Neverness to Everness | 评估命名 S 角色、S 弧盘、觉醒、资源、主角/账号类型和早期市场风险。 |
+| `game-account-zenless-zone-zero` | 绝区零 / ZZZ | 评估限定 S 代理人、专属音擎、队伍完整度、菲林/母带/邦布券和 HoYoverse/PSN/TAP 绑定风险。 |
 
-## Workflow
+## 执行流程
 
 ```text
-User request
+用户需求
   -> game-account-select
-  -> automatic game-account-preflight
+  -> 自动 game-account-preflight
   -> game-account-toolkit
-  -> matching game skill or game-account-skill-generator
+  -> 对应游戏 skill 或 game-account-skill-generator
   -> game-account-skill-evaluator
-  -> ranked recommendations, risks, missing fields, and rule-update suggestions
+  -> 推荐排序、风险、缺失字段、规则更新建议
 ```
 
-1. The user gives the game, budget, server, target assets, risk preference, and listing sources.
-2. `game-account-select` normalizes the request and starts `game-account-preflight` automatically.
-3. `game-account-toolkit` chooses the safest available access route for user-provided pages, screenshots, OCR text, or public listing snippets.
-4. The matching game skill scores the account against game-specific rules and community evidence.
-5. If no game skill exists, `game-account-skill-generator` creates a conservative baseline skill and `game-account-skill-evaluator` decides whether it is usable.
-6. The final answer includes recommendation ranking, reasons to avoid listings, missing seller fields, and rule-update suggestions.
+1. 用户提供游戏、预算、区服、目标资产、风险偏好和账号来源。
+2. `game-account-select` 标准化请求，并自动启动 `game-account-preflight`。
+3. `game-account-toolkit` 为用户提供的页面、截图、OCR 文本或公开挂牌片段选择安全访问方式。
+4. 对应游戏 skill 按游戏专属规则和社区证据给账号评分。
+5. 如果游戏尚未支持，`game-account-skill-generator` 先生成保守基线 skill，再由 `game-account-skill-evaluator` 判断是否可用。
+6. 最终输出推荐排序、不建议购买的原因、卖家缺失字段和规则更新建议。
 
-## Automatic Preflight
+## 自动 Preflight
 
-Users should not run a separate "before use" command. Every entry skill is written to call `game-account-preflight` as the first execution step.
+用户不需要先手动执行“使用前检查”。每个入口 skill 都应把 `game-account-preflight` 作为第一步自动调用。
 
-Preflight checks Node.js, git, GitHub CLI, browser/CDP access, `opencli`, `web-access`, and project-local dependency state. It can safely report missing tools and run repo-local checks, but it does not silently install global software or modify installed Codex skills.
+Preflight 会检查 Node.js、git、GitHub CLI、浏览器/CDP、`opencli`、`web-access` 和项目本地依赖状态。它可以安全地报告缺失工具和运行仓库内检查，但不会静默安装全局软件，也不会静默修改已安装的 Codex skills。
 
-## Standard I/O
+## 标准输入输出
 
-All account skills share the contract in `skills/game-account-toolkit/references/skill-io-contract.md`.
+所有账号 skill 共享 `skills/game-account-toolkit/references/skill-io-contract.md` 中的契约。
 
-Preferred input tags:
+推荐输入标签：
 
 - `<game_account_request>`
 - `<account_listing>`
 - `<community_evidence>`
 - `<skill_generation_request>`
 
-Preferred output tags:
+推荐输出标签：
 
 - `<game_account_evaluation>`
 - `<recommendations>`
 - `<skill_quality_report>`
 - `<community_refresh_report>`
 
-This keeps each skill thin: `SKILL.md` defines the entry behavior, `references/` stores rules and evidence, `scripts/` stores repeatable validation, and `test-fixtures/` stores offline samples.
+这个结构让每个 skill 保持清晰：`SKILL.md` 只写入口行为，`references/` 存规则和证据，`scripts/` 存可重复验证脚本，`test-fixtures/` 存离线样例。
 
-## Generate A New Game Skill
+## 生成新游戏 Skill
 
-Ask the installed skill to generate a buying skill for a new game:
+可以直接让已安装的 skill 为新游戏生成买号 skill：
 
 ```text
-Use game-account-skill-generator to create an account-buying skill for <game>, then evaluate it before using it for recommendations.
+使用 game-account-skill-generator 为 <游戏名> 创建账号购买评估 skill，然后先评估质量再用于推荐。
 ```
 
-Maintainers can run the deterministic generator script from a checkout:
+维护者也可以在本地 checkout 中运行确定性生成脚本：
 
 ```bash
 node skills/game-account-skill-generator/scripts/generate-game-skill.mjs --game "Test Frontier" --out /tmp/game-account-generator-test --force
 node /tmp/game-account-generator-test/skills/game-account-test-frontier/scripts/validate-sample.mjs
 ```
 
-Generated skills start with low confidence until their community evidence, scoring rules, fixtures, and evaluator report pass the quality gate.
+新生成的 skill 默认低置信度，直到社区证据、评分规则、验证样例和 evaluator 报告都通过质量门禁。
 
-## Maintenance
+## 维护验证
 
-These commands are for repository maintainers and CI-style verification. They are not required before a normal user invokes a skill.
+下面命令面向仓库维护者和 CI 风格验证。普通用户调用 skill 前不需要手动执行。
 
 ```bash
 npm run list:skills
@@ -130,18 +137,22 @@ node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
 ```
 
-Community evidence can refresh in two ways:
+社区证据有两种刷新方式：
 
-- Execution-time refresh when the listing mentions assets that are missing from the local snapshot, a major version has changed, or the user asks for current community coverage.
-- Maintainer refresh through `game-account-community-updater` when curated evidence JSON should be written into a game skill before future runs.
+- 执行时刷新：挂牌出现本地快照未覆盖的资产、版本发生大变化，或用户要求检查当前社区评价。
+- 维护者预刷新：通过 `game-account-community-updater` 把整理好的 evidence JSON 写入某个游戏 skill，减少后续执行时的 token 和网络成本。
 
-Evidence refresh updates `community-evidence.md` and the refresh report. It should not silently rewrite valuation weights; rule changes should be proposed, reviewed, and then recorded in the game skill changelog.
+证据刷新只更新 `community-evidence.md` 和刷新报告。它不应静默改写估值权重；规则变化应先提出建议，经过确认后再写入游戏 skill changelog。
 
-## Safety
+## 安全边界
 
-- Do not automate purchases or trading decisions.
-- Do not bypass captcha, login restrictions, platform rate limits, or anti-bot controls.
-- Do not treat publicly visible listings as permission for broad scraping.
-- Do not rank accounts highly from raw rare-asset counts alone.
-- Do not hide binding, real-name, PSN/TAP/Wegame/HoYoverse, recovery, or guarantee-risk gaps.
-- Do not silently modify valuation rules after user feedback; propose the exact rule update first.
+- 不自动购买账号，不替用户做交易决策。
+- 不绕过验证码、登录限制、平台频率限制或反自动化机制。
+- 不把公开可见挂牌等同于允许大规模抓取。
+- 不用稀有资产总数直接抬高账号排名。
+- 不隐藏绑定、实名、PSN/TAP/Wegame/HoYoverse、找回、包赔或验号缺口。
+- 不在用户反馈后静默修改估值规则；必须先提出具体规则更新建议。
+
+## 协议
+
+[MIT License](LICENSE) © 2026 PointMountain
