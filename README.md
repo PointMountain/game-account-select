@@ -10,6 +10,7 @@
 - `skills/game-account-wuthering-waves/`：Wuthering Waves（鸣潮）账号估值 skill。
 - `skills/game-account-arknights/`：明日方舟账号估值 skill。
 - `skills/game-account-neverness-to-everness/`：Neverness to Everness（异环）账号估值 skill。
+- `skills/game-account-zenless-zone-zero/`：Zenless Zone Zero（绝区零 / ZZZ）账号估值 skill。
 
 ## 推荐执行链路
 
@@ -29,15 +30,16 @@ node skills/game-account-toolkit/scripts/check-deps.mjs
 
 如果需要访问动态页面或登录态页面，应加载并遵循本地 `web-access` skill。
 
-## 鸣潮规则验证
+## 游戏规则验证
 
-鸣潮 skill 带有一个社区证据快照和回归样例，用于验证账号排序不会被“总黄数/常驻高命”误导：
+每个重点游戏 skill 都带有本地回归样例，用于验证排序不会被“总数量/泛称高稀有度”误导：
 
 ```bash
+node skills/game-account-arknights/scripts/validate-sample.mjs
+node skills/game-account-neverness-to-everness/scripts/validate-sample.mjs
 node skills/game-account-wuthering-waves/scripts/validate-sample.mjs
+node skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs
 ```
-
-该脚本会比较三个样例账号，预期当前版本高价值限定核心账号排在常驻高命堆数账号之前，并输出每个账号相对社区评价的匹配/冲突原因。
 
 ## 设计原则
 

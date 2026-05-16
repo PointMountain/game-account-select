@@ -1,0 +1,89 @@
+{
+  "expected_top_id": "named-s-fit-good",
+  "community_snapshot_date": "2026-05-16",
+  "listings": [
+    {
+      "id": "s-count-trap",
+      "price": 260,
+      "title": "12S高猎人等级号",
+      "server": "官服",
+      "raw_text": "12个S，猎人等级高，弧盘很多。未列S角色名称，未列弧盘套装，资源没截图，TAP绑定不明。",
+      "game_assets": {
+        "s_characters": [],
+        "s_character_count_claim": 12,
+        "s_arc_plates": [],
+        "resources": {},
+        "progression": { "hunter_level": 55 },
+        "account": {
+          "account_type": "unknown",
+          "tap_binding": "unknown",
+          "guarantee": "unknown",
+          "official_verification": false
+        }
+      }
+    },
+    {
+      "id": "named-s-fit-good",
+      "price": 430,
+      "title": "命名S角色弧盘适配资源干净号",
+      "server": "官服",
+      "raw_text": "S角色Astra、Nova、Yuki，Astra 2觉，Nova 1觉；S弧盘Astra专属套、Nova暴击套、通用辅助套；环石22000，异晶80，质实骰子35，三重钥匙12；TAP未绑，官方验号，找回包赔，主角女。",
+      "game_assets": {
+        "s_characters": [
+          { "name": "Astra", "awakening": 2 },
+          { "name": "Nova", "awakening": 1 },
+          { "name": "Yuki", "awakening": 0 }
+        ],
+        "s_arc_plates": [
+          { "name": "Astra signature arc", "fits": "Astra" },
+          { "name": "Nova crit arc", "fits": "Nova" },
+          { "name": "Support utility arc", "fits": "Yuki" }
+        ],
+        "resources": {
+          "ring_stones": 22000,
+          "crystals": 80,
+          "solid_dice": 35,
+          "triple_keys": 12
+        },
+        "progression": { "hunter_level": 42 },
+        "account": {
+          "account_type": "official",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true,
+          "protagonist": "female"
+        }
+      }
+    },
+    {
+      "id": "risky-type-mismatch",
+      "price": 300,
+      "title": "多S但完美账号绑定",
+      "server": "B服",
+      "raw_text": "S角色Astra、Nova、Yuki、Rin，弧盘未列，资源少，完美账号，TAP已绑定，无找回包赔，主角男。",
+      "game_assets": {
+        "s_characters": [
+          { "name": "Astra", "awakening": 0 },
+          { "name": "Nova", "awakening": 0 },
+          { "name": "Yuki", "awakening": 0 },
+          { "name": "Rin", "awakening": 0 }
+        ],
+        "s_arc_plates": [],
+        "resources": {
+          "ring_stones": 3000,
+          "crystals": 0,
+          "solid_dice": 2,
+          "triple_keys": 0
+        },
+        "progression": { "hunter_level": 50 },
+        "account": {
+          "account_type": "perfect",
+          "tap_binding": "bound",
+          "guarantee": "none",
+          "official_verification": false,
+          "protagonist": "male"
+        }
+      }
+    }
+  ]
+}

@@ -33,6 +33,7 @@ limitations: string[]
 - Wuthering Waves（鸣潮）：`game-account-wuthering-waves`
 - 明日方舟：`game-account-arknights`
 - Neverness to Everness（异环）：`game-account-neverness-to-everness`
+- Zenless Zone Zero（绝区零 / ZZZ）：`game-account-zenless-zone-zero`
 
 若游戏未支持，停止并说明需要新增游戏 skill，不要套用其它游戏规则。
 

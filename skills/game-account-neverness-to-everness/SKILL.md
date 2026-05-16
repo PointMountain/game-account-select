@@ -13,6 +13,8 @@ argument-hint: "[listing json or account description]"
 ## 必须读取
 
 - `references/valuation-rules.md`
+- `references/asset-knowledge.md`
+- `references/community-evidence.md`
 - `references/changelog.md`
 
 ## 核心维度
@@ -33,10 +35,13 @@ neverness_to_everness_score:
   resource_score: number
   progression_score: number
   risk_penalty: number
+  confidence_penalty: number
   confidence: low|medium|high
+  community_comparison: string
   highlights: string[]
   concerns: string[]
   missing_fields: string[]
+  rule_update_suggestion: string | null
 ```
 
 ## 自我优化
