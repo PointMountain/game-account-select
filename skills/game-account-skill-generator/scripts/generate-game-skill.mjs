@@ -94,6 +94,9 @@ const written = [];
 for (const source of walkFiles(templateRoot)) {
   const relative = path.relative(templateRoot, source);
   let targetRelative = relative;
+  if (relative === 'SKILL.md.template') {
+    targetRelative = 'SKILL.md';
+  }
   if (relative === 'test-fixtures/validation-sample.json') {
     targetRelative = `test-fixtures/${slug}-validation-sample.json`;
   }

@@ -15,8 +15,24 @@ if (!skillPath) {
 }
 
 const root = path.resolve(skillPath);
-const exists = (relative) => fs.existsSync(path.join(root, relative));
-const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8');
+const resolveSkillFile = () => {
+  const skill = path.join(root, 'SKILL.md');
+  if (fs.existsSync(skill)) return skill;
+
+  const fixture = path.join(root, 'SKILL.md.fixture');
+  if (fs.existsSync(fixture)) return fixture;
+
+  return null;
+};
+const skillFile = resolveSkillFile();
+const exists = (relative) => {
+  if (relative === 'SKILL.md') return Boolean(skillFile);
+  return fs.existsSync(path.join(root, relative));
+};
+const read = (relative) => {
+  if (relative === 'SKILL.md') return fs.readFileSync(skillFile, 'utf8');
+  return fs.readFileSync(path.join(root, relative), 'utf8');
+};
 const issues = [];
 const warnings = [];
 const suggestedFixes = [];

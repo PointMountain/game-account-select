@@ -167,6 +167,7 @@ node /tmp/game-account-generator-test/skills/game-account-test-frontier/scripts/
 ```bash
 npm run list:skills
 npm run verify:skills
+npm run verify:frontmatter
 node skills/game-account-preflight/scripts/preflight.mjs --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
