@@ -5,8 +5,10 @@
   "description": "Agent skills for community-grounded game account selection and valuation.",
   "type": "module",
   "scripts": {
-    "list:skills": "node scripts/list-skills.mjs",
-    "list:profiles": "node scripts/list-skills.mjs --profiles",
+    "list:skills": "node scripts/list-skills.js",
+    "list:profiles": "node scripts/list-skills.js --profiles",
+    "link:skills": "node scripts/link-local-skills.js",
+    "unlink:skills": "node scripts/unlink-local-skills.js",
     "verify:skills": "node skills/game-account-arknights/scripts/validate-sample.mjs && node skills/game-account-neverness-to-everness/scripts/validate-sample.mjs && node skills/game-account-wuthering-waves/scripts/validate-sample.mjs && node skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs"
   },
   "keywords": [

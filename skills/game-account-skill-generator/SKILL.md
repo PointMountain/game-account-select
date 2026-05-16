@@ -12,7 +12,7 @@ argument-hint: "[game name] [aliases/evidence optional]"
 
 ## 执行前准备
 
-先运行 `game-account-preflight`。
+先运行 `game-account-preflight`，并在生成前显示 `<preflight_report>`。如果缺少必需依赖，停止生成并给出补齐步骤。
 
 ## 必须读取
 

@@ -20,7 +20,7 @@ skills/game-account-<slug>/
 
 ## 必需行为
 
-1. 执行前先调用 `game-account-preflight` 或明确读取其检查结果。
+1. 执行前先调用 `game-account-preflight` 或明确读取其检查结果，并在后续输出前显示 `<preflight_report>`。
 2. 读取 `game-account-toolkit/references/skill-io-contract.md`。
 3. 读取本 skill 的估值规则、知识表、社区证据和 changelog。
 4. 对账号进行资产、资源、进度、风险、缺失字段和社区一致性评分。

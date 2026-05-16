@@ -21,7 +21,7 @@ argument-hint: "[listing json or account description]"
 
 ## 执行前准备
 
-先调用 `game-account-preflight`。如果需要刷新社区证据，调用 `game-account-community-updater` 或按 `game-account-toolkit/references/community-research-protocol.md` 执行当次调研。
+先调用 `game-account-preflight`，并在账号估值前显示 `<preflight_report>`。如果缺少必需依赖，停止估值并给出补齐步骤；如果需要刷新社区证据，调用 `game-account-community-updater` 或按 `game-account-toolkit/references/community-research-protocol.md` 执行当次调研。
 
 ## 核心原则
 

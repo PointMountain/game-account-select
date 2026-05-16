@@ -12,7 +12,7 @@ argument-hint: "[skill path] [evidence json]"
 
 ## 执行前准备
 
-先运行 `game-account-preflight`。如果需要 B站、抖音、小红书等动态页面，必须遵循 `web-access` 和平台访问安全边界。
+先运行 `game-account-preflight`，并在刷新前显示 `<preflight_report>`。如果缺少浏览器或网络相关能力，记录降级范围；如果需要 B站、抖音、小红书等动态页面，必须遵循 `web-access` 和平台访问安全边界。
 
 ## 必须读取
 

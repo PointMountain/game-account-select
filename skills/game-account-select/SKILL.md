@@ -29,6 +29,8 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 ## 执行流程
 
+第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
+
 读取 `references/selection-state-machine.md`，按状态机执行。不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。
 
 ## 标准输入输出

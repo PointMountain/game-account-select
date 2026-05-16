@@ -21,7 +21,7 @@ argument-hint: "[listing json or account description]"
 
 ## 执行前准备
 
-先调用 `game-account-preflight`。如果社区证据不足、版本变化或用户样本出现未覆盖 S 角色/弧盘，调用 `game-account-community-updater` 或按社区调研协议刷新。
+先调用 `game-account-preflight`，并在账号估值前显示 `<preflight_report>`。如果缺少必需依赖，停止估值并给出补齐步骤；如果社区证据不足、版本变化或用户样本出现未覆盖 S 角色/弧盘，调用 `game-account-community-updater` 或按社区调研协议刷新。
 
 ## 核心维度
 
