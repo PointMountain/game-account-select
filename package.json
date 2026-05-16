@@ -9,7 +9,8 @@
     "list:profiles": "node scripts/list-skills.js --profiles",
     "link:skills": "node scripts/link-local-skills.js",
     "unlink:skills": "node scripts/unlink-local-skills.js",
-    "verify:skills": "node skills/game-account-arknights/scripts/validate-sample.mjs && node skills/game-account-neverness-to-everness/scripts/validate-sample.mjs && node skills/game-account-wuthering-waves/scripts/validate-sample.mjs && node skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs"
+    "verify:frontmatter": "node scripts/verify-skill-frontmatter.js",
+    "verify:skills": "node scripts/verify-skill-frontmatter.js && node skills/game-account-arknights/scripts/validate-sample.mjs && node skills/game-account-neverness-to-everness/scripts/validate-sample.mjs && node skills/game-account-wuthering-waves/scripts/validate-sample.mjs && node skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs"
   },
   "keywords": [
     "agent-skills",
