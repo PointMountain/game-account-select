@@ -44,6 +44,7 @@ community_confidence: medium
 - 当前版本强势或多榜单高位限定：Hiyuki、Aemeath、Lynae、Mornye、Augusta、Cartethyia、Shorekeeper、Galbrena、Qiuyuan、Phrolova、Iuno。
 - 能形成完整队伍的组合资产比单个孤立角色更值钱，例如 Aemeath + Lynae + Mornye，Hiyuki + 其关键队友规划，Augusta + Iuno，Cartethyia 相关 Aero 队。
 - 核心限定角色带专武或明确可用 5 星武器时，价值明显高于只有角色但无武器/资源的账号。
+- 用户反馈和当次筛选样本暴露了中文社区买号时常用队伍标签：爱莫林、卡千夏、日月守等。当前快照把它们作为中等置信的队伍原型信号：可用于提醒和排序，但精确权重仍需后续 B站/小红书/抖音证据刷新。
 
 ### 中价值资产
 
@@ -68,4 +69,5 @@ community_confidence: medium
 
 - 本次未能通过 opencli 稳定读取 B站字幕、小红书笔记、抖音公开视频或贴吧帖子正文。
 - 部分第三方强度榜之间存在差异，例如 WutheringLab 与 Wuthering.gg 对 Cartethyia、Shorekeeper、Denia 的相对位置不同；因此本快照采用“多来源共同高位/中位/低位”的区间判断。
+- 爱莫林、卡千夏、日月守等中文队伍标签来自执行反馈和样本归纳，尚未完成独立社区来源刷新；涉及这些标签时最高置信度为 `medium`，并应输出刷新建议。
 - 社区 meta 会随 3.3 下半、3.4 和深塔/Whimpering Wastes 环境变化，超过 30 天或出现大版本更新后必须刷新。

@@ -1,0 +1,43 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "验证优化器产出的 skill 是否能通过门禁",
+  "started_at": "2026-05-17T01:10:00+08:00",
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 账号",
+      "status": "success",
+      "duration_ms": 4300,
+      "result_count": 4
+    },
+    {
+      "platform": "pzds",
+      "query": "绝区零 账号",
+      "status": "success",
+      "duration_ms": 4700,
+      "result_count": 4
+    }
+  ],
+  "evaluation_reports": [
+    {
+      "skill_path": "skills/game-account-zenless-zone-zero",
+      "score": 62,
+      "threshold": 80,
+      "passed": false,
+      "redo_required": true,
+      "blocking_issues": [
+        {
+          "message": "Missing controlled fixture for team and signature-weapon ranking",
+          "blocking": true
+        },
+        {
+          "message": "Community evidence does not support the new rule yet",
+          "blocking": true
+        }
+      ]
+    }
+  ],
+  "final_response": "优化后的绝区零 skill 质量门禁失败，不能用于真实账号推荐，需要回到规则和样例补充。",
+  "missing_fields": []
+}

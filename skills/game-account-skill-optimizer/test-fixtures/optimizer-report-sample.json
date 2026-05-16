@@ -1,0 +1,34 @@
+{
+  "target_skill": "game-account-zenless-zone-zero",
+  "game": "Zenless Zone Zero",
+  "confidence": "medium",
+  "findings": [
+    {
+      "id": "valuation-team-archetypes",
+      "severity": "high",
+      "category": "valuation",
+      "summary": "Valuation should account for game-specific meta assets, teams, progression, and key equipment fit",
+      "evidence": [
+        "绝区零估值不能只看 S 代理人数量和影画，需要看限定主 C、专属音擎、队伍完整度、邦布和资源"
+      ],
+      "suggested_targets": [
+        "skills/game-account-zenless-zone-zero/references/valuation-rules.md",
+        "skills/game-account-zenless-zone-zero/references/agent-knowledge.md",
+        "skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs"
+      ],
+      "autopatch_safe": false
+    }
+  ],
+  "suggested_changes": [
+    {
+      "finding_id": "valuation-team-archetypes",
+      "summary": "Update ZZZ valuation rules and validation fixtures",
+      "targets": [
+        "skills/game-account-zenless-zone-zero/references/valuation-rules.md",
+        "skills/game-account-zenless-zone-zero/test-fixtures/zenless-zone-zero-validation-sample.json"
+      ],
+      "autopatch_safe": false
+    }
+  ],
+  "safe_to_autopatch": false
+}

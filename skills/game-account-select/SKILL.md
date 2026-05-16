@@ -19,6 +19,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 - `game-account-skill-generator`（当游戏未支持时）
 - `game-account-skill-evaluator`（当生成或更新 skill 后）
 - `game-account-community-updater`（当社区证据过期或用户要求刷新时）
+- `game-account-skill-optimizer`（筛选结束后分析慢路径、空结果、平台覆盖、输出格式、估值误判和质量门禁问题）
 
 按游戏引用：
 
@@ -55,6 +56,19 @@ argument-hint: "[游戏] [预算] [偏好]"
 - 性价比
 - 低风险
 
+## 平台优先级
+
+平台顺序以 `game-account-toolkit/references/platform-priority.json` 为准。用户没有指定平台时，优先把中国账号交易平台按低频、可解释方式纳入候选来源：
+
+1. 用户提供的链接、截图或指定平台。
+2. 螃蟹账号代售 `https://www.pxb7.com/`。
+3. 盼之代售 `https://www.pzds.com/`。
+4. 交易猫。
+5. 淘手游。
+6. 闲鱼仅作为补充来源；若出现登录推荐页、验证码、空卡片或长时间无输出，立即降级，不反复重试。
+
+不应声称已覆盖没有实际读取的平台。平台不可读时，把它列入“数据来源与限制”，并建议用户提供链接、截图或复制文本。
+
 ## 输出格式
 
 ```text
@@ -68,6 +82,8 @@ argument-hint: "[游戏] [预算] [偏好]"
 8. 本次规则是否需要更新
 ```
 
+面向用户的最终答复必须先输出自然语言推荐结论、Top N、风险和人工确认项。`<game_account_evaluation>`、`<recommendations>` 等标签只用于内部契约、调试或用户明确要求结构化输出时展示，不要把原始标签作为主文案直接暴露。
+
 ## 自我优化
 
 每次执行结束，如果用户反馈推荐错误，先判断错误类型：
@@ -77,5 +93,18 @@ argument-hint: "[游戏] [预算] [偏好]"
 - 当前版本强度知识过期
 - 用户偏好理解错误
 - 风险判断不足
+- 生成或优化后的 skill 未通过质量门禁
 
 只有在用户确认后，才能修改对应 skill 的规则文件。修改后写入该 skill 的 changelog。
+
+每次筛选完成后，应把本次运行摘要交给 `game-account-skill-optimizer`，至少包括：
+
+- 平台尝试、查询词、耗时、结果数和失败文本。
+- 入选与排除账号。
+- 最终回复是否用了结构化标签。
+- 用户反馈和规则更新建议。
+- 目标 skill 的 evaluator 报告；若已有优化产物，还要包含 `score`、`passed`、`redo_required` 和阻塞问题。
+
+自动优化阶段默认只产出 `<skill_optimization_report>` 和用户可读摘要，不静默写入其它 skill。用户明确要求“实现/应用这些优化”时，才按报告修改对应文件并运行验证。
+
+应用优化后必须运行 `game-account-skill-evaluator`。若低于门槛、存在阻塞问题或 `redo_required: true`，本轮产物必须打回重做，不得继续用于真实账号推荐。

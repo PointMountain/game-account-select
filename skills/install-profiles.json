@@ -13,6 +13,7 @@
         "game-account-toolkit",
         "game-account-skill-generator",
         "game-account-skill-evaluator",
+        "game-account-skill-optimizer",
         "game-account-community-updater",
         "game-account-wuthering-waves",
         "game-account-arknights",
@@ -26,7 +27,8 @@
       "description": "Shared toolkit and preflight checks used by game-specific skills.",
       "skills": [
         "game-account-toolkit",
-        "game-account-preflight"
+        "game-account-preflight",
+        "game-account-skill-optimizer"
       ]
     },
     {
@@ -41,6 +43,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-wuthering-waves"
       ]
     },
@@ -55,6 +58,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-arknights"
       ]
     },
@@ -70,6 +74,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-neverness-to-everness"
       ]
     },
@@ -85,6 +90,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-zenless-zone-zero"
       ]
     },
@@ -97,7 +103,22 @@
         "game-account-preflight",
         "game-account-skill-generator",
         "game-account-skill-evaluator",
+        "game-account-skill-optimizer",
         "game-account-community-updater"
+      ]
+    },
+    {
+      "name": "optimization",
+      "aliases": [
+        "optimizer",
+        "skill-optimizer"
+      ],
+      "title": "Skill optimization",
+      "description": "Analyze completed account-selection runs and produce skill improvement recommendations.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight",
+        "game-account-skill-optimizer"
       ]
     }
   ]

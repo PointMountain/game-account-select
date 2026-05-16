@@ -19,6 +19,9 @@ listing:
   binding_tags: string[]
   raw_text: string
   extracted_at: string
+  source_status: success|partial|empty_result|blocked|login_required|timeout|error
+  source_duration_ms: number | null
+  source_error: string | null
 
 game_assets:
   level: number | null
@@ -35,6 +38,17 @@ risk:
   binding_risk: low|medium|high|unknown
   data_completeness: low|medium|high
   suspicious_price: boolean
+
+platform_attempt:
+  platform: string
+  query: string
+  url: string | null
+  started_at: string | null
+  duration_ms: number | null
+  status: success|partial|empty_result|blocked|login_required|timeout|error
+  result_count: number
+  error_text: string | null
+  fallback_used: string | null
 
 score:
   hard_filter_passed: boolean

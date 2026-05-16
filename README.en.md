@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="#install"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="Install with npx skills add" /></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/skills-10-f0c96a?style=for-the-badge&labelColor=101624" alt="10 agent skills" /></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/skills-11-f0c96a?style=for-the-badge&labelColor=101624" alt="11 agent skills" /></a>
   <a href="#design-philosophy"><img src="https://img.shields.io/badge/philosophy-evidence%20first-f0c96a?style=for-the-badge&labelColor=101624" alt="Evidence first" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=for-the-badge&labelColor=101624" alt="MIT License" /></a>
 </p>
@@ -50,6 +50,7 @@ If you only want one game, select these items in the interactive selector:
 - The game skill you need, for example `game-account-zenless-zone-zero`
 - `game-account-toolkit`
 - `game-account-preflight`
+- `game-account-skill-optimizer`
 - `game-account-community-updater`
 
 You can also use a bundle command:
@@ -58,6 +59,7 @@ You can also use a bundle command:
 npx skills add https://github.com/PointMountain/game-account-select \
   --skill "game-account-toolkit" \
   --skill "game-account-preflight" \
+  --skill "game-account-skill-optimizer" \
   --skill "game-account-community-updater" \
   --skill "game-account-zenless-zone-zero"
 ```
@@ -67,6 +69,7 @@ From a local checkout, generate full commands for common install profiles:
 | Goal | Command |
 | --- | --- |
 | Core helpers only | `node scripts/list-skills.js --profile core` |
+| Optimizer only | `node scripts/list-skills.js --profile optimization` |
 | Zenless Zone Zero only | `node scripts/list-skills.js --profile zenless-zone-zero` |
 | Wuthering Waves only | `node scripts/list-skills.js --profile wuthering-waves` |
 | New game generation and evaluation | `node scripts/list-skills.js --profile new-game-authoring` |
@@ -117,7 +120,8 @@ npm run unlink:skills
 | `game-account-preflight` | Readiness check | The workflow needs clear guidance when browser access, network access, or local tools are missing. |
 | `game-account-toolkit` | Shared toolkit | A game skill needs shared fields, platform boundaries, community research protocol, or reusable templates. |
 | `game-account-skill-generator` | Game skill generator | The requested game is not supported yet and needs a conservative baseline buying skill. |
-| `game-account-skill-evaluator` | Quality gate | A generated or edited game skill must be checked before real account recommendations. |
+| `game-account-skill-evaluator` | Quality gate | A generated, edited, or optimizer-produced skill must be checked before real account recommendations; low scores are sent back for redo. |
+| `game-account-skill-optimizer` | Run optimizer | Analyzes screening and repository-skill runs for slow paths, empty results, source coverage gaps, output-format issues, valuation misses, user feedback, and quality-gate failures. |
 | `game-account-community-updater` | Evidence refresh | Current community consensus is stale, missing, or version-sensitive. |
 | `game-account-wuthering-waves` | Wuthering Waves / Mingchao | Listings need limited-character value, signature weapons, pull resources, and TAP/Wegame/PS5 binding risk. |
 | `game-account-arknights` | Arknights | Listings need limited/collab operators, key progression, mastery/modules, resources, collection value, and real-name recovery risk. |
@@ -132,6 +136,8 @@ npm run unlink:skills
 
 **Transparent and reviewable.** Every recommendation should explain why an account is worth checking and why it might be a bad buy. Missing screenshots, missing resources, unclear verification, and binding risk are visible manual-check items.
 
+**Self-evolving harness.** Every run leaves a diagnosable artifact: platform attempts, timings, failure text, output, user feedback, and evaluator results. The optimizer handles troubleshooting and target-file routing; the evaluator enforces the quality gate. Low scores, blocking issues, or `redo_required: true` must loop back into redo before the skill is used for real recommendations.
+
 **Safety boundaries first.** This pack only supports pre-purchase judgment. It does not bypass platform limits, run high-frequency scraping, or automate trades. Evidence and rules can evolve, but rule changes should be explainable, verifiable, and traceable.
 
 ## Standard I/O
@@ -139,7 +145,7 @@ npm run unlink:skills
 All account skills share the contract in `skills/game-account-toolkit/references/skill-io-contract.md`.
 
 - Inputs: `<game_account_request>`, `<account_listing>`, `<community_evidence>`, `<skill_generation_request>`
-- Outputs: `<game_account_evaluation>`, `<recommendations>`, `<skill_quality_report>`, `<community_refresh_report>`
+- Outputs: `<game_account_evaluation>`, `<recommendations>`, `<skill_quality_report>`, `<community_refresh_report>`, `<skill_optimization_report>`
 
 This keeps each skill thin: `SKILL.md` defines entry behavior, `references/` stores rules and evidence, `scripts/` stores repeatable validation, and `test-fixtures/` stores offline samples.
 
@@ -170,6 +176,9 @@ npm run verify:skills
 npm run verify:frontmatter
 node skills/game-account-preflight/scripts/preflight.mjs --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
+node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
+node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-run.json --json
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=skills/game-account-skill-optimizer/test-fixtures/optimizer-report-sample.json --json
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
 ```
 
@@ -179,6 +188,8 @@ Community evidence can refresh in two ways:
 - Maintainer refresh through `game-account-community-updater` when curated evidence JSON should be written into a game skill before future runs.
 
 Evidence refresh updates `community-evidence.md` and the refresh report. It should not silently rewrite valuation weights; rule changes should be proposed, reviewed, and then recorded in the game skill changelog.
+
+The optimizer can run after a real screening session or from a maintainer-provided JSON artifact. It reports recommended improvements by default; it does not silently rewrite skills unless the user explicitly asks to apply the changes and the corresponding validation scripts and evaluator gate pass. Optimized skills below the quality threshold must be redone.
 
 ## Safety
 
