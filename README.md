@@ -5,8 +5,12 @@
 ## 当前内容
 
 - `docs/product/game-account-selection-assistant.md`：产品定位、MVP 范围、数据策略、评分框架和架构选择。
+- `skills/game-account-preflight/`：所有账号 skill 执行前的环境校验 skill。
 - `skills/game-account-toolkit/`：通用工具 skill，负责依赖检查、平台访问策略、通用 schema。
 - `skills/game-account-select/`：主筛选编排 skill。
+- `skills/game-account-skill-generator/`：根据新游戏生成买号估值 skill。
+- `skills/game-account-skill-evaluator/`：评估生成或已有游戏 skill 是否达标。
+- `skills/game-account-community-updater/`：刷新游戏社区证据快照。
 - `skills/game-account-wuthering-waves/`：Wuthering Waves（鸣潮）账号估值 skill。
 - `skills/game-account-arknights/`：明日方舟账号估值 skill。
 - `skills/game-account-neverness-to-everness/`：Neverness to Everness（异环）账号估值 skill。
@@ -17,14 +21,17 @@
 ```text
 用户需求
   -> game-account-select
+  -> game-account-preflight
   -> game-account-toolkit
-  -> 对应游戏 skill
+  -> 对应游戏 skill 或 game-account-skill-generator
+  -> game-account-skill-evaluator
   -> 推荐列表 + 风险解释 + 规则更新建议
 ```
 
 ## 使用前检查
 
 ```bash
+node skills/game-account-preflight/scripts/preflight.mjs --json
 node skills/game-account-toolkit/scripts/check-deps.mjs
 ```
 
@@ -41,6 +48,19 @@ node skills/game-account-wuthering-waves/scripts/validate-sample.mjs
 node skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs
 ```
 
+## 框架工具验证
+
+```bash
+node skills/game-account-skill-generator/scripts/generate-game-skill.mjs --game "Test Frontier" --out /tmp/game-account-generator-test --force
+node /tmp/game-account-generator-test/skills/game-account-test-frontier/scripts/validate-sample.mjs
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
+node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
+```
+
+## 标准输入输出
+
+新旧 skill 都应读取 `skills/game-account-toolkit/references/skill-io-contract.md`，优先使用 `<game_account_request>`、`<account_listing>`、`<community_evidence>` 输入，并输出 `<game_account_evaluation>`、`<recommendations>`、`<skill_quality_report>` 或 `<community_refresh_report>`。
+
 ## 设计原则
 
 - 不做交易撮合。
@@ -49,4 +69,5 @@ node skills/game-account-zenless-zone-zero/scripts/validate-sample.mjs
 - 不静默安装全局工具。
 - 不静默修改 skill 规则。
 - 不同游戏独立维护估值规则。
+- 自动生成的游戏 skill 默认低置信，必须通过 evaluator 才建议用于真实筛选。
 - 用户反馈先转成规则更新建议，确认后再写入对应 skill。

@@ -12,10 +12,16 @@ argument-hint: "[listing json or account description]"
 
 ## 必须读取
 
+- `../game-account-toolkit/references/skill-io-contract.md`
+- `../game-account-toolkit/references/game-skill-standard.md`
 - `references/valuation-rules.md`
 - `references/agent-knowledge.md`
 - `references/community-evidence.md`
 - `references/changelog.md`
+
+## 执行前准备
+
+先调用 `game-account-preflight`。如果社区证据过期、跨版本、或账号核心代理人/音擎未覆盖，调用 `game-account-community-updater` 或按社区调研协议刷新。
 
 ## 核心维度
 
@@ -34,6 +40,8 @@ argument-hint: "[listing json or account description]"
 若输入没有社区证据快照，读取 `references/community-evidence.md`。如果快照超过 30 天、跨大版本、或账号核心代理人未覆盖，必须降低 `confidence` 并输出规则更新建议。
 
 ## 输出
+
+必须输出 `<game_account_evaluation>`，同时保留下列字段：
 
 ```yaml
 zenless_zone_zero_score:

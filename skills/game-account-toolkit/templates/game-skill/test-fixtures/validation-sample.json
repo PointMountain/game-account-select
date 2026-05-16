@@ -1,0 +1,40 @@
+{
+  "expected_top_id": "named-core-clean",
+  "community_snapshot_date": "{{date}}",
+  "listings": [
+    {
+      "id": "count-only-trap",
+      "title": "高稀有度数量很多但没明细",
+      "server": "unknown",
+      "raw_text": "稀有角色很多，等级高，但没有列名字、资源、绑定和找回保障。",
+      "game_assets": {
+        "named_core_assets": [],
+        "count_claim": 12,
+        "resources": {},
+        "risk": {
+          "binding": "unknown",
+          "guarantee": "unknown",
+          "official_verification": false
+        }
+      }
+    },
+    {
+      "id": "named-core-clean",
+      "title": "命名核心资产资源风险清楚号",
+      "server": "official",
+      "raw_text": "核心资产 Alpha、Beta、Gamma；资源充足；未绑定，官方验号，找回包赔。",
+      "game_assets": {
+        "named_core_assets": ["Alpha", "Beta", "Gamma"],
+        "resources": {
+          "premium_currency": 24000,
+          "pull_tickets": 40
+        },
+        "risk": {
+          "binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    }
+  ]
+}

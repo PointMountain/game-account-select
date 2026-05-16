@@ -8,13 +8,17 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 ## 作用
 
-这是游戏账号智能筛选体系的主编排 skill。它负责把用户需求转成查询条件，调用 `game-account-toolkit` 做工具和平台访问准备，再调用对应游戏 skill 做资产估值。
+这是游戏账号智能筛选体系的主编排 skill。它负责把用户需求转成查询条件，先调用 `game-account-preflight` 做执行前准备，再调用 `game-account-toolkit` 做工具和平台访问策略，最后调用对应游戏 skill 做资产估值。
 
 ## 依赖
 
 必须引用：
 
+- `game-account-preflight`
 - `game-account-toolkit`
+- `game-account-skill-generator`（当游戏未支持时）
+- `game-account-skill-evaluator`（当生成或更新 skill 后）
+- `game-account-community-updater`（当社区证据过期或用户要求刷新时）
 
 按游戏引用：
 
@@ -26,6 +30,10 @@ argument-hint: "[游戏] [预算] [偏好]"
 ## 执行流程
 
 读取 `references/selection-state-machine.md`，按状态机执行。不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。
+
+## 标准输入输出
+
+读取 `../game-account-toolkit/references/skill-io-contract.md`。优先接受 `<game_account_request>`，最终输出 `<recommendations>`。如果需要评价单个账号，游戏 skill 必须输出 `<game_account_evaluation>`。
 
 ## 默认筛选目标
 
