@@ -13,5 +13,6 @@
     "codex",
     "game-account",
     "valuation"
-  ]
+  ],
+  "license": "MIT"
 }
