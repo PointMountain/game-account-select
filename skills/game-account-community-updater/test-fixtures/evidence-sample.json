@@ -1,0 +1,24 @@
+{
+  "updated_at": "2026-05-16",
+  "community_confidence": "medium",
+  "source_coverage": {
+    "bilibili": "limited",
+    "douyin": "failed",
+    "xiaohongshu": "not_checked",
+    "guide_sites": "available"
+  },
+  "sources": [
+    {
+      "title": "Sample community guide",
+      "url": "https://example.com/sample-guide",
+      "note": "Used to verify updater formatting"
+    }
+  ],
+  "consensus": {
+    "high_value_assets": ["Named limited/core assets"],
+    "medium_value_assets": ["Useful but replaceable support assets"],
+    "low_value_or_trap_assets": ["Count-only listings", "High account level without named assets"],
+    "risk_factors": ["Binding unknown", "No retrieval compensation"]
+  },
+  "limitations": ["Fixture data only; not real community evidence."]
+}

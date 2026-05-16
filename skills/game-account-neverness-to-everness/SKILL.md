@@ -12,10 +12,16 @@ argument-hint: "[listing json or account description]"
 
 ## 必须读取
 
+- `../game-account-toolkit/references/skill-io-contract.md`
+- `../game-account-toolkit/references/game-skill-standard.md`
 - `references/valuation-rules.md`
 - `references/asset-knowledge.md`
 - `references/community-evidence.md`
 - `references/changelog.md`
+
+## 执行前准备
+
+先调用 `game-account-preflight`。如果社区证据不足、版本变化或用户样本出现未覆盖 S 角色/弧盘，调用 `game-account-community-updater` 或按社区调研协议刷新。
 
 ## 核心维度
 
@@ -28,6 +34,8 @@ argument-hint: "[listing json or account description]"
 - TAP 绑定、完美账号/B服等账号类型风险
 
 ## 输出
+
+必须输出 `<game_account_evaluation>`，同时保留下列字段：
 
 ```yaml
 neverness_to_everness_score:

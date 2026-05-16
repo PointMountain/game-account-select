@@ -12,10 +12,16 @@ argument-hint: "[listing json or account description]"
 
 ## 必须读取
 
+- `../game-account-toolkit/references/skill-io-contract.md`
+- `../game-account-toolkit/references/game-skill-standard.md`
 - `references/valuation-rules.md`
 - `references/operator-knowledge.md`
 - `references/community-evidence.md`
 - `references/changelog.md`
+
+## 执行前准备
+
+先调用 `game-account-preflight`。如果社区证据过期或账号包含未覆盖新干员/皮肤/模组，调用 `game-account-community-updater` 或按社区调研协议刷新。
 
 ## 核心维度
 
@@ -29,6 +35,8 @@ argument-hint: "[listing json or account description]"
 - 找回和实名风险
 
 ## 输出
+
+必须输出 `<game_account_evaluation>`，同时保留下列字段：
 
 ```yaml
 arknights_score:

@@ -10,7 +10,13 @@
 
 ## LOAD_TOOLKIT
 
-调用 `game-account-toolkit`：
+先调用 `game-account-preflight`：
+
+1. 运行环境校验。
+2. 若缺少必需工具，停止并输出安装/授权指引。
+3. 若缺少可选工具，继续但记录能力限制。
+
+再调用 `game-account-toolkit`：
 
 1. 检查依赖。
 2. 读取平台访问策略。
@@ -35,7 +41,23 @@ limitations: string[]
 - Neverness to Everness（异环）：`game-account-neverness-to-everness`
 - Zenless Zone Zero（绝区零 / ZZZ）：`game-account-zenless-zone-zero`
 
-若游戏未支持，停止并说明需要新增游戏 skill，不要套用其它游戏规则。
+若游戏未支持，不要套用其它游戏规则。进入 `GENERATE_GAME_SKILL`。
+
+## GENERATE_GAME_SKILL
+
+调用 `game-account-skill-generator`：
+
+1. 根据用户输入的游戏名、别名和已知证据生成 `skills/game-account-<slug>/`。
+2. 运行生成后的验证脚本。
+3. 调用 `game-account-skill-evaluator` 判断是否达到使用标准。
+4. 若未通过，只输出生成报告、阻塞问题和社区刷新建议；不要用低质量 skill 真实推荐。
+
+输出：
+
+```xml
+<skill_generation_report>...</skill_generation_report>
+<skill_quality_report>...</skill_quality_report>
+```
 
 ## BUILD_QUERY
 
@@ -76,6 +98,8 @@ limitations: string[]
 ## COLLECT_COMMUNITY_EVIDENCE
 
 读取 `game-account-toolkit/references/community-research-protocol.md`，为当前游戏和版本建立证据快照，或读取游戏 skill 中最近一次仍可用的证据快照。
+
+当快照过期、覆盖不足、或用户要求刷新时，调用 `game-account-community-updater`，把当次调研结果写成 `<community_refresh_report>`。
 
 输入：
 

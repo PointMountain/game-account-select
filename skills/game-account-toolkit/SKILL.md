@@ -12,6 +12,8 @@ argument-hint: "[check|install-guide|platform|ocr|extract]"
 
 主筛选 skill 和游戏专属 skill 在需要联网、浏览器、OCR、HTML 抽取、样本存储、依赖检查时，应先引用本 skill 的规则。
 
+所有入口 skill 应优先调用 `game-account-preflight`。本 toolkit 的 `scripts/check-deps.mjs` 现在委托给 preflight，保留为兼容入口。
+
 ## 文件结构
 
 ```text
@@ -20,8 +22,12 @@ game-account-toolkit/
 ├── references/
 │   ├── community-research-protocol.md
 │   ├── dependency-state-machine.md
+│   ├── game-skill-standard.md
 │   ├── platform-access-policy.md
+│   ├── skill-io-contract.md
 │   └── shared-listing-schema.md
+├── templates/
+│   └── game-skill/
 └── scripts/
     └── check-deps.mjs
 ```
@@ -31,7 +37,7 @@ game-account-toolkit/
 每次被筛选 skill 调用前，按状态机执行：
 
 1. 读取 `references/dependency-state-machine.md`。
-2. 运行 `node "${CLAUDE_SKILL_DIR}/scripts/check-deps.mjs"` 检查本地依赖。
+2. 调用 `game-account-preflight`，或运行 `node skills/game-account-preflight/scripts/preflight.mjs --json` 检查本地依赖。
 3. 若全部存在，继续执行。
 4. 若缺少可本地安装的 npm 依赖，先说明将安装什么、安装到哪里、为什么需要，再请求用户确认。
 5. 若缺少系统级依赖或浏览器设置，给出人工安装步骤，不静默安装。
