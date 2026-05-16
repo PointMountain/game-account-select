@@ -3,11 +3,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const args = new Set(process.argv.slice(2));
 const wantsJson = args.has('--json');
 const strict = args.has('--strict');
 const needsBrowser = args.has('--browser');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoSkillsRoot = path.resolve(__dirname, '..', '..');
 
 function commandExists(command, versionArgs = ['--version']) {
   const which = spawnSync('sh', ['-lc', `command -v ${command}`], { encoding: 'utf8' });
@@ -23,6 +26,16 @@ function checkWebAccessSkill() {
   const candidates = [
     path.join(os.homedir(), '.agents/skills/web-access/SKILL.md'),
     path.join(os.homedir(), '.codex/skills/web-access/SKILL.md')
+  ];
+  const found = candidates.find((candidate) => fs.existsSync(candidate));
+  return { ok: Boolean(found), found };
+}
+
+function checkGameAccountSkill(skillName) {
+  const candidates = [
+    path.join(os.homedir(), '.agents/skills', skillName, 'SKILL.md'),
+    path.join(os.homedir(), '.codex/skills', skillName, 'SKILL.md'),
+    path.join(repoSkillsRoot, skillName, 'SKILL.md')
   ];
   const found = candidates.find((candidate) => fs.existsSync(candidate));
   return { ok: Boolean(found), found };
@@ -66,6 +79,26 @@ checks.push({
   action: opencli.ok ? 'none' : 'Install opencli or provide community evidence manually.'
 });
 
+const toolkitSkill = checkGameAccountSkill('game-account-toolkit');
+checks.push({
+  name: 'game-account-toolkit skill',
+  required: true,
+  ok: toolkitSkill.ok,
+  found: toolkitSkill.found,
+  required_for: 'shared account fields, platform access policy, and community research protocol',
+  action: toolkitSkill.ok ? 'none' : 'Install game-account-toolkit together with the game skill.'
+});
+
+const communityUpdaterSkill = checkGameAccountSkill('game-account-community-updater');
+checks.push({
+  name: 'game-account-community-updater skill',
+  required: false,
+  ok: communityUpdaterSkill.ok,
+  found: communityUpdaterSkill.found,
+  required_for: 'community evidence refresh when local game evidence is stale or incomplete',
+  action: communityUpdaterSkill.ok ? 'none' : 'Install game-account-community-updater for evidence refresh support.'
+});
+
 const webAccess = checkWebAccessSkill();
 checks.push({
   name: 'web-access skill',
@@ -105,6 +138,7 @@ if (wantsJson) {
   console.log(`<preflight_report>`);
   console.log(`  <ok>${result.ok}</ok>`);
   console.log(`  <checks format="json">${JSON.stringify(result.checks)}</checks>`);
+  console.log(`  <missing_optional format="json">${JSON.stringify(result.missing_optional)}</missing_optional>`);
   console.log(`  <missing_required format="json">${JSON.stringify(result.missing_required)}</missing_required>`);
   console.log(`  <manual_actions format="json">${JSON.stringify(result.manual_actions)}</manual_actions>`);
   console.log(`  <safe_auto_actions format="json">[]</safe_auto_actions>`);

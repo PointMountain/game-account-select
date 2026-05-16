@@ -8,7 +8,7 @@ argument-hint: "[--json|--strict|--browser]"
 
 ## 作用
 
-在 `game-account-select`、游戏估值 skill、社区更新 skill 或生成器执行前运行。它负责确认本地工具、联网能力和安全边界，避免执行到一半才发现缺依赖。
+在 `game-account-select`、游戏估值 skill、社区更新 skill 或生成器执行前运行。它负责确认配套 skill、本地工具、联网能力和安全边界，避免执行到一半才发现缺依赖。
 
 ## 必须读取
 
@@ -28,12 +28,13 @@ node skills/game-account-preflight/scripts/preflight.mjs --json
 
 ## 输出
 
-必须输出 `<preflight_report>`：
+必须先把 `<preflight_report>` 显示给用户，再继续后续 skill 输出。即使全部检查通过，也要保留这段报告，方便用户确认本次运行使用了哪些本地能力：
 
 ```xml
 <preflight_report>
   <ok>true|false</ok>
   <checks format="json">[]</checks>
+  <missing_optional format="json">[]</missing_optional>
   <missing_required format="json">[]</missing_required>
   <manual_actions format="json">[]</manual_actions>
   <safe_auto_actions format="json">[]</safe_auto_actions>

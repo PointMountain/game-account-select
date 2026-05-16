@@ -16,6 +16,10 @@ argument-hint: "[skill path]"
 - `../game-account-toolkit/references/game-skill-standard.md`
 - `../game-account-toolkit/references/skill-io-contract.md`
 
+## 执行前准备
+
+先运行 `game-account-preflight`，并在评估前显示 `<preflight_report>`。如果缺少必需依赖，停止评估并给出补齐步骤。
+
 ## 执行
 
 ```bash

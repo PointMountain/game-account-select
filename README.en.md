@@ -45,7 +45,14 @@ Without `--skill`, `npx skills` opens an interactive selector:
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-For a single game, use a bundle command. `npx skills` supports repeated `--skill` flags, but it does not currently read a repository dependency manifest to default-select companion skills. Bundle commands install the game skill with its preflight check, shared toolkit, and community refresh support in one pass.
+If you only want one game, select these items in the interactive selector:
+
+- The game skill you need, for example `game-account-zenless-zone-zero`
+- `game-account-toolkit`
+- `game-account-preflight`
+- `game-account-community-updater`
+
+You can also use a bundle command:
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select \
@@ -59,16 +66,23 @@ From a local checkout, generate full commands for common install profiles:
 
 | Goal | Command |
 | --- | --- |
-| Core helpers only | `node scripts/list-skills.mjs --profile core` |
-| Zenless Zone Zero only | `node scripts/list-skills.mjs --profile zenless-zone-zero` |
-| Wuthering Waves only | `node scripts/list-skills.mjs --profile wuthering-waves` |
-| New game generation and evaluation | `node scripts/list-skills.mjs --profile new-game-authoring` |
+| Core helpers only | `node scripts/list-skills.js --profile core` |
+| Zenless Zone Zero only | `node scripts/list-skills.js --profile zenless-zone-zero` |
+| Wuthering Waves only | `node scripts/list-skills.js --profile wuthering-waves` |
+| New game generation and evaluation | `node scripts/list-skills.js --profile new-game-authoring` |
 
 List all install names and profiles from a local checkout:
 
 ```bash
 npm run list:skills
 npm run list:profiles
+```
+
+For local development, symlink this checkout into `~/.agents/skills` so your local agent reads the latest workspace copy:
+
+```bash
+npm run link:skills
+npm run unlink:skills
 ```
 
 ## What It Helps With

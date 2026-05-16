@@ -45,7 +45,14 @@ npx skills add https://github.com/PointMountain/game-account-select --skill '*'
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-按游戏安装时，请使用组合命令。`npx skills` 支持重复传入 `--skill`，但目前不读取仓库里的依赖清单来自动勾选配套 skill；组合命令会一次带上游戏 skill、执行前检查、共享工具和社区刷新能力。
+如果只想装某一个游戏，在交互式选择器里同时勾选：
+
+- 你需要的游戏 skill，例如 `game-account-zenless-zone-zero`
+- `game-account-toolkit`
+- `game-account-preflight`
+- `game-account-community-updater`
+
+也可以直接使用组合命令：
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select \
@@ -59,16 +66,23 @@ npx skills add https://github.com/PointMountain/game-account-select \
 
 | 目标 | 命令 |
 | --- | --- |
-| 只装核心工具 | `node scripts/list-skills.mjs --profile core` |
-| 只装绝区零 | `node scripts/list-skills.mjs --profile zenless-zone-zero` |
-| 只装鸣潮 | `node scripts/list-skills.mjs --profile wuthering-waves` |
-| 新游戏 skill 生成与评估 | `node scripts/list-skills.mjs --profile new-game-authoring` |
+| 只装核心工具 | `node scripts/list-skills.js --profile core` |
+| 只装绝区零 | `node scripts/list-skills.js --profile zenless-zone-zero` |
+| 只装鸣潮 | `node scripts/list-skills.js --profile wuthering-waves` |
+| 新游戏 skill 生成与评估 | `node scripts/list-skills.js --profile new-game-authoring` |
 
 在本地 checkout 中列出所有 skill 和安装组合：
 
 ```bash
 npm run list:skills
 npm run list:profiles
+```
+
+本地开发时，可以把当前 checkout 软链接到 `~/.agents/skills`，让本机 Agent 直接读取工作区里的最新 skill：
+
+```bash
+npm run link:skills
+npm run unlink:skills
 ```
 
 ## 适合解决什么问题
