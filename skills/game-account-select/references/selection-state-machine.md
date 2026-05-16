@@ -1,0 +1,144 @@
+# 筛选状态机
+
+## START
+
+输入用户需求。如果缺少游戏或预算，先询问最少必要信息：
+
+- 游戏
+- 预算范围
+- 核心偏好：强度、资源、收藏、低风险、性价比
+
+## LOAD_TOOLKIT
+
+调用 `game-account-toolkit`：
+
+1. 检查依赖。
+2. 读取平台访问策略。
+3. 确认可用能力：WebFetch、浏览器 CDP、OCR、样本库。
+
+输出：
+
+```yaml
+capabilities:
+  browser_cdp: boolean
+  web_fetch: boolean
+  ocr: boolean
+limitations: string[]
+```
+
+## SELECT_GAME_SKILL
+
+根据游戏选择专属 skill：
+
+- Wuthering Waves（鸣潮）：`game-account-wuthering-waves`
+- 明日方舟：`game-account-arknights`
+- Neverness to Everness（异环）：`game-account-neverness-to-everness`
+
+若游戏未支持，停止并说明需要新增游戏 skill，不要套用其它游戏规则。
+
+## BUILD_QUERY
+
+将用户需求转成硬筛和软评分条件。
+
+硬筛例子：
+
+- 预算范围
+- 区服/渠道
+- 未绑定 TAP/Wegame
+- 找回包赔
+- 官方验号
+
+软评分例子：
+
+- 强度开荒
+- 抽卡资源
+- 限定/稀有资产
+- 价格优势
+- 数据完整度
+
+## COLLECT_LISTINGS
+
+按保守访问策略获取候选账号：
+
+1. 优先用户触发的少量列表页查询。
+2. 平台页面不可读时，请用户提供截图/链接/复制文本。
+3. 记录数据来源和限制。
+
+不要全站扫描或高频翻页。
+
+## NORMALIZE_LISTINGS
+
+用 `game-account-toolkit/references/shared-listing-schema.md` 标准化字段。
+
+缺失字段保留为空，不要猜测。
+
+## COLLECT_COMMUNITY_EVIDENCE
+
+读取 `game-account-toolkit/references/community-research-protocol.md`，为当前游戏和版本建立证据快照，或读取游戏 skill 中最近一次仍可用的证据快照。
+
+输入：
+
+- 游戏与版本上下文
+- 用户偏好：强度、资源、收藏、低风险、性价比
+- 待比较账号中出现的角色、命座、武器、资源和绑定风险
+
+输出：
+
+```yaml
+community_evidence:
+  version_context: string
+  updated_at: YYYY-MM-DD
+  community_confidence: low|medium|high
+  source_coverage: object
+  high_value_assets: string[]
+  medium_value_assets: string[]
+  low_value_or_trap_assets: string[]
+  key_teams: string[]
+  limitations: string[]
+```
+
+要求：
+
+- 优先用 B站长视频/字幕/评论、小红书图文/评论、抖音话题或视频信号；平台不可用时记录失败原因并使用降级来源。
+- 不得因为单条视频标题、短帖或评论就显著提高账号排名。
+- 如果当前证据过期、冲突或覆盖不足，继续筛选时必须降低置信度并列出人工确认项。
+
+## SCORE_WITH_GAME_SKILL
+
+把标准化挂牌和 `community_evidence` 一起传给游戏专属 skill，获取：
+
+- 游戏资产评分
+- 资源评分
+- 风险扣分
+- 版本强度解释
+- 排除理由
+
+## RANK_AND_EXPLAIN
+
+合并平台风险、价格、游戏资产分，输出 Top N。
+
+每个入选账号必须包含：
+
+- 价格
+- 核心资产
+- 为什么适合用户偏好
+- 风险和缺失信息
+- 是否需要人工二次确认
+
+## FEEDBACK_LOOP
+
+询问或接收用户反馈：
+
+- 推荐是否准确
+- 哪个账号被高估/低估
+- 原因是什么
+
+如果反馈揭示规则问题，进入 `PROPOSE_RULE_UPDATE`。
+
+## PROPOSE_RULE_UPDATE
+
+输出拟更新的文件、规则和原因。只有用户确认后才修改 skill 文件。
+
+## END
+
+总结本次查询限制、保留的待验证平台/规则问题，以及下一次如何改进。
