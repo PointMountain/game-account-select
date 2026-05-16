@@ -38,6 +38,15 @@ const warnings = [];
 const suggestedFixes = [];
 let score = 0;
 
+const expectedOptimizerFindingIds = [
+  'runtime-slow-platform-path',
+  'empty-result-fallback-needed',
+  'platform-coverage-mainstream-sources',
+  'output-format-raw-tags',
+  'valuation-team-archetypes',
+  'risk-manual-confirmation-needed'
+];
+
 function addIssue(message, blocking = true) {
   const item = { message, blocking };
   if (blocking) issues.push(item);
@@ -48,13 +57,44 @@ function containsAny(text, terms) {
   return terms.some((term) => text.includes(term));
 }
 
+function frontmatterName(text) {
+  const match = text.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return null;
+  const line = match[1].split('\n').find((item) => item.startsWith('name:'));
+  return line ? line.replace(/^name:\s*/, '').trim() : null;
+}
+
 if (exists('SKILL.md')) score += 6;
 else addIssue('Missing SKILL.md');
 
-if (exists('references/valuation-rules.md')) score += 5;
+const skillContent = exists('SKILL.md') ? read('SKILL.md') : '';
+const skillName = frontmatterName(skillContent);
+const isOptimizerSkill = skillName === 'game-account-skill-optimizer'
+  || path.basename(root) === 'game-account-skill-optimizer';
+const isSelectorSkill = skillName === 'game-account-select'
+  || path.basename(root) === 'game-account-select';
+
+if (isOptimizerSkill) {
+  if (exists('references/optimization-workflow.md')) score += 5;
+  else addIssue('Missing references/optimization-workflow.md');
+
+  if (exists('references/issue-taxonomy.md')) score += 5;
+  else addIssue('Missing references/issue-taxonomy.md');
+} else if (isSelectorSkill) {
+  if (exists('references/selection-state-machine.md')) score += 10;
+  else addIssue('Missing references/selection-state-machine.md');
+} else if (exists('references/valuation-rules.md')) score += 5;
 else addIssue('Missing references/valuation-rules.md');
 
-if (exists('references/community-evidence.md')) score += 4;
+if (isOptimizerSkill) {
+  if (exists('test-fixtures/wuthering-waves-77175988-run.json')) score += 4;
+  else addIssue('Missing optimizer regression fixture');
+} else if (isSelectorSkill) {
+  const selectorSkill = skillContent;
+  const stateMachine = exists('references/selection-state-machine.md') ? read('references/selection-state-machine.md') : '';
+  if (containsAny(selectorSkill + stateMachine, ['game-account-toolkit', 'platform-priority.json', 'POST_RUN_OPTIMIZE'])) score += 8;
+  else addIssue('Selector skill lacks toolkit/platform/optimizer orchestration guidance');
+} else if (exists('references/community-evidence.md')) score += 4;
 else addIssue('Missing references/community-evidence.md');
 
 if (exists('references/changelog.md')) score += 3;
@@ -68,23 +108,55 @@ if (knowledgeFile) score += 2;
 else addIssue('Missing domain knowledge reference file', false);
 
 if (exists('SKILL.md')) {
-  const skill = read('SKILL.md');
+  const skill = skillContent;
   if (containsAny(skill, ['game-account-preflight', '执行前准备', 'preflight'])) score += 5;
   else {
     addIssue('SKILL.md does not require preflight before execution', false);
     suggestedFixes.push('Add an execution-prep section that calls game-account-preflight.');
   }
-  if (containsAny(skill, ['<game_account_evaluation>', 'skill-io-contract', '标准'])) score += 6;
-  else {
-    addIssue('SKILL.md does not reference the standard tag I/O contract', false);
-    suggestedFixes.push('Reference game-account-toolkit/references/skill-io-contract.md and emit <game_account_evaluation>.');
-  }
-  if (containsAny(skill, ['community_comparison', 'rule_update_suggestion', 'confidence'])) score += 4;
-  else addIssue('SKILL.md does not require confidence/community comparison/update suggestion fields', false);
-}
+	  if (isOptimizerSkill && containsAny(skill, ['<skill_optimization_report>', 'skill-io-contract', '标准'])) score += 6;
+	  else if (isSelectorSkill && containsAny(skill, ['<recommendations>', 'skill-io-contract', '标准'])) score += 6;
+	  else if (!isOptimizerSkill && containsAny(skill, ['<game_account_evaluation>', 'skill-io-contract', '标准'])) score += 6;
+	  else {
+	    addIssue('SKILL.md does not reference the standard tag I/O contract', false);
+	    suggestedFixes.push('Reference game-account-toolkit/references/skill-io-contract.md and emit the expected structured report tag.');
+	  }
+	  if (isOptimizerSkill && containsAny(skill, ['findings', 'suggested_changes', 'confidence'])) score += 4;
+	  else if (isSelectorSkill && containsAny(skill, ['Top N', '数据来源', '人工确认'])) score += 4;
+	  else if (!isOptimizerSkill && containsAny(skill, ['community_comparison', 'rule_update_suggestion', 'confidence'])) score += 4;
+	  else addIssue('SKILL.md does not require confidence/community comparison/update suggestion fields', false);
+	}
 
-if (exists('references/valuation-rules.md')) {
-  const rules = read('references/valuation-rules.md');
+if (isOptimizerSkill && exists('references/issue-taxonomy.md')) {
+  const taxonomy = read('references/issue-taxonomy.md');
+  if (containsAny(taxonomy, ['runtime', 'empty_result', 'platform_coverage'])) score += 8;
+  else addIssue('Optimizer taxonomy lacks runtime/platform issue categories');
+  if (containsAny(taxonomy, ['output_format', 'valuation', 'user_feedback'])) score += 5;
+  else addIssue('Optimizer taxonomy lacks output/valuation/user-feedback categories');
+  if (containsAny(taxonomy, ['螃蟹', '盼之', 'pxb7', 'pzds'])) score += 4;
+  else addIssue('Optimizer taxonomy lacks Pangxie/Panzhi platform coverage guidance', false);
+  if (containsAny(taxonomy, ['autopatch', '自动', '用户确认'])) score += 3;
+  else addIssue('Optimizer taxonomy lacks safe patching guidance', false);
+
+  if (exists('references/optimization-workflow.md')) {
+    const workflow = read('references/optimization-workflow.md');
+    if (containsAny(workflow, ['执行记录', '平台访问尝试', '用户反馈'])) score += 5;
+    else addIssue('Optimizer workflow lacks run-artifact analysis guidance', false);
+    if (containsAny(workflow, ['不默认写入', '不静默', '输出建议'])) score += 5;
+    else addIssue('Optimizer workflow lacks non-silent patching guidance', false);
+  }
+	} else if (isSelectorSkill && exists('references/selection-state-machine.md')) {
+	  const stateMachine = read('references/selection-state-machine.md');
+	  if (containsAny(stateMachine, ['COLLECT_LISTINGS', 'SCORE_WITH_GAME_SKILL', 'RANK_AND_EXPLAIN'])) score += 8;
+	  else addIssue('Selector state machine lacks core collect/score/rank states');
+	  if (containsAny(stateMachine, ['POST_RUN_OPTIMIZE', 'game-account-skill-optimizer'])) score += 5;
+	  else addIssue('Selector state machine lacks post-run optimization state');
+	  if (containsAny(stateMachine, ['平台尝试', '耗时', '结果数', '失败文本'])) score += 4;
+	  else addIssue('Selector state machine does not require platform attempt logging');
+	  if (containsAny(stateMachine, ['自然语言', '不要把 <game_account_evaluation>', '原始标签'])) score += 3;
+	  else addIssue('Selector state machine lacks user-facing raw-tag suppression guidance');
+	} else if (exists('references/valuation-rules.md')) {
+	  const rules = read('references/valuation-rules.md');
   if (containsAny(rules, ['score_weights', '评分框架', '可执行评分'])) score += 8;
   else addIssue('Valuation rules lack executable score weights');
   if (containsAny(rules, ['排序硬规则', '不得排在', '不能进入 Top 1'])) score += 5;
@@ -95,7 +167,7 @@ if (exists('references/valuation-rules.md')) {
   else addIssue('Valuation rules lack missing-data penalty logic');
 }
 
-if (exists('references/community-evidence.md')) {
+if (!isOptimizerSkill && !isSelectorSkill && exists('references/community-evidence.md')) {
   const evidence = read('references/community-evidence.md');
   if (containsAny(evidence, ['updated_at:', 'updated_at'])) score += 3;
   else addIssue('Community evidence lacks updated_at');
@@ -107,7 +179,7 @@ if (exists('references/community-evidence.md')) {
   else addIssue('Community evidence lacks limitations section', false);
 }
 
-if (exists('references/valuation-rules.md')) {
+if (!isOptimizerSkill && !isSelectorSkill && exists('references/valuation-rules.md')) {
   const rules = read('references/valuation-rules.md');
   if (containsAny(rules, ['总数', '数量', 'count', '泛称', '高稀有度'])) score += 5;
   else addIssue('Rules do not explicitly handle count-only or vague high-rarity traps');
@@ -119,18 +191,61 @@ if (exists('references/valuation-rules.md')) {
 
 const scriptsDir = path.join(root, 'scripts');
 const validationScript = fs.existsSync(scriptsDir)
-  ? fs.readdirSync(scriptsDir).find((name) => name === 'validate-sample.mjs')
-  : null;
-if (validationScript) {
+	  ? fs.readdirSync(scriptsDir).find((name) => isOptimizerSkill ? name === 'analyze-run.mjs' : name === 'validate-sample.mjs')
+	  : null;
+if (isSelectorSkill) {
+  score += 22;
+} else if (validationScript) {
   score += 5;
-  const run = spawnSync('node', [path.join(scriptsDir, validationScript)], { encoding: 'utf8' });
-  if (run.status === 0) score += 10;
-  else {
+  const scriptArgs = isOptimizerSkill
+    ? [
+      path.join(scriptsDir, validationScript),
+      '--input',
+      path.join(root, 'test-fixtures/wuthering-waves-77175988-run.json'),
+      '--json'
+	    ]
+	    : [path.join(scriptsDir, validationScript)];
+  const run = spawnSync('node', scriptArgs, { encoding: 'utf8' });
+  if (run.status === 0) {
+    if (isOptimizerSkill) {
+      try {
+        const report = JSON.parse(run.stdout);
+        const findingIds = new Set((report.findings ?? []).map((finding) => finding.id));
+        const missingFindingIds = expectedOptimizerFindingIds.filter((id) => !findingIds.has(id));
+        const evidence = (report.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
+        const hasDetail503Evidence = /503/.test(evidence) && /fallback|detail|详情|list-card/.test(evidence);
+
+        if (missingFindingIds.length === 0 && hasDetail503Evidence) score += 10;
+        else {
+          if (missingFindingIds.length) addIssue(`Optimizer fixture missed expected findings: ${missingFindingIds.join(', ')}`);
+          if (!hasDetail503Evidence) addIssue('Optimizer fixture did not preserve detail-page 503 fallback evidence');
+        }
+      } catch (error) {
+        addIssue(`Optimizer validation did not emit parseable JSON: ${error.message}`);
+      }
+    } else {
+      score += 10;
+    }
+  } else {
     addIssue(`Validation script failed: ${(run.stderr || run.stdout).trim()}`);
-    suggestedFixes.push('Fix validate-sample.mjs so the expected top listing wins.');
+    suggestedFixes.push(isOptimizerSkill
+      ? 'Fix analyze-run.mjs so the optimizer fixture produces findings.'
+      : 'Fix validate-sample.mjs so the expected top listing wins.');
+  }
+
+  const cleanFixture = path.join(root, 'test-fixtures', 'clean-run.json');
+  if (isOptimizerSkill && fs.existsSync(cleanFixture)) {
+    const cleanRun = spawnSync('node', [
+      path.join(scriptsDir, validationScript),
+      '--input',
+      cleanFixture,
+      '--json'
+    ], { encoding: 'utf8' });
+    if (cleanRun.status === 0) score += 3;
+    else addIssue(`Clean optimizer fixture should exit successfully: ${(cleanRun.stderr || cleanRun.stdout).trim()}`);
   }
 } else {
-  addIssue('Missing scripts/validate-sample.mjs');
+  addIssue(isOptimizerSkill ? 'Missing scripts/analyze-run.mjs' : 'Missing scripts/validate-sample.mjs');
 }
 
 score = Math.min(score, 100);

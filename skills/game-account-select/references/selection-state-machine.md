@@ -83,9 +83,12 @@ limitations: string[]
 
 按保守访问策略获取候选账号：
 
-1. 优先用户触发的少量列表页查询。
-2. 平台页面不可读时，请用户提供截图/链接/复制文本。
-3. 记录数据来源和限制。
+1. 优先用户提供的链接、截图、复制文本或指定平台。
+2. 用户没有指定平台时，按 `game-account-toolkit/references/platform-priority.json` 的 `default_order` 低频尝试：螃蟹账号代售、盼之代售、交易猫、淘手游；闲鱼只作为补充来源。
+3. 每个平台最多做少量用户意图明确的列表页/搜索页读取。不要全站扫描。
+4. 对每个平台记录：查询词、开始/结束时间、耗时、结果数、失败文本、是否进入详情页。
+5. 平台页面不可读时，请用户提供截图/链接/复制文本。
+6. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
 
 不要全站扫描或高频翻页。
 
@@ -150,6 +153,8 @@ community_evidence:
 - 风险和缺失信息
 - 是否需要人工二次确认
 
+用户可见答复必须是自然语言推荐和清单，不要把 `<game_account_evaluation>` 或 `<recommendations>` 原始标签作为主文案输出。机器可读标签可在内部日志或用户明确要求结构化输出时附在后面。
+
 ## FEEDBACK_LOOP
 
 询问或接收用户反馈：
@@ -159,6 +164,37 @@ community_evidence:
 - 原因是什么
 
 如果反馈揭示规则问题，进入 `PROPOSE_RULE_UPDATE`。
+
+## POST_RUN_OPTIMIZE
+
+筛选完成后，调用 `game-account-skill-optimizer` 分析本次执行摘要。
+
+输入：
+
+- `game`
+- `target_skill`
+- `user_request`
+- `platform_attempts`
+- `recommendations`
+- `excluded_listings`
+- `final_response`
+- `missing_fields`
+- `rule_update_suggestions`
+- `user_feedback`
+
+输出：
+
+```xml
+<skill_optimization_report>...</skill_optimization_report>
+```
+
+处理规则：
+
+- 默认只报告优化建议，不自动改文件。
+- 如果报告指出平台耗时或空结果，下次同平台应使用更短等待预算并更快降级。
+- 如果报告指出平台覆盖缺口，下次筛选应先纳入缺失平台或明确说明不可读。
+- 如果报告指出输出格式问题，下次用户可见答复必须先给自然语言摘要。
+- 如果报告指出估值规则问题，进入 `PROPOSE_RULE_UPDATE` 或在用户明确要求实现优化时修改对应 skill 并验证。
 
 ## PROPOSE_RULE_UPDATE
 

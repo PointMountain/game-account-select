@@ -13,6 +13,7 @@
 - 盼之代售
 - 螃蟹代售
 - 交易猫
+- 淘手游
 
 第一版不做全站实时聚合，不做自动下单，不做交易撮合。采用低频、用户条件驱动、浏览器辅助读取和样本库沉淀的方式验证可行性。
 
@@ -38,6 +39,7 @@ game-account-select       主筛选编排：收集条件、查询平台、调用
 game-account-skill-generator      根据新游戏生成买号估值 skill 和验证样例
 game-account-skill-evaluator      评估 skill 是否达到使用标准
 game-account-community-updater    刷新社区证据快照和覆盖限制
+game-account-skill-optimizer      分析筛选执行问题并生成 skill 优化建议
 game-account-wuthering-waves     Wuthering Waves（鸣潮）估值规则
 game-account-arknights    明日方舟估值规则
 game-account-neverness-to-everness       Neverness to Everness（异环）估值规则
@@ -172,6 +174,7 @@ npx skills add https://github.com/PointMountain/game-account-select --skill "gam
 每次执行筛选后，skill 应记录：
 
 - 哪些候选被推荐
+- 每个平台的查询词、耗时、结果数和失败文本
 - 用户是否接受
 - 用户指出的误判原因
 - 是否需要更新游戏规则
@@ -184,6 +187,13 @@ npx skills add https://github.com/PointMountain/game-account-select --skill "gam
 3. 获得用户确认。
 4. 写入对应游戏 skill 的 `references/valuation-rules.md` 或平台解析规则。
 5. 记录 changelog。
+
+当用户明确要求“实现优化”时，可以由工程执行流程直接修改 skill 文件，但仍必须：
+
+- 保留执行问题证据。
+- 说明目标文件和原因。
+- 运行对应验证脚本。
+- 不把单次反馈无证据升级为高置信硬规则。
 
 ## 社区证据刷新机制
 

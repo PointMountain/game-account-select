@@ -1,0 +1,84 @@
+{
+  "game": "Wuthering Waves",
+  "target_skill": "game-account-wuthering-waves",
+  "user_request": "1000元以内性价比高的鸣潮账户",
+  "started_at": "2026-05-17T00:00:00+08:00",
+  "platform_attempts": [
+    {
+      "platform": "xianyu",
+      "query": "鸣潮 账号",
+      "status": "timeout",
+      "duration_ms": 46000,
+      "result_count": 0,
+      "evidence": "opencli xianyu search exceeded reasonable wait with no output"
+    },
+    {
+      "platform": "xianyu",
+      "query": "鸣潮 官服 账号 专武 包赔",
+      "status": "timeout",
+      "duration_ms": 46000,
+      "result_count": 0,
+      "evidence": "second xianyu query also exceeded wait budget"
+    },
+    {
+      "platform": "goofish",
+      "query": "direct browser search page",
+      "status": "empty_result",
+      "duration_ms": 8000,
+      "result_count": 0,
+      "evidence": "page showed login prompt and no item cards"
+    },
+    {
+      "platform": "google",
+      "query": "site:goofish.com 鸣潮 账号 1000 官服",
+      "status": "timeout",
+      "duration_ms": 10000,
+      "result_count": 0,
+      "evidence": "google opencli search timed out"
+    },
+    {
+      "platform": "taoshouyou",
+      "query": "鸣潮 100-500 and 500-1000 price pages",
+      "status": "success",
+      "duration_ms": 6000,
+      "result_count": 40,
+      "evidence": "public list pages returned account cards and details for selected candidates"
+    },
+    {
+      "platform": "taoshouyou",
+      "query": "detail page 淘手游 77175988",
+      "status": "error",
+      "duration_ms": 9000,
+      "result_count": 0,
+      "evidence": "detail page returned 503, fallback used list-card text and seller title"
+    }
+  ],
+  "missing_platforms": [
+    "pxb7",
+    "pzds"
+  ],
+  "recommendations": [
+    {
+      "listing_id": "淘手游 77175988",
+      "price": 500,
+      "platform": "taoshouyou",
+      "reason": "6+1卡提，2+1千咲，1+1爱弥斯，1+1今汐，未绑定wegame，可购终身包赔"
+    }
+  ],
+  "final_response": "<game_account_evaluation><game>Wuthering Waves</game><listing_id>淘手游 77175988</listing_id><score format=\"json\">{\"wuthering_waves_score\":{\"asset_score\":32,\"resource_score\":7,\"team_score\":18,\"risk_penalty\":6,\"confidence_penalty\":5,\"final_score\":82}}</score></game_account_evaluation>",
+  "rule_update_suggestions": [
+    "补充千咲/绯雪等3.3后半角色中文社区评价和专武收益后，可提高置信度",
+    "增加爱莫林、卡千夏、日月守等社媒热门配队权重"
+  ],
+  "missing_fields": [
+    "TAP/手机号/邮箱换绑冷却",
+    "PS5/第三方关联",
+    "专武归属截图",
+    "资源截图"
+  ],
+  "user_feedback": [
+    "原始 tag 文案很奇怪",
+    "平台找少了，需要补螃蟹和盼之",
+    "评价不能一味看命座和武器，需要参考热门配队和主C专武"
+  ]
+}

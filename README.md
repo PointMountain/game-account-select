@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="#安装"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="使用 npx skills add 安装" /></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/skills-10-f0c96a?style=for-the-badge&labelColor=101624" alt="10 个 Agent Skills" /></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/skills-11-f0c96a?style=for-the-badge&labelColor=101624" alt="11 个 Agent Skills" /></a>
   <a href="#设计哲学"><img src="https://img.shields.io/badge/philosophy-evidence%20first-f0c96a?style=for-the-badge&labelColor=101624" alt="Evidence first" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=for-the-badge&labelColor=101624" alt="MIT License" /></a>
 </p>
@@ -67,6 +67,7 @@ npx skills add https://github.com/PointMountain/game-account-select \
 | 目标 | 命令 |
 | --- | --- |
 | 只装核心工具 | `node scripts/list-skills.js --profile core` |
+| 只装优化器 | `node scripts/list-skills.js --profile optimization` |
 | 只装绝区零 | `node scripts/list-skills.js --profile zenless-zone-zero` |
 | 只装鸣潮 | `node scripts/list-skills.js --profile wuthering-waves` |
 | 新游戏 skill 生成与评估 | `node scripts/list-skills.js --profile new-game-authoring` |
@@ -118,6 +119,7 @@ npm run unlink:skills
 | `game-account-toolkit` | 通用工具层 | 提供统一字段、平台访问边界、社区调研协议和共享模板。 |
 | `game-account-skill-generator` | 游戏 skill 生成器 | 为尚未支持的游戏生成保守的买号估值基线 skill。 |
 | `game-account-skill-evaluator` | 质量门禁 | 检查新生成或修改过的游戏 skill 是否具备真实推荐所需的结构、证据、规则和验证样例。 |
+| `game-account-skill-optimizer` | 执行优化器 | 分析筛选运行中的耗时、空结果、平台覆盖、输出格式、估值误判和用户反馈，生成可执行优化建议。 |
 | `game-account-community-updater` | 社区证据刷新 | 在版本变化、证据过期或资产未覆盖时更新社区证据快照。 |
 | `game-account-wuthering-waves` | 鸣潮 / Wuthering Waves | 评估限定角色、版本价值、专武、抽卡资源和 TAP/Wegame/PS5 绑定风险。 |
 | `game-account-arknights` | 明日方舟 | 评估限定/联动干员、关键练度、专精/模组、资源、收藏价值和实名找回风险。 |
@@ -170,6 +172,7 @@ npm run verify:skills
 npm run verify:frontmatter
 node skills/game-account-preflight/scripts/preflight.mjs --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
+node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
 ```
 
@@ -179,6 +182,8 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 - 维护者预刷新：通过 `game-account-community-updater` 把整理好的 evidence JSON 写入某个游戏 skill，减少后续执行时的 token 和网络成本。
 
 证据刷新只更新 `community-evidence.md` 和刷新报告。它不应静默改写估值权重；规则变化应先提出建议，经过确认后再写入游戏 skill changelog。
+
+执行优化器可在真实筛选结束后运行，也可由维护者手动传入 JSON 记录。它默认只输出优化报告，不静默改写 skill；当用户明确要求应用优化时，再修改对应规则、平台策略或输出格式，并运行验证脚本。
 
 ## 安全边界
 

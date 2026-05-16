@@ -150,9 +150,38 @@ low_value_or_trap_assets:
 - Cartethyia 相关 Aero 队：Cartethyia 单独高价值，但完整队伍和专武会显著影响买号价值。
 - Hiyuki：当前 3.3 上半新角色，必须结合可用队友、武器和资源判断，不要只因“新角色”无条件满分。
 
+## 社媒热门配队标签
+
+这些标签用于买号解释和排序，不等同于永久强度榜。若版本环境或中文社区叫法变化，应刷新 `community-evidence.md`。
+
+```yaml
+team_archetypes:
+  - label: 爱莫林
+    aliases: [Aemeath-Mornye-Lynae, 小爱莫宁琳奈]
+    key_members: [Aemeath, Mornye, Lynae]
+    scoring_notes: 命中两名即可作为队伍方向，三名齐全且主C/关键位有专武时高分。
+  - label: 卡千夏
+    aliases: [Cartethyia-Chisa-XiaKong, 卡提千咲夏空]
+    key_members: [Cartethyia, Chisa, Xia Kong]
+    scoring_notes: Cartethyia 是核心信号，Chisa/Xia Kong 等队友和专武决定完整度。
+  - label: 日月守
+    aliases: [Jinhsi-moon-support-Shorekeeper, 今汐月辅守岸]
+    key_members: [Jinhsi, Shorekeeper]
+    scoring_notes: 中文社区叫法可能漂移；只在卖家明确队伍关系或截图证明时加高分。
+  - label: 奥尤
+    aliases: [Augusta-Iuno]
+    key_members: [Augusta, Iuno]
+    scoring_notes: 二者同号且武器/资源明确时加队伍分。
+  - label: 绯雪队
+    aliases: [Hiyuki core]
+    key_members: [Hiyuki]
+    scoring_notes: Hiyuki 需要结合适配队友、专武和资源；孤立角色只给中段队伍分。
+```
+
 ## 待补充/待刷新
 
 - 哪些命座属于质变命座。
 - 哪些专武对角色价值影响最大。
 - 3.3 下半 Denia/Chisa/Phrolova 卡池实际社区评价。
+- 爱莫林、卡千夏、日月守等中文社区热门配队的稳定来源和命名别名。
 - B站字幕、小红书笔记、抖音公开视频正文的稳定读取结果。

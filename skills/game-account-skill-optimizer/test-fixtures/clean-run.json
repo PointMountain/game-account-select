@@ -1,0 +1,36 @@
+{
+  "target_skill": "game-account-wuthering-waves",
+  "game": "Wuthering Waves",
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "鸣潮 账号 1000 官服",
+      "status": "success",
+      "duration_ms": 6200,
+      "result_count": 5
+    },
+    {
+      "platform": "pzds",
+      "query": "鸣潮 账号 1000 官服",
+      "status": "success",
+      "duration_ms": 7400,
+      "result_count": 4
+    },
+    {
+      "platform": "taoshouyou",
+      "query": "鸣潮 1000 官服",
+      "status": "partial",
+      "duration_ms": 8200,
+      "result_count": 3
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "pxb7-clean-sample",
+      "score": 84,
+      "confidence": "high"
+    }
+  ],
+  "final_response": "推荐优先看 pxb7-clean-sample。数据来源覆盖螃蟹、盼之和淘手游，风险字段完整。",
+  "missing_fields": []
+}

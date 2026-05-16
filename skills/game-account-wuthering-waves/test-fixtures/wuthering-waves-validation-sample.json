@@ -88,6 +88,166 @@
           "official_verification": false
         }
       }
+    },
+    {
+      "id": "team-archetype-complete",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 520,
+      "title": "爱莫林完整队低链带双专",
+      "server": "官服",
+      "raw_text": "爱弥斯0+1，莫宁0+1，琳奈0+0，另有守岸人，星声12000，未绑定TAP/Wegame/PS5，官方验号，找回包赔。",
+      "game_assets": {
+        "characters": [
+          { "name": "Aemeath", "resonance_chain": 0, "category": "limited" },
+          { "name": "Mornye", "resonance_chain": 0, "category": "limited" },
+          { "name": "Lynae", "resonance_chain": 0, "category": "limited" },
+          { "name": "Shorekeeper", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "Aemeath signature weapon", "signature_for": "Aemeath" },
+          { "name": "Mornye signature weapon", "signature_for": "Mornye" }
+        ],
+        "premium_currency": {
+          "astrite": 12000,
+          "radiant_tide": 20,
+          "forging_tide": 12,
+          "afterglow_coral": 180
+        },
+        "game_specific": {
+          "binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "isolated-high-chain-carry",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 500,
+      "title": "满链单C但队友专武资源不明",
+      "server": "官服",
+      "raw_text": "6链绯雪，没写专武，队友截图缺失，资源不明，未写TAP/Wegame/PS5绑定。",
+      "game_assets": {
+        "characters": [
+          { "name": "Hiyuki", "resonance_chain": 6, "category": "limited" },
+          { "name": "Lingyang", "resonance_chain": 6, "category": "standard" },
+          { "name": "Calcharo", "resonance_chain": 5, "category": "standard" }
+        ],
+        "weapons_or_equipment": [],
+        "premium_currency": {},
+        "game_specific": {
+          "binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "controlled-team-archetype-match",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 500,
+      "title": "受控样例：爱莫林完整队",
+      "server": "官服",
+      "raw_text": "爱弥斯0+1，莫宁0+1，琳奈0+0，星声8000，未绑定TAP/Wegame/PS5，官方验号，找回包赔。",
+      "game_assets": {
+        "characters": [
+          { "name": "Aemeath", "resonance_chain": 0, "category": "limited" },
+          { "name": "Mornye", "resonance_chain": 0, "category": "limited" },
+          { "name": "Lynae", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "Aemeath signature weapon", "signature_for": "Aemeath" },
+          { "name": "Mornye signature weapon", "signature_for": "Mornye" }
+        ],
+        "premium_currency": {
+          "astrite": 8000,
+          "radiant_tide": 12,
+          "forging_tide": 8,
+          "afterglow_coral": 120
+        },
+        "game_specific": {
+          "binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "controlled-loose-high-value",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 500,
+      "title": "受控样例：同等高价值但队伍不完整",
+      "server": "官服",
+      "raw_text": "爱弥斯0+1，莫宁0+1，奥古斯塔0+0，星声8000，未绑定TAP/Wegame/PS5，官方验号，找回包赔。",
+      "game_assets": {
+        "characters": [
+          { "name": "Aemeath", "resonance_chain": 0, "category": "limited" },
+          { "name": "Mornye", "resonance_chain": 0, "category": "limited" },
+          { "name": "Augusta", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "Aemeath signature weapon", "signature_for": "Aemeath" },
+          { "name": "Mornye signature weapon", "signature_for": "Mornye" }
+        ],
+        "premium_currency": {
+          "astrite": 8000,
+          "radiant_tide": 12,
+          "forging_tide": 8,
+          "afterglow_coral": 120
+        },
+        "game_specific": {
+          "binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "taoshouyou-77175988",
+      "platform": "taoshouyou",
+      "game": "Wuthering Waves",
+      "price": 500,
+      "title": "6+1卡提，2+1千咲，1+1爱弥斯，1+1今汐，有今汐、散华皮肤，号上还有一千多月相。",
+      "server": "官服",
+      "raw_text": "安卓官方，80级，14五星角色，14五星武器，未绑定wegame，防沉迷无，可购终身包赔。TAP/PS5/邮箱换绑和资源截图仍需确认。",
+      "missing_fields": [
+        "TAP/手机号/邮箱换绑冷却",
+        "PS5/第三方关联",
+        "资源截图"
+      ],
+      "game_assets": {
+        "characters": [
+          { "name": "Cartethyia", "resonance_chain": 6, "category": "limited" },
+          { "name": "Chisa", "resonance_chain": 2, "category": "limited" },
+          { "name": "Aemeath", "resonance_chain": 1, "category": "limited" },
+          { "name": "Jinhsi", "resonance_chain": 1, "category": "limited" },
+          { "name": "Phrolova", "resonance_chain": 0, "category": "limited" },
+          { "name": "Phoebe", "resonance_chain": 0, "category": "limited" },
+          { "name": "Carlotta", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "Cartethyia signature weapon", "signature_for": "Cartethyia" },
+          { "name": "Chisa signature weapon", "signature_for": "Chisa" },
+          { "name": "Aemeath signature weapon", "signature_for": "Aemeath" },
+          { "name": "Jinhsi signature weapon", "signature_for": "Jinhsi" }
+        ],
+        "premium_currency": {
+          "astrite": 0,
+          "radiant_tide": 0,
+          "forging_tide": 0,
+          "afterglow_coral": 0,
+          "lunites": 1000
+        },
+        "game_specific": {
+          "binding": "partial_clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
     }
   ]
 }

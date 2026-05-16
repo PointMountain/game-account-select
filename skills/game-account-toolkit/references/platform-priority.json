@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "updated_at": "2026-05-17",
+  "default_order": [
+    "user_provided",
+    "pxb7",
+    "pzds",
+    "jiaoyimao",
+    "taoshouyou",
+    "xianyu"
+  ],
+  "required_default_coverage": [
+    "pxb7",
+    "pzds"
+  ],
+  "platforms": [
+    {
+      "id": "user_provided",
+      "label": "用户提供的链接、截图或复制文本",
+      "aliases": [
+        "user",
+        "user_provided",
+        "用户提供"
+      ],
+      "url": null,
+      "role": "highest_priority_input"
+    },
+    {
+      "id": "pxb7",
+      "label": "螃蟹账号代售",
+      "aliases": [
+        "pxb7",
+        "pxb",
+        "螃蟹",
+        "螃蟹账号代售"
+      ],
+      "url": "https://www.pxb7.com/",
+      "role": "mainstream_account_platform"
+    },
+    {
+      "id": "pzds",
+      "label": "盼之代售",
+      "aliases": [
+        "pzds",
+        "panzhi",
+        "盼之",
+        "盼之代售"
+      ],
+      "url": "https://www.pzds.com/",
+      "role": "mainstream_account_platform"
+    },
+    {
+      "id": "jiaoyimao",
+      "label": "交易猫",
+      "aliases": [
+        "jiaoyimao",
+        "交易猫"
+      ],
+      "url": null,
+      "role": "account_marketplace"
+    },
+    {
+      "id": "taoshouyou",
+      "label": "淘手游",
+      "aliases": [
+        "taoshouyou",
+        "淘手游"
+      ],
+      "url": null,
+      "role": "account_marketplace"
+    },
+    {
+      "id": "xianyu",
+      "label": "闲鱼",
+      "aliases": [
+        "xianyu",
+        "goofish",
+        "闲鱼"
+      ],
+      "url": null,
+      "role": "supplemental_source"
+    }
+  ]
+}
