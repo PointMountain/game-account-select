@@ -33,23 +33,42 @@ Game Account Select 帮你在购买游戏账号前，把卖家描述、截图/OC
 
 ## 安装
 
-安装仓库内所有 skill：
+推荐完整安装。这样主筛选、执行前检查、共享工具、社区刷新和所有已支持游戏都会一起可用：
+
+```bash
+npx skills add https://github.com/PointMountain/game-account-select --skill '*'
+```
+
+不带 `--skill` 时，`npx skills` 会打开交互式选择器：
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-按需安装单个 skill。`--skill` 后面传的是每个 `SKILL.md` frontmatter 里的 `name:`：
+按游戏安装时，请使用组合命令。`npx skills` 支持重复传入 `--skill`，但目前不读取仓库里的依赖清单来自动勾选配套 skill；组合命令会一次带上游戏 skill、执行前检查、共享工具和社区刷新能力。
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
-npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-zenless-zone-zero"
+npx skills add https://github.com/PointMountain/game-account-select \
+  --skill "game-account-toolkit" \
+  --skill "game-account-preflight" \
+  --skill "game-account-community-updater" \
+  --skill "game-account-zenless-zone-zero"
 ```
 
-在本地 checkout 中列出所有可安装名称：
+如果已经 clone 本仓库，可以生成常用组合的完整安装命令：
+
+| 目标 | 命令 |
+| --- | --- |
+| 只装核心工具 | `node scripts/list-skills.mjs --profile core` |
+| 只装绝区零 | `node scripts/list-skills.mjs --profile zenless-zone-zero` |
+| 只装鸣潮 | `node scripts/list-skills.mjs --profile wuthering-waves` |
+| 新游戏 skill 生成与评估 | `node scripts/list-skills.mjs --profile new-game-authoring` |
+
+在本地 checkout 中列出所有 skill 和安装组合：
 
 ```bash
 npm run list:skills
+npm run list:profiles
 ```
 
 ## 适合解决什么问题

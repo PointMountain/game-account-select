@@ -33,23 +33,42 @@ It is not a trading platform and does not place orders. It is built to remove ri
 
 ## Install
 
-Install every skill in the repository:
+Recommended: install the full pack so the selector, preflight check, shared toolkit, community refresh, and every supported game skill are available together:
+
+```bash
+npx skills add https://github.com/PointMountain/game-account-select --skill '*'
+```
+
+Without `--skill`, `npx skills` opens an interactive selector:
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-Install only the skills you need. The `--skill` value is the `name:` field inside each `SKILL.md`:
+For a single game, use a bundle command. `npx skills` supports repeated `--skill` flags, but it does not currently read a repository dependency manifest to default-select companion skills. Bundle commands install the game skill with its preflight check, shared toolkit, and community refresh support in one pass.
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
-npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-zenless-zone-zero"
+npx skills add https://github.com/PointMountain/game-account-select \
+  --skill "game-account-toolkit" \
+  --skill "game-account-preflight" \
+  --skill "game-account-community-updater" \
+  --skill "game-account-zenless-zone-zero"
 ```
 
-List all install names from a local checkout:
+From a local checkout, generate full commands for common install profiles:
+
+| Goal | Command |
+| --- | --- |
+| Core helpers only | `node scripts/list-skills.mjs --profile core` |
+| Zenless Zone Zero only | `node scripts/list-skills.mjs --profile zenless-zone-zero` |
+| Wuthering Waves only | `node scripts/list-skills.mjs --profile wuthering-waves` |
+| New game generation and evaluation | `node scripts/list-skills.mjs --profile new-game-authoring` |
+
+List all install names and profiles from a local checkout:
 
 ```bash
 npm run list:skills
+npm run list:profiles
 ```
 
 ## What It Helps With

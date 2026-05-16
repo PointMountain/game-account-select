@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "source": "https://github.com/PointMountain/game-account-select",
+  "profiles": [
+    {
+      "name": "full",
+      "title": "Full skill pack",
+      "description": "Install every Game Account Select skill. Recommended for most users.",
+      "mode": "all",
+      "skills": [
+        "game-account-select",
+        "game-account-preflight",
+        "game-account-toolkit",
+        "game-account-skill-generator",
+        "game-account-skill-evaluator",
+        "game-account-community-updater",
+        "game-account-wuthering-waves",
+        "game-account-arknights",
+        "game-account-neverness-to-everness",
+        "game-account-zenless-zone-zero"
+      ]
+    },
+    {
+      "name": "core",
+      "title": "Core helpers",
+      "description": "Shared toolkit and preflight checks used by game-specific skills.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight"
+      ]
+    },
+    {
+      "name": "wuthering-waves",
+      "aliases": [
+        "wuthering-waves-with-refresh",
+        "mingchao"
+      ],
+      "title": "Wuthering Waves bundle",
+      "description": "Mingchao account evaluation with shared helpers and community refresh support.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight",
+        "game-account-community-updater",
+        "game-account-wuthering-waves"
+      ]
+    },
+    {
+      "name": "arknights",
+      "aliases": [
+        "arknights-with-refresh"
+      ],
+      "title": "Arknights bundle",
+      "description": "Arknights account evaluation with shared helpers and community refresh support.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight",
+        "game-account-community-updater",
+        "game-account-arknights"
+      ]
+    },
+    {
+      "name": "neverness-to-everness",
+      "aliases": [
+        "neverness-to-everness-with-refresh",
+        "nte"
+      ],
+      "title": "Neverness to Everness bundle",
+      "description": "NTE account evaluation with shared helpers and community refresh support.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight",
+        "game-account-community-updater",
+        "game-account-neverness-to-everness"
+      ]
+    },
+    {
+      "name": "zenless-zone-zero",
+      "aliases": [
+        "zenless-zone-zero-with-refresh",
+        "zzz"
+      ],
+      "title": "Zenless Zone Zero bundle",
+      "description": "ZZZ account evaluation with shared helpers and community refresh support.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight",
+        "game-account-community-updater",
+        "game-account-zenless-zone-zero"
+      ]
+    },
+    {
+      "name": "new-game-authoring",
+      "title": "New game authoring",
+      "description": "Generate, evaluate, and refresh a new game-specific account buying skill.",
+      "skills": [
+        "game-account-toolkit",
+        "game-account-preflight",
+        "game-account-skill-generator",
+        "game-account-skill-evaluator",
+        "game-account-community-updater"
+      ]
+    }
+  ]
+}
