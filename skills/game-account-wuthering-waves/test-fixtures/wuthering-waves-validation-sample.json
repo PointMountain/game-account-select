@@ -1,0 +1,93 @@
+{
+  "expected_top_id": "limited-core-good",
+  "community_snapshot_date": "2026-05-16",
+  "listings": [
+    {
+      "id": "standard-dupes-trap",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 188,
+      "title": "38黄满命常驻多五星成品号",
+      "server": "官服",
+      "raw_text": "38黄，凌阳6链，卡卡罗5链，鉴心4链，安可3链，五星武器数量多。未写星声，未写浮金波纹，未写TAP/Wegame/PS5绑定，卖家强调总黄数和常驻高命。",
+      "game_assets": {
+        "characters": [
+          { "name": "Lingyang", "resonance_chain": 6, "category": "standard" },
+          { "name": "Calcharo", "resonance_chain": 5, "category": "standard" },
+          { "name": "Jianxin", "resonance_chain": 4, "category": "standard" },
+          { "name": "Encore", "resonance_chain": 3, "category": "standard" },
+          { "name": "Jiyan", "resonance_chain": 0, "category": "limited" },
+          { "name": "Yinlin", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "generic 5-star weapon", "signature_for": null }
+        ],
+        "premium_currency": {},
+        "game_specific": {
+          "binding": "unknown",
+          "guarantee": "unknown",
+          "official_verification": false
+        }
+      }
+    },
+    {
+      "id": "limited-core-good",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 260,
+      "title": "3.3强限定核心带专武资源号",
+      "server": "官服",
+      "raw_text": "Hiyuki 0链专武，Mornye 0链专武，Shorekeeper 0链，Cartethyia 0链，Iuno 0链；星声18000，浮金波纹42，铸潮波纹28，余波珊瑚可换抽；未绑定TAP/Wegame/PS5，官方验号，找回包赔。",
+      "game_assets": {
+        "characters": [
+          { "name": "Hiyuki", "resonance_chain": 0, "category": "limited" },
+          { "name": "Mornye", "resonance_chain": 0, "category": "limited" },
+          { "name": "Shorekeeper", "resonance_chain": 0, "category": "limited" },
+          { "name": "Cartethyia", "resonance_chain": 0, "category": "limited" },
+          { "name": "Iuno", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "Hiyuki signature weapon", "signature_for": "Hiyuki" },
+          { "name": "Mornye signature weapon", "signature_for": "Mornye" }
+        ],
+        "premium_currency": {
+          "astrite": 18000,
+          "radiant_tide": 42,
+          "forging_tide": 28,
+          "afterglow_coral": 360
+        },
+        "game_specific": {
+          "binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "risky-missing-data",
+      "platform": "fixture",
+      "game": "Wuthering Waves",
+      "price": 150,
+      "title": "便宜多限定但绑定不明",
+      "server": "B服",
+      "raw_text": "有今汐、长离、椿、赞妮、菲比、坎特蕾拉，资源没截图，武器没截图，TAP绑定中，换绑CD未知，无官方验号。",
+      "game_assets": {
+        "characters": [
+          { "name": "Jinhsi", "resonance_chain": 0, "category": "limited" },
+          { "name": "Changli", "resonance_chain": 0, "category": "limited" },
+          { "name": "Camellya", "resonance_chain": 0, "category": "limited" },
+          { "name": "Zani", "resonance_chain": 0, "category": "limited" },
+          { "name": "Phoebe", "resonance_chain": 0, "category": "limited" },
+          { "name": "Cantarella", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [],
+        "premium_currency": {},
+        "game_specific": {
+          "binding": "tap_bound",
+          "guarantee": "none",
+          "official_verification": false
+        }
+      }
+    }
+  ]
+}
