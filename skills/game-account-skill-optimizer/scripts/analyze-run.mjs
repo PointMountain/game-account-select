@@ -20,6 +20,8 @@ if (!inputPath) {
 
 const artifactPath = path.resolve(inputPath);
 const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+const repoRoot = process.cwd();
+const targetSkill = artifact.target_skill ?? artifact.skill ?? 'unknown';
 
 const toolkitPriorityPath = path.resolve('skills/game-account-toolkit/references/platform-priority.json');
 const priorityConfig = fs.existsSync(toolkitPriorityPath)
@@ -36,6 +38,92 @@ for (const platform of priorityConfig.platforms ?? []) {
 const DEFAULT_REQUIRED_PLATFORMS = priorityConfig.required_default_coverage ?? ['pxb7', 'pzds'];
 const findings = [];
 
+function repoPath(absolutePath) {
+  return path.relative(repoRoot, absolutePath).split(path.sep).join('/');
+}
+
+function unique(items) {
+  return [...new Set(items.filter(Boolean))];
+}
+
+function skillRootFor(skill = targetSkill) {
+  if (!skill || skill === 'unknown') return null;
+
+  const normalized = String(skill).replace(/\\/g, '/').replace(/^\.\//, '');
+  const skillName = normalized.startsWith('skills/')
+    ? normalized.split('/')[1]
+    : path.basename(normalized);
+
+  const candidates = [
+    path.resolve(repoRoot, normalized),
+    path.resolve(repoRoot, 'skills', normalized),
+    path.resolve(repoRoot, 'skills', skillName)
+  ];
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
+function skillRelativePath(skill, ...segments) {
+  const root = skillRootFor(skill);
+  if (!root) return null;
+  const absolutePath = path.join(root, ...segments);
+  return fs.existsSync(absolutePath) ? repoPath(absolutePath) : null;
+}
+
+function referenceFiles(skill, predicate) {
+  const root = skillRootFor(skill);
+  if (!root) return [];
+  const referencesDir = path.join(root, 'references');
+  if (!fs.existsSync(referencesDir)) return [];
+
+  return fs.readdirSync(referencesDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter(predicate)
+    .map((name) => repoPath(path.join(referencesDir, name)));
+}
+
+function fixtureFiles(skill) {
+  const root = skillRootFor(skill);
+  if (!root) return [];
+  const fixtureDir = path.join(root, 'test-fixtures');
+  if (!fs.existsSync(fixtureDir)) return [];
+
+  return fs.readdirSync(fixtureDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+    .map((entry) => repoPath(path.join(fixtureDir, entry.name)));
+}
+
+function skillTargetsFor(skill = targetSkill, { includeFixtures = false, includeValidation = false } = {}) {
+  const targets = [
+    skillRelativePath(skill, 'SKILL.md'),
+    skillRelativePath(skill, 'references', 'valuation-rules.md'),
+    skillRelativePath(skill, 'references', 'selection-state-machine.md'),
+    skillRelativePath(skill, 'references', 'update-workflow.md'),
+    skillRelativePath(skill, 'references', 'evaluation-rubric.md'),
+    skillRelativePath(skill, 'references', 'generation-workflow.md'),
+    skillRelativePath(skill, 'references', 'optimization-workflow.md'),
+    skillRelativePath(skill, 'references', 'issue-taxonomy.md'),
+    ...referenceFiles(skill, (name) => name.endsWith('-knowledge.md') || name === 'asset-knowledge.md'),
+    includeValidation ? skillRelativePath(skill, 'scripts', 'validate-sample.mjs') : null,
+    includeValidation ? skillRelativePath(skill, 'scripts', 'preflight.mjs') : null,
+    includeValidation ? skillRelativePath(skill, 'scripts', 'check-deps.mjs') : null,
+    includeValidation ? skillRelativePath(skill, 'scripts', 'update-community-evidence.mjs') : null,
+    includeValidation ? skillRelativePath(skill, 'scripts', 'generate-game-skill.mjs') : null,
+    includeValidation ? skillRelativePath(skill, 'scripts', 'evaluate-skill.mjs') : null,
+    includeValidation ? skillRelativePath(skill, 'scripts', 'analyze-run.mjs') : null,
+    ...(includeFixtures ? fixtureFiles(skill) : [])
+  ];
+
+  const existingTargets = unique(targets);
+  return existingTargets.length
+    ? existingTargets
+    : ['skills/game-account-toolkit/references/game-skill-standard.md'];
+}
+
+function targetSkillTargets(options = {}) {
+  return skillTargetsFor(targetSkill, options);
+}
+
 function addFinding({ id, severity, category, summary, evidence = [], suggestedTargets = [], autopatchSafe = false }) {
   findings.push({
     id,
@@ -43,7 +131,7 @@ function addFinding({ id, severity, category, summary, evidence = [], suggestedT
     category,
     summary,
     evidence,
-    suggested_targets: suggestedTargets,
+    suggested_targets: unique(suggestedTargets),
     autopatch_safe: autopatchSafe
   });
 }
@@ -68,6 +156,60 @@ function platformName(attempt) {
 }
 
 const attempts = Array.isArray(artifact.platform_attempts) ? artifact.platform_attempts : [];
+const executionIssues = [
+  ...(Array.isArray(artifact.errors) ? artifact.errors : []),
+  ...(Array.isArray(artifact.exceptions) ? artifact.exceptions : []),
+  ...(Array.isArray(artifact.tool_failures) ? artifact.tool_failures : []),
+  ...(Array.isArray(artifact.blocked_steps) ? artifact.blocked_steps : [])
+];
+if (executionIssues.length) {
+  addFinding({
+    id: 'troubleshooting-execution-failure',
+    severity: 'high',
+    category: 'troubleshooting',
+    summary: 'Execution failures should be diagnosed before changing ranking or valuation rules',
+    evidence: executionIssues.map((issue) => typeof issue === 'string' ? issue : JSON.stringify(issue)),
+    suggestedTargets: [
+      ...targetSkillTargets({ includeValidation: true }),
+      'skills/game-account-preflight/SKILL.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
+const evaluationReports = [
+  ...(artifact.evaluation_report ? [artifact.evaluation_report] : []),
+  ...(Array.isArray(artifact.evaluation_reports) ? artifact.evaluation_reports : [])
+];
+const failedEvaluations = evaluationReports.filter((report) => {
+  const score = Number(report.score ?? 100);
+  const threshold = Number(report.threshold ?? 80);
+  return report.redo_required === true || report.passed === false || score < threshold;
+});
+if (failedEvaluations.length) {
+  addFinding({
+    id: 'quality-gate-redo-required',
+    severity: 'blocking',
+    category: 'quality_gate',
+    summary: 'Evaluator quality gate failed; optimized or generated skill must be redone before reuse',
+    evidence: failedEvaluations.map((report) => {
+      const skill = report.skill_path ?? report.skill ?? targetSkill;
+      const issues = [
+        ...(Array.isArray(report.blocking_issues) ? report.blocking_issues : []),
+        ...(Array.isArray(report.redo_reasons) ? report.redo_reasons : [])
+      ].map((issue) => typeof issue === 'string' ? issue : issue.message ?? JSON.stringify(issue));
+      return `${skill}: score ${report.score ?? 'unknown'}/${report.threshold ?? 80}; ${issues.join('; ')}`.trim();
+    }),
+    suggestedTargets: unique([
+      ...failedEvaluations.flatMap((report) => skillTargetsFor(report.skill_path ?? report.skill ?? targetSkill, { includeFixtures: true, includeValidation: true })),
+      'skills/game-account-skill-evaluator/references/evaluation-rubric.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md'
+    ]),
+    autopatchSafe: false
+  });
+}
+
 const slowAttempts = attempts.filter((attempt) => Number(attempt.duration_ms ?? 0) >= 30000 || attempt.status === 'timeout');
 if (slowAttempts.length) {
   const platforms = [...new Set(slowAttempts.map(platformName))];
@@ -154,25 +296,21 @@ const feedback = [
   ...(Array.isArray(artifact.rule_update_suggestions) ? artifact.rule_update_suggestions : [])
 ].join('\n');
 
-if (/配队|爱莫林|卡千夏|日月守|主C|主c|专武/.test(feedback)) {
+const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色/i;
+if (valuationPattern.test(feedback)) {
   addFinding({
     id: 'valuation-team-archetypes',
     severity: 'high',
     category: 'valuation',
-    summary: 'Game valuation should account for social-meta team archetypes and main-DPS signature fit',
-    evidence: feedback.split('\n').filter((line) => /配队|爱莫林|卡千夏|日月守|主C|主c|专武/.test(line)),
-    suggestedTargets: [
-      'skills/game-account-wuthering-waves/references/valuation-rules.md',
-      'skills/game-account-wuthering-waves/references/character-knowledge.md',
-      'skills/game-account-wuthering-waves/test-fixtures/wuthering-waves-validation-sample.json',
-      'skills/game-account-wuthering-waves/scripts/validate-sample.mjs'
-    ],
+    summary: 'Valuation should account for game-specific meta assets, teams, progression, and key equipment fit',
+    evidence: feedback.split('\n').filter((line) => valuationPattern.test(line)),
+    suggestedTargets: targetSkillTargets({ includeFixtures: true, includeValidation: true }),
     autopatchSafe: false
   });
 }
 
 const missingFields = Array.isArray(artifact.missing_fields) ? artifact.missing_fields : [];
-if (missingFields.some((field) => /TAP|Wegame|PS5|绑定|换绑|找回|验号/.test(field))) {
+if (missingFields.some((field) => /TAP|Wegame|PS5|HoYoverse|实名|绑定|换绑|找回|验号|邮箱/.test(field))) {
   addFinding({
     id: 'risk-manual-confirmation-needed',
     severity: 'medium',
@@ -180,7 +318,7 @@ if (missingFields.some((field) => /TAP|Wegame|PS5|绑定|换绑|找回|验号/.t
     summary: 'Binding and retrieval-risk fields remained unresolved in the recommendation',
     evidence: missingFields,
     suggestedTargets: [
-      'skills/game-account-wuthering-waves/references/valuation-rules.md',
+      ...targetSkillTargets(),
       'skills/game-account-toolkit/references/shared-listing-schema.md'
     ],
     autopatchSafe: false
@@ -209,7 +347,7 @@ const suggestedChanges = findings.map((finding) => ({
 }));
 
 const report = {
-  target_skill: artifact.target_skill ?? artifact.skill ?? 'unknown',
+  target_skill: targetSkill,
   game: artifact.game ?? 'unknown',
   confidence: findings.length >= 3 ? 'high' : findings.length ? 'medium' : 'high',
   findings,

@@ -50,7 +50,7 @@ limitations: string[]
 1. 根据用户输入的游戏名、别名和已知证据生成 `skills/game-account-<slug>/`。
 2. 运行生成后的验证脚本。
 3. 调用 `game-account-skill-evaluator` 判断是否达到使用标准。
-4. 若未通过，只输出生成报告、阻塞问题和社区刷新建议；不要用低质量 skill 真实推荐。
+4. 若未通过或 `redo_required: true`，只输出生成报告、阻塞问题和社区刷新建议；不要用低质量 skill 真实推荐。
 
 输出：
 
@@ -181,6 +181,7 @@ community_evidence:
 - `missing_fields`
 - `rule_update_suggestions`
 - `user_feedback`
+- `evaluation_reports`：目标 skill、生成器产物或优化产物的 evaluator 输出。
 
 输出：
 
@@ -195,10 +196,11 @@ community_evidence:
 - 如果报告指出平台覆盖缺口，下次筛选应先纳入缺失平台或明确说明不可读。
 - 如果报告指出输出格式问题，下次用户可见答复必须先给自然语言摘要。
 - 如果报告指出估值规则问题，进入 `PROPOSE_RULE_UPDATE` 或在用户明确要求实现优化时修改对应 skill 并验证。
+- 如果报告指出 `quality_gate` 或 `redo_required`，必须打回重做：先修目标 skill，再运行验证脚本和 `game-account-skill-evaluator`，通过前不得用于真实推荐。
 
 ## PROPOSE_RULE_UPDATE
 
-输出拟更新的文件、规则和原因。只有用户确认后才修改 skill 文件。
+输出拟更新的文件、规则和原因。只有用户确认后才修改 skill 文件。修改后必须运行目标验证脚本和 evaluator；低于门槛或 `redo_required: true` 时继续回到本状态重做。
 
 ## END
 

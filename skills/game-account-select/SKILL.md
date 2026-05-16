@@ -19,7 +19,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 - `game-account-skill-generator`（当游戏未支持时）
 - `game-account-skill-evaluator`（当生成或更新 skill 后）
 - `game-account-community-updater`（当社区证据过期或用户要求刷新时）
-- `game-account-skill-optimizer`（筛选结束后分析慢路径、空结果、平台覆盖、输出格式和估值误判）
+- `game-account-skill-optimizer`（筛选结束后分析慢路径、空结果、平台覆盖、输出格式、估值误判和质量门禁问题）
 
 按游戏引用：
 
@@ -93,6 +93,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 - 当前版本强度知识过期
 - 用户偏好理解错误
 - 风险判断不足
+- 生成或优化后的 skill 未通过质量门禁
 
 只有在用户确认后，才能修改对应 skill 的规则文件。修改后写入该 skill 的 changelog。
 
@@ -102,5 +103,8 @@ argument-hint: "[游戏] [预算] [偏好]"
 - 入选与排除账号。
 - 最终回复是否用了结构化标签。
 - 用户反馈和规则更新建议。
+- 目标 skill 的 evaluator 报告；若已有优化产物，还要包含 `score`、`passed`、`redo_required` 和阻塞问题。
 
 自动优化阶段默认只产出 `<skill_optimization_report>` 和用户可读摘要，不静默写入其它 skill。用户明确要求“实现/应用这些优化”时，才按报告修改对应文件并运行验证。
+
+应用优化后必须运行 `game-account-skill-evaluator`。若低于门槛、存在阻塞问题或 `redo_required: true`，本轮产物必须打回重做，不得继续用于真实账号推荐。

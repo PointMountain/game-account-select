@@ -15,6 +15,7 @@ argument-hint: "[--json|--strict|--browser]"
 - `references/preflight-checklist.md`
 - `../game-account-toolkit/references/dependency-state-machine.md`
 - `../game-account-toolkit/references/platform-access-policy.md`
+- `../game-account-toolkit/references/skill-io-contract.md`
 
 ## 执行
 

@@ -1,0 +1,50 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "900元以内绝区零账号，优先限定主C和成型队伍",
+  "started_at": "2026-05-17T01:00:00+08:00",
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 账号 900 限定 音擎",
+      "status": "success",
+      "duration_ms": 5400,
+      "result_count": 6
+    },
+    {
+      "platform": "pzds",
+      "query": "绝区零 账号 900 限定 音擎",
+      "status": "success",
+      "duration_ms": 6200,
+      "result_count": 5
+    },
+    {
+      "platform": "jiaoyimao",
+      "query": "绝区零 账号 900 限定",
+      "status": "partial",
+      "duration_ms": 7800,
+      "result_count": 3
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "pxb7-zzz-meta-sample",
+      "price": 780,
+      "platform": "pxb7",
+      "reason": "限定 S 代理人多，但卖家标题没有说明专属音擎归属和完整配队"
+    }
+  ],
+  "final_response": "这次样例优先看 pxb7-zzz-meta-sample，但需要继续确认专属音擎归属、队伍完整度和 HoYoverse/PSN/TAP 绑定状态。",
+  "rule_update_suggestions": [
+    "绝区零估值不能只看 S 代理人数量和影画，需要看限定主 C、专属音擎、队伍完整度、邦布和资源",
+    "热门配队和主 C 是否带专属音擎应进入账号价值解释"
+  ],
+  "missing_fields": [
+    "HoYoverse/PSN/TAP 绑定状态",
+    "专属音擎归属截图",
+    "菲林/母带/邦布券资源截图"
+  ],
+  "user_feedback": [
+    "这个绝区零账号不能只看 S 数量，队伍是否成型和专属音擎更关键"
+  ]
+}

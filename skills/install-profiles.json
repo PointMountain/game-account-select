@@ -58,6 +58,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-arknights"
       ]
     },
@@ -73,6 +74,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-neverness-to-everness"
       ]
     },
@@ -88,6 +90,7 @@
         "game-account-toolkit",
         "game-account-preflight",
         "game-account-community-updater",
+        "game-account-skill-optimizer",
         "game-account-zenless-zone-zero"
       ]
     },
