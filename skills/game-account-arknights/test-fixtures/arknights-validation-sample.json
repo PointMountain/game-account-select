@@ -1,0 +1,80 @@
+{
+  "expected_top_id": "limited-progress-good",
+  "community_snapshot_date": "2026-05-16",
+  "listings": [
+    {
+      "id": "six-star-count-trap",
+      "price": 420,
+      "title": "130六星高等级老号",
+      "server": "官服",
+      "raw_text": "博士120级，六星130个，普通六星多，未列限定，练度截图不全，资源不明，实名和找回包赔未写。",
+      "game_assets": {
+        "operators": [
+          { "name": "银灰", "category": "standard", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "艾雅法拉", "category": "standard", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "伊芙利特", "category": "standard", "elite": 1, "mastery": 0, "module": 0 }
+        ],
+        "resources": {},
+        "skins": [],
+        "risk": {
+          "real_name_status": "unknown",
+          "guarantee": "unknown",
+          "official_verification": false
+        }
+      }
+    },
+    {
+      "id": "limited-progress-good",
+      "price": 680,
+      "title": "限定联动核心练度资源齐全",
+      "server": "官服",
+      "raw_text": "缄默德克萨斯、麒麟R夜刀、浊心斯卡蒂、耀骑士临光、假日威龙陈均精二，关键技能专三，部分模组三；合成玉42000，源石180，十连券8，黄票320；实名可换，官方验号，找回包赔。",
+      "game_assets": {
+        "operators": [
+          { "name": "缄默德克萨斯", "category": "limited", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "麒麟R夜刀", "category": "collab", "elite": 2, "mastery": 3, "module": 2 },
+          { "name": "浊心斯卡蒂", "category": "limited", "elite": 2, "mastery": 3, "module": 2 },
+          { "name": "耀骑士临光", "category": "limited", "elite": 2, "mastery": 3, "module": 1 },
+          { "name": "假日威龙陈", "category": "limited", "elite": 2, "mastery": 3, "module": 1 },
+          { "name": "玛恩纳", "category": "standard", "elite": 2, "mastery": 3, "module": 0 },
+          { "name": "伊内丝", "category": "standard", "elite": 2, "mastery": 3, "module": 0 }
+        ],
+        "resources": {
+          "orundum": 42000,
+          "originite_prime": 180,
+          "ten_pull_tickets": 8,
+          "distinction_certificates": 320
+        },
+        "skins": ["dynamic", "collab"],
+        "risk": {
+          "real_name_status": "changeable",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "risky-limited-missing",
+      "price": 360,
+      "title": "低价多限定B服但实名不清",
+      "server": "B服",
+      "raw_text": "有令、年、夕、W、迷迭香，但练度没截图，资源没写，实名不清，无官方验号。",
+      "game_assets": {
+        "operators": [
+          { "name": "令", "category": "limited", "elite": null, "mastery": null, "module": null },
+          { "name": "年", "category": "limited", "elite": null, "mastery": null, "module": null },
+          { "name": "夕", "category": "limited", "elite": null, "mastery": null, "module": null },
+          { "name": "W", "category": "limited", "elite": null, "mastery": null, "module": null },
+          { "name": "迷迭香", "category": "limited", "elite": null, "mastery": null, "module": null }
+        ],
+        "resources": {},
+        "skins": [],
+        "risk": {
+          "real_name_status": "unknown",
+          "guarantee": "none",
+          "official_verification": false
+        }
+      }
+    }
+  ]
+}

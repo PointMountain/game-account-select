@@ -21,6 +21,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 - Wuthering Waves（鸣潮） → `game-account-wuthering-waves`
 - 明日方舟 → `game-account-arknights`
 - Neverness to Everness（异环） → `game-account-neverness-to-everness`
+- Zenless Zone Zero（绝区零 / ZZZ） → `game-account-zenless-zone-zero`
 
 ## 执行流程
 

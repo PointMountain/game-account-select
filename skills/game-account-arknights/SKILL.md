@@ -13,6 +13,8 @@ argument-hint: "[listing json or account description]"
 ## 必须读取
 
 - `references/valuation-rules.md`
+- `references/operator-knowledge.md`
+- `references/community-evidence.md`
 - `references/changelog.md`
 
 ## 核心维度
@@ -34,10 +36,14 @@ arknights_score:
   resource_score: number
   collection_score: number
   risk_penalty: number
+  progress_score: number
+  confidence_penalty: number
   confidence: low|medium|high
+  community_comparison: string
   highlights: string[]
   concerns: string[]
   missing_fields: string[]
+  rule_update_suggestion: string | null
 ```
 
 ## 自我优化

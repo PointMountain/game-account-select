@@ -1,0 +1,93 @@
+{
+  "expected_top_id": "limited-engine-team-good",
+  "community_snapshot_date": "2026-05-16",
+  "listings": [
+    {
+      "id": "standard-mindscape-trap",
+      "price": 240,
+      "title": "12S常驻高影画绳匠满级号",
+      "server": "官服",
+      "raw_text": "12个S，猫又6影，11号4影，莱卡恩3影，S音擎很多，绳匠等级高。未写限定，未写菲林母带，PSN/TAP绑定不明。",
+      "game_assets": {
+        "agents": [
+          { "name": "Nekomata", "category": "standard", "mindscape": 6, "role": "attack" },
+          { "name": "Soldier 11", "category": "standard", "mindscape": 4, "role": "attack" },
+          { "name": "Lycaon", "category": "standard", "mindscape": 3, "role": "stun" },
+          { "name": "Rina", "category": "standard", "mindscape": 1, "role": "support" }
+        ],
+        "w_engines": [
+          { "name": "generic S engine", "signature_for": null }
+        ],
+        "resources": {},
+        "progression": { "inter_knot_level": 60 },
+        "risk": {
+          "hoyoverse_binding": "unknown",
+          "psn_binding": "unknown",
+          "tap_binding": "unknown",
+          "guarantee": "unknown",
+          "official_verification": false
+        }
+      }
+    },
+    {
+      "id": "limited-engine-team-good",
+      "price": 520,
+      "title": "限定核心专武两队资源干净号",
+      "server": "官服",
+      "raw_text": "Miyabi 0影专武、Astra Yao 0影专武、Jane 0影、Caesar 0影、Qingyi 0影；菲林26000，加密母带42，原装母带20，邦布券35；HoYoverse可换绑，PSN未绑，TAP未绑，官方验号，找回包赔。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Jane", "category": "limited", "mindscape": 0, "role": "anomaly" },
+          { "name": "Caesar", "category": "limited", "mindscape": 0, "role": "defense" },
+          { "name": "Qingyi", "category": "limited", "mindscape": 0, "role": "stun" }
+        ],
+        "w_engines": [
+          { "name": "Miyabi signature engine", "signature_for": "Miyabi" },
+          { "name": "Astra Yao signature engine", "signature_for": "Astra Yao" }
+        ],
+        "resources": {
+          "polychrome": 26000,
+          "encrypted_master_tape": 42,
+          "master_tape": 20,
+          "boopon": 35,
+          "residual_signal": 320
+        },
+        "progression": { "inter_knot_level": 52 },
+        "risk": {
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "risky-limited-missing",
+      "price": 330,
+      "title": "便宜限定多但绑定不清",
+      "server": "B服",
+      "raw_text": "有Ellen、Zhu Yuan、Jane、Burnice，音擎没截图，资源没截图，PSN绑定过，TAP不明，无官方验号。",
+      "game_assets": {
+        "agents": [
+          { "name": "Ellen", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Zhu Yuan", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Jane", "category": "limited", "mindscape": 0, "role": "anomaly" },
+          { "name": "Burnice", "category": "limited", "mindscape": 0, "role": "anomaly" }
+        ],
+        "w_engines": [],
+        "resources": {},
+        "progression": { "inter_knot_level": 50 },
+        "risk": {
+          "hoyoverse_binding": "unknown",
+          "psn_binding": "bound",
+          "tap_binding": "unknown",
+          "guarantee": "none",
+          "official_verification": false
+        }
+      }
+    }
+  ]
+}
