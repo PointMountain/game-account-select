@@ -1,0 +1,10 @@
+game-account-select: Main selector for game account buying workflows. Normalizes user requirements, runs automatic preflight, routes to game-specific valuation skills, and returns ranked recommendations with risks.
+game-account-preflight: Automatic execution preparation for game account skills. Checks Node.js, git, gh, opencli, web-access, browser/CDP access, and safe dependency state before the workflow continues.
+game-account-toolkit: Shared game account toolkit. Defines the I/O contract, platform access policy, community research protocol, dependency state machine, and reusable templates.
+game-account-skill-generator: Generates a conservative baseline buying skill for a new game, including references, fixtures, validation script, and low-confidence community evidence.
+game-account-skill-evaluator: Evaluates generated or edited game account skills against structure, community evidence, scoring, risk, validation, and changelog quality gates.
+game-account-community-updater: Refreshes community evidence snapshots for a game account skill from curated evidence JSON or execution-time research, with source failures and confidence recorded.
+game-account-wuthering-waves: Wuthering Waves account valuation skill focused on limited characters, current community value, signature weapons, resources, and TAP/Wegame/PS5 binding risk.
+game-account-arknights: Arknights account valuation skill focused on limited/collab operators, impact operators, mastery/modules, resources, collection value, server, and real-name recovery risk.
+game-account-neverness-to-everness: Neverness to Everness account valuation skill focused on named S characters, S arc plates, awakening, resources, protagonist/account type, and early-market risk.
+game-account-zenless-zone-zero: Zenless Zone Zero account valuation skill focused on limited S agents, signature W-Engines, team completeness, Polychrome/tapes/Boopons, progression, and HoYoverse/PSN/TAP binding risk.
