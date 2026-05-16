@@ -1,31 +1,35 @@
 <p align="center">
-  <img src="assets/readme-banner.svg" alt="Game Account Select - community-grounded game account valuation skill pack" width="100%" />
+  <img src="assets/readme-banner-en.svg" alt="Game Account Select - community-grounded game account valuation skill pack" width="100%" />
 </p>
 
 # Game Account Select
 
 <p align="center">
-  <em>Community-grounded account valuation skills for game buyers.</em>
+  <img src="assets/readme-icon.svg" width="92" height="92" alt="Game Account Select icon" />
+</p>
+
+<p align="center">
+  <em>Agent skills for anime-game account screening, valuation, and purchase-risk review.</em>
 </p>
 
 <p align="center">
   <a href="README.md">简体中文</a>
   ·
-  <a href="README.en.md"><strong>English</strong></a>
+  <strong>English</strong>
 </p>
 
 <p align="center">
   <a href="#install"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="Install with npx skills add" /></a>
   <a href="#skills"><img src="https://img.shields.io/badge/skills-10-f0c96a?style=for-the-badge&labelColor=101624" alt="10 agent skills" /></a>
-  <a href="#automatic-preflight"><img src="https://img.shields.io/badge/preflight-automatic-e27d60?style=for-the-badge&labelColor=101624" alt="Automatic preflight" /></a>
+  <a href="#design-philosophy"><img src="https://img.shields.io/badge/philosophy-evidence%20first-f0c96a?style=for-the-badge&labelColor=101624" alt="Evidence first" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=for-the-badge&labelColor=101624" alt="MIT License" /></a>
 </p>
 
-Game Account Select is a portable Agent Skills pack for buying game accounts more carefully. It turns account listings, screenshots, seller descriptions, and community guide evidence into structured recommendations with visible risk, missing-field, and rule-update notes.
+Game Account Select helps you turn seller descriptions, screenshots/OCR, account assets, and community guide consensus into a comparable shortlist before buying a game account. It cares less about raw five-star, six-star, or S-rank counts, and more about whether those assets are actually valuable in the current version, whether the team is usable, whether resources are sufficient, and whether binding/recovery risk is clear.
 
-It is not a trading platform and does not place orders. The goal is to help an agent explain which listings deserve attention, which listings are weak despite impressive-looking asset counts, and which claims need manual verification before purchase.
+It is not a trading platform and does not place orders. It is built to remove risky listings quickly, surface the accounts worth checking further, and make the reasoning and uncertainty behind every recommendation visible.
 
-<p align="center"><sub><a href="#install">Install</a> · <a href="#skills">Skills</a> · <a href="#workflow">Workflow</a> · <a href="#standard-io">I/O</a> · <a href="#maintenance">Maintenance</a> · <a href="#safety">Safety</a> · <a href="#license">License</a></sub></p>
+<p align="center"><sub><a href="#install">Install</a> · <a href="#what-it-helps-with">Capabilities</a> · <a href="#account-screening-flow">Flow</a> · <a href="#skills">Skills</a> · <a href="#design-philosophy">Philosophy</a> · <a href="#maintenance">Maintenance</a> · <a href="#safety">Safety</a> · <a href="#license">License</a></sub></p>
 
 ## Install
 
@@ -35,78 +39,76 @@ Install every skill in the repository:
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-Install only the skills you need by passing the exact install name from the `name:` field in each `SKILL.md`:
+Install only the skills you need. The `--skill` value is the `name:` field inside each `SKILL.md`:
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
 npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-zenless-zone-zero"
 ```
 
-List the available install names from a local checkout:
+List all install names from a local checkout:
 
 ```bash
 npm run list:skills
 ```
+
+## What It Helps With
+
+| Scenario | What Game Account Select focuses on |
+| --- | --- |
+| A listing looks rare but you cannot tell whether it is valuable | Separates limited/core assets from standard-pool traps and low-value dupes. |
+| Seller text is messy and screenshots are incomplete | Normalizes characters, weapons/engines/arcs, resources, server, binding, and verification fields. |
+| Each game has different account-value logic | Maintains separate game rules instead of applying one generic rarity rule to every game. |
+| Community meta changes quickly | Uses evidence snapshots and refresh reports to show version context, coverage gaps, and confidence. |
+| Real-name, binding, and recovery risk matter | Makes risk deductions visible and lists fields that must be confirmed with the seller. |
+
+## Account Screening Flow
+
+<p align="center">
+  <img src="assets/readme-flow-en.svg" alt="Game Account Select account screening flow" width="100%" />
+</p>
+
+| Node | Meaning |
+| --- | --- |
+| Buyer intent | Capture game, budget, server, target assets, and risk appetite so the shortlist has a real goal. |
+| Listing read | Accept platform pages, screenshots, OCR text, or seller descriptions and normalize loose claims into comparable fields. |
+| Guide signal | Use high-signal community content from Bilibili, Douyin, Xiaohongshu, guide sites, and search surfaces to build version context. |
+| Value + risk | Score assets, resources, price fit, binding risk, recovery risk, and verification gaps together. |
+| Recommendation | Return ranked candidates, rejection reasons, missing fields, manual checks, and rule-update suggestions. |
 
 ## Skills
 
 | Install name | Role | Use when |
 | --- | --- | --- |
 | `game-account-select` | Main selector | You want the full account screening workflow from user requirements to ranked recommendations. |
-| `game-account-preflight` | Automatic preparation | Another account skill starts execution and needs to verify tools, browser access, and missing dependencies. |
-| `game-account-toolkit` | Shared toolkit | A game skill needs the common I/O contract, platform access policy, community research protocol, or dependency helpers. |
+| `game-account-preflight` | Readiness check | The workflow needs clear guidance when browser access, network access, or local tools are missing. |
+| `game-account-toolkit` | Shared toolkit | A game skill needs shared fields, platform boundaries, community research protocol, or reusable templates. |
 | `game-account-skill-generator` | Game skill generator | The requested game is not supported yet and needs a conservative baseline buying skill. |
 | `game-account-skill-evaluator` | Quality gate | A generated or edited game skill must be checked before real account recommendations. |
 | `game-account-community-updater` | Evidence refresh | Current community consensus is stale, missing, or version-sensitive. |
-| `game-account-wuthering-waves` | Wuthering Waves / Mingchao | Listings for Wuthering Waves accounts need role, weapon, resonance, resource, and binding-risk scoring. |
-| `game-account-arknights` | Arknights | Listings need operator, limited/collab, mastery/module, resource, skin, and real-name risk scoring. |
-| `game-account-neverness-to-everness` | Neverness to Everness | Listings need named S-character, arc, awakening, resource, and account-type scoring. |
-| `game-account-zenless-zone-zero` | Zenless Zone Zero / ZZZ | Listings need limited agent, signature W-Engine, team, Polychrome/tape, Bangboo, and binding-risk scoring. |
+| `game-account-wuthering-waves` | Wuthering Waves / Mingchao | Listings need limited-character value, signature weapons, pull resources, and TAP/Wegame/PS5 binding risk. |
+| `game-account-arknights` | Arknights | Listings need limited/collab operators, key progression, mastery/modules, resources, collection value, and real-name recovery risk. |
+| `game-account-neverness-to-everness` | Neverness to Everness | Listings need named S characters, S arc plates, awakening, resources, protagonist/account type, and early-market risk. |
+| `game-account-zenless-zone-zero` | Zenless Zone Zero / ZZZ | Listings need limited S agents, signature W-Engines, team completeness, Polychrome/tapes/Boopons, and HoYoverse/PSN/TAP binding risk. |
 
-## Workflow
+## Design Philosophy
 
-```text
-User request
-  -> game-account-select
-  -> automatic game-account-preflight
-  -> game-account-toolkit
-  -> matching game skill or game-account-skill-generator
-  -> game-account-skill-evaluator
-  -> ranked recommendations, risks, missing fields, and rule-update suggestions
-```
+**Goal-driven, not asset-count driven.** Start from what the buyer actually wants, then map account evidence to that goal. Raw rarity counts are only supporting signals; they should not override team completeness, version value, or risk state.
 
-1. The user gives the game, budget, server, target assets, risk preference, and listing sources.
-2. `game-account-select` normalizes the request and starts `game-account-preflight` automatically.
-3. `game-account-toolkit` chooses the safest available access route for user-provided pages, screenshots, OCR text, or public listing snippets.
-4. The matching game skill scores the account against game-specific rules and community evidence.
-5. If no game skill exists, `game-account-skill-generator` creates a conservative baseline skill and `game-account-skill-evaluator` decides whether it is usable.
-6. The final answer includes recommendation ranking, reasons to avoid listings, missing seller fields, and rule-update suggestions.
+**Evidence before scoring.** Build the current-version context first: guide consensus, combat environment, character/weapon value, and buyer-risk anecdotes. When evidence is weak, confidence should drop instead of turning gaps into certainty.
 
-## Automatic Preflight
+**Transparent and reviewable.** Every recommendation should explain why an account is worth checking and why it might be a bad buy. Missing screenshots, missing resources, unclear verification, and binding risk are visible manual-check items.
 
-Users should not run a separate "before use" command. Every entry skill is written to call `game-account-preflight` as the first execution step.
-
-Preflight checks Node.js, git, GitHub CLI, browser/CDP access, `opencli`, `web-access`, and project-local dependency state. It can safely report missing tools and run repo-local checks, but it does not silently install global software or modify installed Codex skills.
+**Safety boundaries first.** This pack only supports pre-purchase judgment. It does not bypass platform limits, run high-frequency scraping, or automate trades. Evidence and rules can evolve, but rule changes should be explainable, verifiable, and traceable.
 
 ## Standard I/O
 
 All account skills share the contract in `skills/game-account-toolkit/references/skill-io-contract.md`.
 
-Preferred input tags:
+- Inputs: `<game_account_request>`, `<account_listing>`, `<community_evidence>`, `<skill_generation_request>`
+- Outputs: `<game_account_evaluation>`, `<recommendations>`, `<skill_quality_report>`, `<community_refresh_report>`
 
-- `<game_account_request>`
-- `<account_listing>`
-- `<community_evidence>`
-- `<skill_generation_request>`
-
-Preferred output tags:
-
-- `<game_account_evaluation>`
-- `<recommendations>`
-- `<skill_quality_report>`
-- `<community_refresh_report>`
-
-This keeps each skill thin: `SKILL.md` defines the entry behavior, `references/` stores rules and evidence, `scripts/` stores repeatable validation, and `test-fixtures/` stores offline samples.
+This keeps each skill thin: `SKILL.md` defines entry behavior, `references/` stores rules and evidence, `scripts/` stores repeatable validation, and `test-fixtures/` stores offline samples.
 
 ## Generate A New Game Skill
 
@@ -127,7 +129,7 @@ Generated skills start with low confidence until their community evidence, scori
 
 ## Maintenance
 
-These commands are for repository maintainers and CI-style verification. They are not required before a normal user invokes a skill.
+These commands are for repository maintainers and CI-style verification:
 
 ```bash
 npm run list:skills
@@ -139,7 +141,7 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 
 Community evidence can refresh in two ways:
 
-- Execution-time refresh when the listing mentions assets that are missing from the local snapshot, a major version has changed, or the user asks for current community coverage.
+- Execution-time refresh when the listing mentions assets missing from the local snapshot, a major version changes, or the user asks for current community coverage.
 - Maintainer refresh through `game-account-community-updater` when curated evidence JSON should be written into a game skill before future runs.
 
 Evidence refresh updates `community-evidence.md` and the refresh report. It should not silently rewrite valuation weights; rule changes should be proposed, reviewed, and then recorded in the game skill changelog.
@@ -150,7 +152,7 @@ Evidence refresh updates `community-evidence.md` and the refresh report. It shou
 - Do not bypass captcha, login restrictions, platform rate limits, or anti-bot controls.
 - Do not treat publicly visible listings as permission for broad scraping.
 - Do not rank accounts highly from raw rare-asset counts alone.
-- Do not hide binding, real-name, PSN/TAP/Wegame/HoYoverse, recovery, or guarantee-risk gaps.
+- Do not hide binding, real-name, PSN/TAP/Wegame/HoYoverse, recovery, guarantee, or verification gaps.
 - Do not silently modify valuation rules after user feedback; propose the exact rule update first.
 
 ## License
