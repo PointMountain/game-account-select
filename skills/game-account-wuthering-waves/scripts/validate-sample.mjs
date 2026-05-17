@@ -72,6 +72,7 @@ function scoreListing(listing) {
   const gameSpecific = assets.game_specific ?? {};
   const explicitMissingFields = Array.isArray(listing.missing_fields) ? listing.missing_fields : [];
   const characterNames = new Set(characters.map((character) => character.name));
+  const budget = Number(fixture.budget?.max_cny ?? fixture.budget_cny ?? 0);
 
   const highlights = [];
   const concerns = [];
@@ -175,8 +176,11 @@ function scoreListing(listing) {
   }
 
   let priceFitScore = 6;
-  if (listing.price <= 200 && highCoreCount >= 2) priceFitScore = 10;
+  const budgetShare = budget > 0 ? listing.price / budget : null;
+  if (listing.price <= 200 && highCoreCount >= 2) priceFitScore = 9;
+  if (listing.price <= 200 && highCoreCount >= 2 && weapons.length === 0) priceFitScore = 6;
   if (listing.price > 240 && highCoreCount >= 4) priceFitScore = 8;
+  if (budgetShare !== null && budgetShare >= 0.65 && budgetShare <= 1 && highCoreCount >= 3 && weapons.length >= 5) priceFitScore = 10;
   if (highCoreCount === 0 && listing.price >= 180) priceFitScore = 1;
 
   let riskPenalty = 0;
@@ -202,6 +206,11 @@ function scoreListing(listing) {
   if (!gameSpecific.official_verification) {
     riskPenalty += 8;
     missingFields.push('official verification');
+  }
+
+  if (listing.price <= 250 && highCoreCount >= 2 && weapons.length === 0) {
+    riskPenalty += 6;
+    concerns.push('Very low price with no weapon ownership details needs extra verification before being treated as best value');
   }
 
   if (listing.server && listing.server !== '官服') {
@@ -311,6 +320,15 @@ if (!realRun || realRun.final_score < 65 || realRun.confidence !== 'medium') {
 }
 if (!realRun.missing_fields.includes('resource screenshot confirmation') || !realRun.missing_fields.includes('partial third-party binding confirmation')) {
   throw new Error('Expected taoshouyou-77175988 to preserve resource screenshot and binding confirmation gaps');
+}
+
+const cheapRisky = results.find((result) => result.id === 'budget-cheap-risky-198');
+const budgetComplete = results.find((result) => result.id === 'budget-complete-888');
+if (!cheapRisky || !budgetComplete || budgetComplete.final_score <= cheapRisky.final_score) {
+  throw new Error('Expected a 700-1000 CNY complete low-risk account to outrank a 198 CNY account with missing weapons/resources in value-for-budget sorting');
+}
+if (!cheapRisky.missing_fields.includes('weapon / signature weapon details') || cheapRisky.components.risk_penalty < 6) {
+  throw new Error('Expected cheap risky account to carry weapon-detail gaps and extra low-price risk penalty');
 }
 
 console.log(`\nValidation passed: ${fixture.expected_top_id} outranks raw-count/standard-dupe accounts.`);

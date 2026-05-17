@@ -36,6 +36,12 @@ risk:
   tos_risk: low|medium|high|unknown
   retrieval_risk: low|medium|high|unknown
   binding_risk: low|medium|high|unknown
+  tap_binding: unbound|bound|can_unbind|unknown|null
+  wegame_binding: unbound|bound|can_unbind|unknown|null
+  ps5_binding: unbound|bound|unknown|null
+  phone_email_rebind_cooldown: none|active|unknown|null
+  official_verification: boolean|null
+  retrieval_compensation: boolean|null
   data_completeness: low|medium|high
   suspicious_price: boolean
 

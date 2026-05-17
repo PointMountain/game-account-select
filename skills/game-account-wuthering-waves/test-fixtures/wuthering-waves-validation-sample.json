@@ -1,6 +1,10 @@
 {
   "expected_top_id": "limited-core-good",
   "community_snapshot_date": "2026-05-16",
+  "budget": {
+    "max_cny": 1000,
+    "preference": "value_for_budget"
+  },
   "listings": [
     {
       "id": "standard-dupes-trap",
@@ -241,6 +245,85 @@
           "forging_tide": 0,
           "afterglow_coral": 0,
           "lunites": 1000
+        },
+        "game_specific": {
+          "binding": "partial_clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "budget-cheap-risky-198",
+      "platform": "pxb7",
+      "game": "Wuthering Waves",
+      "price": 198,
+      "title": "低价多限定但资源和武器归属缺失",
+      "server": "官服",
+      "raw_text": "61级，21黄，星声166，余波珊瑚9，有卡提希娅、弗洛洛、爱弥斯、绯雪、莫宁、千咲，商品卡写未绑定TAP/未绑Wegame、找回包赔、官方验号；未展示完整武器归属、PS5/邮箱换绑和详情截图。",
+      "missing_fields": [
+        "完整武器归属",
+        "PS5/第三方关联",
+        "邮箱/手机号换绑冷却",
+        "详情截图"
+      ],
+      "game_assets": {
+        "characters": [
+          { "name": "Cartethyia", "resonance_chain": 0, "category": "limited" },
+          { "name": "Phrolova", "resonance_chain": 0, "category": "limited" },
+          { "name": "Aemeath", "resonance_chain": 0, "category": "limited" },
+          { "name": "Hiyuki", "resonance_chain": 0, "category": "limited" },
+          { "name": "Mornye", "resonance_chain": 0, "category": "limited" },
+          { "name": "Chisa", "resonance_chain": 1, "category": "limited" }
+        ],
+        "weapons_or_equipment": [],
+        "premium_currency": {
+          "astrite": 166,
+          "afterglow_coral": 9
+        },
+        "game_specific": {
+          "binding": "partial_clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "budget-complete-888",
+      "platform": "pzds",
+      "game": "Wuthering Waves",
+      "price": 888,
+      "title": "千元内资源和武器更完整成品号",
+      "server": "官服",
+      "raw_text": "80级，59黄，21金角色，17金武器，25浮金波纹，348月相，2铸潮波纹，数据坞30，12962星声；官服手机，能解绑Wegame，未绑定TAP，无换绑冷却。",
+      "missing_fields": [
+        "PS5/第三方关联",
+        "官方验号截图",
+        "找回包赔条款"
+      ],
+      "game_assets": {
+        "characters": [
+          { "name": "Hiyuki", "resonance_chain": 0, "category": "limited" },
+          { "name": "Aemeath", "resonance_chain": 0, "category": "limited" },
+          { "name": "Mornye", "resonance_chain": 0, "category": "limited" },
+          { "name": "Cartethyia", "resonance_chain": 0, "category": "limited" },
+          { "name": "Shorekeeper", "resonance_chain": 0, "category": "limited" },
+          { "name": "Iuno", "resonance_chain": 0, "category": "limited" },
+          { "name": "Jinhsi", "resonance_chain": 0, "category": "limited" }
+        ],
+        "weapons_or_equipment": [
+          { "name": "Hiyuki signature weapon", "signature_for": "Hiyuki" },
+          { "name": "Aemeath signature weapon", "signature_for": "Aemeath" },
+          { "name": "Mornye signature weapon", "signature_for": "Mornye" },
+          { "name": "Cartethyia signature weapon", "signature_for": "Cartethyia" },
+          { "name": "Shorekeeper signature weapon", "signature_for": "Shorekeeper" },
+          { "name": "Jinhsi signature weapon", "signature_for": "Jinhsi" }
+        ],
+        "premium_currency": {
+          "astrite": 12962,
+          "lunites": 348,
+          "radiant_tide": 25,
+          "forging_tide": 2
         },
         "game_specific": {
           "binding": "partial_clean",
