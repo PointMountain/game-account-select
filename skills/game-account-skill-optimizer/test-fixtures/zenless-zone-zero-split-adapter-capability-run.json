@@ -14,10 +14,10 @@
       "list_adapter_available": false,
       "detail_adapter_available": true,
       "adapter_verified": true,
-      "detail_adapter_command": "opencli pxb7 detail 2186225899602137215 -f json",
-      "verify_command": "opencli browser zzz-verify verify pxb7/detail --strict-memory",
+      "detail_adapter_command": "opencli pxb7 zzz-detail 2186225899602137215 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
       "fallback_used": "browser_cdp_for_list",
-      "evidence": "列表页仍通过 browser DOM 低频读取；详情页已用 verified pxb7/detail adapter 抽取 binding/resources/voidHunters"
+      "evidence": "列表页仍通过 browser DOM 低频读取；详情页已用 verified pxb7/zzz-detail adapter 抽取 binding/resources/voidHunters"
     },
     {
       "platform": "pzds",
@@ -29,10 +29,10 @@
       "list_adapter_available": false,
       "detail_adapter_available": true,
       "adapter_verified": true,
-      "detail_adapter_command": "opencli pzds detail QL9CHD -f json",
-      "verify_command": "opencli browser zzz-verify-pzds verify pzds/detail --strict-memory",
+      "detail_adapter_command": "opencli pzds zzz-detail QL9CHD -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
       "fallback_used": "browser_cdp_for_list",
-      "evidence": "列表页筛选仍靠自然导航；详情页已用 verified pzds/detail adapter 抽取 binding/resources/voidHunters"
+      "evidence": "列表页筛选仍靠自然导航；详情页已用 verified pzds/zzz-detail adapter 抽取 binding/resources/voidHunters"
     }
   ],
   "community_attempts": [
@@ -68,6 +68,6 @@
   ],
   "excluded_listings": [],
   "missing_fields": [],
-  "final_response": "已复用 pxb7/detail 和 pzds/detail adapter；列表页仍为浏览器低频降级。",
+  "final_response": "已复用 pxb7/zzz-detail 和 pzds/zzz-detail adapter；列表页仍为浏览器低频降级。",
   "user_feedback": []
 }

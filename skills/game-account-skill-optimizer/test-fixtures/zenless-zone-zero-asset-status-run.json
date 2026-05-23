@@ -15,8 +15,8 @@
       "adapter_verified": true,
       "detail_adapter_available": true,
       "detail_adapter_verified": true,
-      "adapter_command": "opencli pxb7 detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
-      "verify_command": "opencli browser zzz-verify verify pxb7/detail --strict-memory",
+      "adapter_command": "opencli pxb7 zzz-detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
       "evidence": "verified detail adapter returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
     },
     {
@@ -30,8 +30,8 @@
       "adapter_verified": true,
       "detail_adapter_available": true,
       "detail_adapter_verified": true,
-      "adapter_command": "opencli pzds detail QLA18X -f json",
-      "verify_command": "opencli browser zzz-verify-pzds verify pzds/detail --strict-memory",
+      "adapter_command": "opencli pzds zzz-detail QLA18X -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
       "evidence": "verified detail adapter returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
     }
   ],
@@ -70,7 +70,7 @@
   "backup_listings": [],
   "excluded_listings": [],
   "missing_fields": [],
-  "final_response": "推荐 QLA18X，备选 JHYXJ0699；已用 pxb7/pzds detail adapter 读取三虚狩。",
+  "final_response": "推荐 QLA18X，备选 JHYXJ0699；已用 pxb7/pzds zzz-detail adapter 读取三虚狩。",
   "user_feedback": [
     "螃蟹详情页下面有商品图片，角色右上角数字 x+y 可以直接预览，之后 skill 查询要一起看一下"
   ]

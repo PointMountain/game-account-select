@@ -14,6 +14,15 @@ argument-hint: "[check|install-guide|platform|ocr|extract]"
 
 所有入口 skill 应优先调用 `game-account-preflight`。本 toolkit 的 `scripts/check-deps.mjs` 现在委托给 preflight，保留为兼容入口。
 
+本 skill 还携带仓库托管的 Pxb7/PZDS OpenCLI adapter。命令按游戏命名，目前提供绝区零专用的 `pxb7/zzz-detail` 和 `pzds/zzz-detail`；后续其它游戏应在 `opencli-adapters/games/<game>/clis/<site>/` 下新增自己的命令，避免把游戏专属解析伪装成平台通用 `detail`。用户需要平台详情结构化抽取时，先运行：
+
+```bash
+node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --check
+node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install
+```
+
+安装脚本默认不覆盖用户已有不同内容；确认覆盖时再加 `--force`。
+
 ## 文件结构
 
 ```text
@@ -28,8 +37,13 @@ game-account-toolkit/
 │   └── shared-listing-schema.md
 ├── templates/
 │   └── game-skill/
+├── opencli-adapters/
+│   ├── games/
+│   │   └── zenless-zone-zero/
+│   └── sites/
 └── scripts/
-    └── check-deps.mjs
+    ├── check-deps.mjs
+    └── install-opencli-adapters.mjs
 ```
 
 ## 执行前状态机

@@ -293,7 +293,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const hasGapFinding = findingIds.has('platform-opencli-adapter-gap');
     const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
     const gapIsListSpecific = /list_adapter_available=false|browser_cdp_for_list/i.test(evidence);
-    const reusePreservesDetailCommands = /pxb7 detail|pzds detail|pxb7\/detail|pzds\/detail/i.test(evidence);
+    const reusePreservesDetailCommands = /pxb7 zzz-detail|pzds zzz-detail|pxb7\/zzz-detail|pzds\/zzz-detail/i.test(evidence);
     if (hasGapFinding && hasReuseFinding && gapIsListSpecific && reusePreservesDetailCommands) addScore(4);
     else {
       if (!hasGapFinding) issue('Optimizer did not report missing list adapter capability');
@@ -311,7 +311,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasAssetStatusFinding = findingIds.has('platform-agent-status-asset-cards-missing');
-    const preservesAssetCardEvidence = /agentStatuses|asset-card|角标|pxb7 detail|pzds detail/i.test(evidence);
+    const preservesAssetCardEvidence = /agentStatuses|asset-card|角标|pxb7 zzz-detail|pzds zzz-detail/i.test(evidence);
     if (hasAssetStatusFinding && preservesAssetCardEvidence) addScore(4);
     else {
       if (!hasAssetStatusFinding) issue('Optimizer did not require ZZZ pxb7/pzds asset-card agentStatuses');
@@ -588,6 +588,8 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
       else addIssue(`Toolkit missing references: ${missingReferences.join(', ')}`);
       if (exists('scripts/check-deps.mjs')) addScore(10);
       else addIssue('Missing scripts/check-deps.mjs');
+      if (exists('scripts/install-opencli-adapters.mjs') && exists('opencli-adapters/manifest.json')) addScore(4);
+      else addIssue('Toolkit lacks repo-managed OpenCLI adapter installer or manifest', false);
       const toolkitText = `${skillContent}\n${requiredReferences.map((name) => readFileIfExists(path.join(root, 'references', name))).join('\n')}`;
       if (containsAny(toolkitText, ['pxb7', 'pzds', '螃蟹', '盼之'])) addScore(12);
       else addIssue('Toolkit lacks mainstream platform priority coverage');
@@ -595,7 +597,7 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
       else addIssue('Toolkit lacks platform safety boundary guidance');
       if (containsAny(toolkitText, ['skill-io-contract', 'shared-listing-schema', 'platform_attempts'])) addScore(12);
       else addIssue('Toolkit lacks shared contract/schema guidance');
-      addScore(12);
+      addScore(8);
       break;
     }
 

@@ -1,0 +1,17 @@
+{
+  "detail_dom": {
+    "url": "https://www.pxb7.com/product/<productId>/1",
+    "method": "BROWSER_DOM",
+    "params": {
+      "required": [
+        "input"
+      ],
+      "optional": [
+        "wait"
+      ]
+    },
+    "response": "one normalized account-detail row from rendered DOM",
+    "verified_at": "2026-05-23",
+    "notes": "Aliyun WAF cookies may be required, but no cookie value is stored here. Use the browser-backed COOKIE adapter and verify against rendered detail fields."
+  }
+}

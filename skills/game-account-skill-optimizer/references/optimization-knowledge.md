@@ -68,7 +68,7 @@ Regression coverage should include:
 - A run covering community evidence fallback, wait-budget recording, listing links, and flexible-budget backup output.
 - A run covering hard-condition budget expansion and multi-team completeness, such as ZZZ all Void Hunters needing three independent teams.
 - A run where valuable platforms have no reusable OpenCLI adapter and should trigger an adapter-generation recommendation.
-- A run where pxb7/pzds detail adapters are verified and should be reused without re-triggering the adapter-gap finding.
-- A run where pxb7/pzds detail adapters are verified but list adapters are missing, proving the optimizer can emit both detail reuse and list-capability gap evidence without conflating the two.
-- A run where verified pxb7/pzds detail adapters are used for ZZZ but the recommendation drops `agentStatuses`, proving the optimizer catches missing asset-card status data.
+- A run where pxb7/pzds zzz-detail adapters are verified and should be reused without re-triggering the adapter-gap finding.
+- A run where pxb7/pzds zzz-detail adapters are verified but list adapters are missing, proving the optimizer can emit both detail reuse and list-capability gap evidence without conflating the two.
+- A run where verified pxb7/pzds zzz-detail adapters are used for ZZZ but the recommendation drops `agentStatuses`, proving the optimizer catches missing asset-card status data.
 - A failed evaluator run to prove redo behavior.

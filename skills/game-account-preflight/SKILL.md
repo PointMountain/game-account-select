@@ -1,7 +1,7 @@
 ---
 name: game-account-preflight
 description: 游戏账号 skill 执行前准备和环境校验。检查 Node、git、gh、opencli、web-access skill、浏览器 CDP 等依赖，能自动处理的给出安全操作，不能自动处理的输出安装指引。
-argument-hint: "[--json|--strict|--browser]"
+argument-hint: "[--json|--strict|--browser|--opencli-adapters]"
 ---
 
 # Game Account Preflight Skill
@@ -25,7 +25,7 @@ argument-hint: "[--json|--strict|--browser]"
 node skills/game-account-preflight/scripts/preflight.mjs --json
 ```
 
-如需要浏览器/CDP，追加 `--browser`。
+如需要浏览器/CDP，追加 `--browser`。如需要确认仓库托管的 Pxb7/PZDS OpenCLI adapter 是否已同步到本机，追加 `--opencli-adapters`；当前绝区零命令为 `pxb7/zzz-detail` 和 `pzds/zzz-detail`。
 
 ## 输出
 
@@ -48,3 +48,4 @@ node skills/game-account-preflight/scripts/preflight.mjs --json
 - 不静默安装或修改 Codex skill。
 - 不绕过 Chrome 授权、验证码、登录墙或平台风控。
 - 对缺失的 `opencli`、`web-access`、Chrome remote debugging 只输出可执行安装/授权指引。
+- 对缺失或版本不一致的仓库托管 OpenCLI adapter，只输出安装脚本指引；不静默写入 `~/.opencli`。
