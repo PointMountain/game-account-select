@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "name": "game-account-select-opencli-adapters",
+  "updated_at": "2026-05-23",
+  "description": "Repo-managed OpenCLI adapters used by Game Account Select skills. Files are grouped by game, public, browser-backed, and contain no cookies, tokens, or user private data.",
+  "adapters": [
+    {
+      "game": "zenless-zone-zero",
+      "site": "pxb7",
+      "command": "zzz-detail",
+      "source": "games/zenless-zone-zero/clis/pxb7/zzz-detail.js",
+      "target": "clis/pxb7/zzz-detail.js",
+      "strategy": "COOKIE",
+      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
+      "sample_args": [
+        "https://www.pxb7.com/product/2187082765844721999/1"
+      ]
+    },
+    {
+      "game": "zenless-zone-zero",
+      "site": "pzds",
+      "command": "zzz-detail",
+      "source": "games/zenless-zone-zero/clis/pzds/zzz-detail.js",
+      "target": "clis/pzds/zzz-detail.js",
+      "strategy": "COOKIE",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
+      "sample_args": [
+        "QLA18X"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "source": "games/zenless-zone-zero/clis/pxb7/zzz-detail.js",
+      "target": "clis/pxb7/zzz-detail.js",
+      "kind": "adapter"
+    },
+    {
+      "source": "games/zenless-zone-zero/clis/pzds/zzz-detail.js",
+      "target": "clis/pzds/zzz-detail.js",
+      "kind": "adapter"
+    },
+    {
+      "source": "sites/pxb7/endpoints.json",
+      "target": "sites/pxb7/endpoints.json",
+      "kind": "site-memory"
+    },
+    {
+      "source": "sites/pxb7/notes.md",
+      "target": "sites/pxb7/notes.md",
+      "kind": "site-memory"
+    },
+    {
+      "source": "sites/pxb7/verify/zzz-detail.json",
+      "target": "sites/pxb7/verify/zzz-detail.json",
+      "kind": "verify"
+    },
+    {
+      "source": "sites/pzds/endpoints.json",
+      "target": "sites/pzds/endpoints.json",
+      "kind": "site-memory"
+    },
+    {
+      "source": "sites/pzds/notes.md",
+      "target": "sites/pzds/notes.md",
+      "kind": "site-memory"
+    },
+    {
+      "source": "sites/pzds/verify/zzz-detail.json",
+      "target": "sites/pzds/verify/zzz-detail.json",
+      "kind": "verify"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "detail_dom": {
+    "url": "https://www.pzds.com/goodsDetails/<listingId>/6",
+    "method": "BROWSER_DOM",
+    "params": {
+      "required": [
+        "input"
+      ],
+      "optional": [
+        "wait"
+      ]
+    },
+    "response": "one normalized account-detail row from rendered Nuxt DOM",
+    "verified_at": "2026-05-23",
+    "notes": "Page exposes Nuxt-rendered detail state and visible asset DOM. WAF cookies may be required, but no cookie value is stored here. Use the browser-backed COOKIE adapter."
+  }
+}

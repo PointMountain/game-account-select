@@ -9,6 +9,7 @@ const args = new Set(process.argv.slice(2));
 const wantsJson = args.has('--json');
 const strict = args.has('--strict');
 const needsBrowser = args.has('--browser');
+const checkAdapters = args.has('--opencli-adapters') || args.has('--adapters');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoSkillsRoot = path.resolve(__dirname, '..', '..');
 
@@ -46,6 +47,33 @@ function checkChromePort() {
   return { ok: result.status === 0, found: result.status === 0 ? 'localhost:9222' : null };
 }
 
+function checkOpencliAdapters() {
+  const script = path.join(repoSkillsRoot, 'game-account-toolkit', 'scripts', 'install-opencli-adapters.mjs');
+  if (!fs.existsSync(script)) {
+    return {
+      ok: false,
+      found: null,
+      detail: null,
+      action: 'Install game-account-toolkit with repo-managed OpenCLI adapter support.'
+    };
+  }
+
+  const run = spawnSync('node', [script, '--check', '--json'], { encoding: 'utf8' });
+  let detail = null;
+  try {
+    detail = JSON.parse(run.stdout || '{}');
+  } catch {
+    detail = { parse_error: (run.stderr || run.stdout || '').trim() };
+  }
+
+  return {
+    ok: run.status === 0 && detail?.ok === true,
+    found: detail?.opencli_home ?? null,
+    detail,
+    action: 'Run node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install, then verify with opencli validate pxb7/zzz-detail and pzds/zzz-detail.'
+  };
+}
+
 const checks = [];
 const nodeMajor = Number.parseInt(process.versions.node.split('.')[0], 10);
 checks.push({
@@ -78,6 +106,19 @@ checks.push({
   required_for: 'structured community/platform search',
   action: opencli.ok ? 'none' : 'Install opencli or provide community evidence manually.'
 });
+
+if (checkAdapters) {
+  const adapters = checkOpencliAdapters();
+  checks.push({
+    name: 'repo-managed OpenCLI adapters',
+    required: false,
+    ok: adapters.ok,
+    found: adapters.found,
+    required_for: 'shared pxb7/zzz-detail and pzds/zzz-detail account detail extraction',
+    action: adapters.ok ? 'none' : adapters.action,
+    detail: adapters.detail
+  });
+}
 
 const toolkitSkill = checkGameAccountSkill('game-account-toolkit');
 checks.push({
@@ -125,6 +166,7 @@ const result = {
   ok: requiredFailures.length === 0 && (!strict || optionalFailures.length === 0),
   strict,
   needs_browser: needsBrowser,
+  checks_opencli_adapters: checkAdapters,
   checks,
   missing_required: requiredFailures.map((check) => check.name),
   missing_optional: optionalFailures.map((check) => check.name),

@@ -47,11 +47,13 @@
 4. 只有 adapter 报错、fixture mismatch、字段缺失或网页肉眼值不一致时，才降级到 `browser state/eval`、截图、用户复制文本或其它平台。
 5. 已验证 adapter 的运行记录应设置 `adapter_available: true`、`adapter_verified: true`；优化器据此生成复用建议，而不是 adapter 缺口建议。
 
+已脱敏、可复用的 Pxb7/PZDS adapter 放在 `skills/game-account-toolkit/opencli-adapters/`，命令按游戏命名，例如绝区零使用 `pxb7/zzz-detail` 和 `pzds/zzz-detail`。通过 `node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --check` 检查、`--install` 同步到 `~/.opencli`。安装脚本不能静默覆盖用户已有不同 adapter；含 cookie、token、账号状态或私有站点记忆的文件只保留在本机。
+
 ### Pxb7/PZDS 绝区零详情资产角标
 
 螃蟹和盼之的绝区零详情页可能在下方资产/验号报告区域展示角色卡片。角色右上角的 `x` 或 `x+y` 比标题更可靠：`x` 是影画/命座数，`+y` 是该角色对应专属音擎数量。读取这类页面时：
 
-- 优先复用已验证的 `opencli pxb7 detail <url> -f json` 或 `opencli pzds detail <id> -f json`。
+- 优先复用已验证的 `opencli pxb7 zzz-detail <url> -f json` 或 `opencli pzds zzz-detail <id> -f json`。
 - Adapter 应在必要时滚动到资产卡片区域，读取 DOM 中可见的角色卡片文本或角标元素，并输出浅层 `agentStatuses` 对象。
 - 筛选流程必须把该对象标准化到 `game_assets.agent_statuses`，并记录 `agent_status_source` 或 `asset_status_source`。
 - 如果只能读到标题里的 S 数量、黄数或几命描述，不能据此确认专属音擎归属；应降级为 `source_status: partial` 并列为人工确认项。

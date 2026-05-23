@@ -75,7 +75,7 @@ updated_at: 2026-05-17
 3. 判定：数据必须在浏览器可见，且来自可验证的 HTTP/JSON/HTML；验证码、登录墙、强风控、图片 OCR 或付费内容不做 adapter，直接降级为用户链接/截图/复制文本。
 4. 生成：用 `opencli browser init <site>/<command>` 建私有 adapter，按 `opencli-adapter-author` 做 endpoint 验证、字段解码和输出列设计。
 5. 验证：运行 `opencli browser verify <site>/<command> --write-fixture`，再用 fixture 收紧核心字段；字段值必须和网页肉眼值抽查一致。
-6. 记忆：把 endpoint、field-map、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`；下次运行优先复用 adapter，并继续记录失败文本和降级路径。
+6. 记忆：把 endpoint、field-map、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`；若 adapter 已脱敏、可复用且不含 cookie/token/账号状态，再同步到 `skills/game-account-toolkit/opencli-adapters/` 供其他用户安装。
 
 Adapter 代码实现默认不是自动补丁。只有用户明确要求“实现/生成 adapter”并且验证通过后，才把它纳入当前推荐的数据来源。
 
@@ -87,8 +87,8 @@ Adapter 代码实现默认不是自动补丁。只有用户明确要求“实现
 2. 推荐前先执行 adapter 命令读取结构化字段；只有 adapter 失败、fixture mismatch 或字段缺失时，才退回 `browser state/eval`、截图或用户文本。
 3. `verify_command` 必须能通过 `--strict-memory`，即 `~/.opencli/sites/<site>/endpoints.json` 和 `notes.md` 都存在。
 4. 若 adapter 输出和网页肉眼值不一致，应按 `opencli-autofix` 或 adapter-author workflow 修 adapter，不要在游戏估值规则里补偿解析错误。
-5. 私有 adapter 不进仓库时，repo 内只记录“如何识别/复用/验证”，实际 adapter 文件和站点记忆保留在 `~/.opencli/`。
-6. 绝区零的 `pxb7/detail` / `pzds/detail` 必须保留详情页角色角标 `agentStatuses`。如果推荐记录只有 `voidHunters` 或标题几命，没有 `agentStatuses`，优化器应输出 `platform-agent-status-asset-cards-missing` 并要求回到 adapter 或标准化层修复。
+5. 含本机状态的私有 adapter 不进仓库；已脱敏、可复用的 adapter 应通过 `game-account-toolkit/opencli-adapters` 和安装脚本同步，避免 skill 使用者缺失本机 OpenCLI 能力。
+6. 绝区零的 `pxb7/zzz-detail` / `pzds/zzz-detail` 必须保留详情页角色角标 `agentStatuses`。如果推荐记录只有 `voidHunters` 或标题几命，没有 `agentStatuses`，优化器应输出 `platform-agent-status-asset-cards-missing` 并要求回到 adapter 或标准化层修复。
 
 ## 手动执行模式
 

@@ -174,13 +174,18 @@ These commands are for repository maintainers and CI-style verification:
 npm run list:skills
 npm run verify:skills
 npm run verify:frontmatter
+npm run opencli:adapters:check
+node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install
 node skills/game-account-preflight/scripts/preflight.mjs --json
+node skills/game-account-preflight/scripts/preflight.mjs --json --opencli-adapters
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-run.json --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=skills/game-account-skill-optimizer/test-fixtures/optimizer-report-sample.json --json
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
 ```
+
+`game-account-toolkit` carries repo-managed Pxb7/PZDS OpenCLI adapters under `skills/game-account-toolkit/opencli-adapters/`. Commands are grouped by game, for example `pxb7/zzz-detail` and `pzds/zzz-detail` for Zenless Zone Zero. They are never installed silently. Use the check/install commands above to sync them into `~/.opencli`; pass `--force` only after reviewing an existing different local adapter.
 
 Community evidence can refresh in two ways:
 

@@ -13,8 +13,8 @@
       "result_count": 1,
       "adapter_available": true,
       "adapter_verified": true,
-      "adapter_command": "opencli pxb7 detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
-      "verify_command": "opencli browser zzz-verify verify pxb7/detail --strict-memory",
+      "adapter_command": "opencli pxb7 zzz-detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
       "evidence": "verified private adapter returned binding/resources/counts/voidHunters for JHYXJ0699"
     },
     {
@@ -26,8 +26,8 @@
       "result_count": 1,
       "adapter_available": true,
       "adapter_verified": true,
-      "adapter_command": "opencli pzds detail QL9CHD -f json",
-      "verify_command": "opencli browser zzz-verify-pzds verify pzds/detail --strict-memory",
+      "adapter_command": "opencli pzds zzz-detail QL9CHD -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
       "evidence": "verified private adapter returned binding/resources/counts/voidHunters for QL9CHD"
     }
   ],

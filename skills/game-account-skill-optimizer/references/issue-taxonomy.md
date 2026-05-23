@@ -99,7 +99,7 @@ updated_at: 2026-05-17
 
 - 先用 `opencli list -f yaml` 和 `opencli <site> -h` 确认确实没有现成站点命令。
 - 对浏览器可见、数据来自 HTTP/JSON/HTML、无需绕过验证码/风控/付费墙的平台，调用 `opencli-adapter-author` workflow：`opencli browser analyze <url>`、`opencli browser init <site>/<command>`、字段解码、`opencli browser verify <site>/<command> --write-fixture`。
-- 把 endpoint、字段映射、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`，下次筛选优先复用 adapter。
+- 把 endpoint、字段映射、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`；若 adapter 已脱敏且可复用，再同步到 `game-account-toolkit/opencli-adapters`，下次筛选优先复用 adapter。
 - 若数据只在不可稳定访问的交互、图片、验证码或付费内容里，停止 adapter 化，降级为用户提供链接、截图或复制文本。
 
 ### adapter_reuse
@@ -111,8 +111,8 @@ updated_at: 2026-05-17
 - `adapter_available: true` 或 `opencli_adapter_available: true`
 - `detail_adapter_available: true`
 - `adapter_verified: true`
-- `adapter_command` 类似 `opencli pxb7 detail <url> -f json`
-- `verify_command` 类似 `opencli browser <session> verify pxb7/detail --strict-memory`
+- `adapter_command` 类似 `opencli pxb7 zzz-detail <url> -f json`
+- `verify_command` 类似 `opencli browser <session> verify pxb7/zzz-detail --strict-memory`
 
 建议：
 
@@ -126,7 +126,7 @@ updated_at: 2026-05-17
 
 常见信号：
 
-- 绝区零账号来自 `pxb7/detail` 或 `pzds/detail` verified adapter。
+- 绝区零账号来自 `pxb7/zzz-detail` 或 `pzds/zzz-detail` verified adapter。
 - 运行记录包含 `voidHunters`、S 代理人总数、标题“几命”，但推荐/备选缺少 `agentStatuses` 或 `game_assets.agent_statuses`。
 - 用户要求“全部虚狩和对应辅助/专武”，但输出没有说明资产卡角标来源。
 

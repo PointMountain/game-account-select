@@ -16,6 +16,6 @@
 - 增加社区证据缺口、社区工具降级、等待预算、备选链接和预算浮动备选的优化规则。
 - 增加 OpenCLI adapter 缺口诊断：高价值平台没有现成站点命令时，建议按 `opencli-adapter-author` 生成并验证私有 adapter，而不是长期依赖一次性 DOM 抽取。
 - 增加 OpenCLI adapter 复用诊断：pxb7/pzds 详情 adapter 通过 `browser verify --strict-memory` 后，优化器应建议优先复用 `opencli <site> detail`，且不再误报 adapter 缺口。
-- 增加 ZZZ 详情页资产角标诊断：verified pxb7/pzds detail adapter 推荐结果必须保留 `agentStatuses`，避免只靠标题猜影画和专属音擎。
+- 增加 ZZZ 详情页资产角标诊断：verified pxb7/pzds zzz-detail adapter 推荐结果必须保留 `agentStatuses`，避免只靠标题猜影画和专属音擎。
 - 增加硬条件预算扩展诊断：预算内无合格账号时，应扩大到价格浮动层并返回最低满足价。
 - 增加多队完整性诊断：例如 ZZZ 三虚狩要求三支独立队伍，不能把共享辅助重复计入多个核心。
