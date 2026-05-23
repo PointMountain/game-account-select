@@ -11,6 +11,18 @@ updated_at: 2026-05-17
 - User feedback about game meta should become evidence for a rule update suggestion, not an immediate high-confidence rule.
 - Failed evaluator reports should become `quality_gate` findings, not warnings that can be ignored.
 - Tool failures and dependency gaps should go through Troubleshooting before any valuation rule change.
+- For game-account trading, "邮箱未实名出售" / unverified email included can be a positive low-retrieval-risk signal; optimizers should flag runs where it was treated as neutral or risky despite user feedback.
+- Live purchase recommendations should not rely on a 30-day community evidence window. If the run records a 7+ day snapshot age, cross-version context, or user feedback that data is stale, emit an evidence refresh-window finding.
+- If the run is uncertain about meta, team archetypes, pairings, dupes, signature equipment, or account-trading risk, the optimizer should require community attempts before high-confidence ranking.
+- Community-source failures should not end at "unreadable"; flag missing tool fallbacks when Bilibili subtitles, Xiaohongshu bodies, comments, or similar sources time out without browser DOM, metadata, guide-site, official-source, or user-screenshot fallback.
+- Main recommendations, flexible-budget backups, risk backups, and excluded listings should retain source URLs so users can compare candidates directly.
+- User-approved budget flexibility belongs in a separate backup tier; near-budget accounts should not displace primary in-budget recommendations.
+- Hard conditions outrank budget fit. If no listing inside the stated budget satisfies a hard condition, recommend expanding to the flexible budget and identify the cheapest satisfying listing instead of promoting an in-budget miss.
+- Multi-team hard requirements must check independent team completeness. Do not count the same support or equipment slot for multiple cores; add regression samples with both shared-support traps and complete-team positives.
+- Repeated valuable platform access without a native OpenCLI command should become an adapter-gap finding, not permanent one-off DOM scraping.
+- OpenCLI adapter generation is only appropriate when the data is browser-visible, backed by verifiable HTTP/JSON/HTML, and can pass `opencli browser verify`; otherwise the correct fallback is user-provided links, screenshots, or copied text.
+- Once an OpenCLI adapter has passed `browser verify --strict-memory`, future runs should emit adapter-reuse guidance and prefer `opencli <site> <command>` over one-off browser DOM parsing.
+- Detail-page adapters and list-page adapters are separate capabilities. A run with `detail_adapter_available: true` and `list_adapter_available: false` should reuse the detail adapter while reporting only the missing list adapter capability.
 
 ## Harness Philosophy
 
@@ -30,12 +42,15 @@ Autopatch-safe changes:
 - Adding output-format guidance.
 - Adding runtime logging fields.
 - Adding deterministic fixtures.
+- Adding adapter-gap diagnosis guidance.
+- Adding verified-adapter reuse guidance.
 
 Not autopatch-safe by default:
 
 - Changing game valuation weights.
 - Declaring new community meta as high confidence.
 - Implementing platform scraping or browser bypass logic.
+- Writing or registering a new OpenCLI adapter.
 - Removing risk checks to improve scores.
 - Marking a failed evaluator report as acceptable.
 
@@ -48,4 +63,10 @@ Regression coverage should include:
 - A real-ish noisy account screening run.
 - A clean run with no findings.
 - A non-Wuthering target skill run to prove repository-wide routing.
+- A Zenless Zone Zero run covering email-unverified risk ranking and shortened evidence refresh windows.
+- A run covering community evidence fallback, wait-budget recording, listing links, and flexible-budget backup output.
+- A run covering hard-condition budget expansion and multi-team completeness, such as ZZZ all Void Hunters needing three independent teams.
+- A run where valuable platforms have no reusable OpenCLI adapter and should trigger an adapter-generation recommendation.
+- A run where pxb7/pzds detail adapters are verified and should be reused without re-triggering the adapter-gap finding.
+- A run where pxb7/pzds detail adapters are verified but list adapters are missing, proving the optimizer can emit both detail reuse and list-capability gap evidence without conflating the two.
 - A failed evaluator run to prove redo behavior.

@@ -1,0 +1,118 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "千元内性价比高，硬性标准全部虚狩，辅助按社群配队判断；价格可上下浮动二三百作为备选；预算内没有满足三队条件的号就扩大金额找最低满足价",
+  "budget_max": 1000,
+  "allow_budget_flex": true,
+  "community_snapshot_age_days": 7,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 仪玄 星见雅 叶瞬光 千元内",
+      "status": "success",
+      "duration_ms": 7200,
+      "wait_budget_ms": 15000,
+      "result_count": 50,
+      "adapter_available": false,
+      "fallback_used": "browser_cdp",
+      "evidence": "opencli list had no pxb7 site command; product pages were readable through browser DOM"
+    },
+    {
+      "platform": "pzds",
+      "query": "绝区零 goodsList/275 仪玄 星见雅 叶瞬光",
+      "status": "partial",
+      "duration_ms": 19000,
+      "result_count": 10,
+      "adapter_available": false,
+      "fallback_used": "browser_cdp",
+      "error_text": "no opencli adapter; detail asset tab failed with XMLHttpRequest header error"
+    },
+    {
+      "platform": "xianyu",
+      "query": "绝区零 账号 三虚狩",
+      "status": "timeout",
+      "duration_ms": 45000,
+      "result_count": 0,
+      "error_text": "adapter response timed out"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "opencli subtitle",
+      "query": "绝区零 叶瞬光 配队 星见雅 仪玄 2.8",
+      "status": "timeout",
+      "duration_ms": 46000,
+      "result_count": 0,
+      "error_text": "subtitle command hung"
+    },
+    {
+      "source": "xiaohongshu",
+      "tool": "opencli search",
+      "query": "绝区零 叶瞬光 配队 星见雅 仪玄",
+      "status": "timeout",
+      "duration_ms": 42000,
+      "result_count": 0,
+      "error_text": "search command hung"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ0699",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2187082765844721999/1",
+      "price": 788,
+      "recommendation_tier": "primary",
+      "reason": "2命雅、2命叶瞬光、1命仪玄，邮箱未实名出售，未绑定TAP/PSN"
+    },
+    {
+      "listing_id": "QL9CHD",
+      "platform": "pzds",
+      "price": 799,
+      "recommendation_tier": "primary",
+      "reason": "列表声称三虚狩均有皮肤，但详情资产不完整"
+    }
+  ],
+  "backup_listings": [
+    {
+      "listing_id": "JHYXJ4694",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2186792948531961127/1",
+      "price": 999,
+      "recommendation_tier": "risk_backup",
+      "reason": "TAP 已绑定送 TAP，需要确认找回链"
+    }
+  ],
+  "excluded_listings": [
+    {
+      "listing_id": "JHYXJ3302",
+      "platform": "pxb7",
+      "price": 999,
+      "reason": "邮箱不出售"
+    }
+  ],
+  "missing_fields": [
+    "B站字幕未稳定读取",
+    "小红书正文未稳定读取",
+    "pzds部分详情页资产列表加载失败",
+    "最终验号截图和换绑码需要人工确认"
+  ],
+  "rule_update_suggestions": [
+    "社群配队不确定时必须先找社群答案，不能只用平台标题高置信排序",
+    "opencli B站字幕和小红书搜索超时时，应改用浏览器DOM、页面metadata、攻略站或用户截图降级",
+    "1000元预算允许上下波动二三百的账号应作为价格浮动备选单独展示，并保留链接",
+    "全部虚狩不能按三虚狩+两个辅助算完整，必须检查星见雅、仪玄、叶瞬光能否无重复队友组成三队",
+    "星见雅队优先确认柚叶；没有柚叶时必须说明耀嘉音、妮可、苍角、月城柳或莱卡恩等下位替代"
+  ],
+  "final_response": "当前只能中置信推荐，因为 B站字幕和小红书正文未稳定读取。推荐把三虚狩+琉音+耀嘉音当作都有适配辅助，但没有证明三队独立；用户允许价格上下浮动 200-300 元，但最终回复没有列出超预算最低满足价备选链接。",
+  "user_feedback": [
+    "不确定的场景下需要去找社群答案",
+    "看是否有工具可以优化社群内容无法读取的问题",
+    "优化执行性能问题",
+    "其它备选也要返回链接便于展示挑选",
+    "1000元内上下波动2，300也可以作为备选推荐，不做主流推荐",
+    "柚叶是星见雅队必须优先看的队友，组队尽可能找最适配，其次再是下位替代",
+    "角色要能和虚狩组成三队，不要3虚狩+2辅助，看起来都有适配辅助，实则没法组成三队",
+    "如果给定金额没有满足条件的号，可以扩大金额搜索范围，尽可能找一个价格最低且满足条件的号"
+  ]
+}

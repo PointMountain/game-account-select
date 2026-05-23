@@ -1,0 +1,59 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "千元内性价比高的绝区零账号",
+  "community_snapshot_age_days": 7,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 账号 千元内",
+      "status": "success",
+      "duration_ms": 6500,
+      "result_count": 20
+    },
+    {
+      "platform": "pzds",
+      "query": "绝区零 goodsList/275",
+      "status": "success",
+      "duration_ms": 5900,
+      "result_count": 10
+    },
+    {
+      "platform": "xianyu",
+      "query": "绝区零 账号 米哈游官服",
+      "status": "timeout",
+      "duration_ms": 45000,
+      "result_count": 0,
+      "error_text": "adapter response timed out"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ0699",
+      "platform": "pxb7",
+      "price": 788,
+      "email_status": "邮箱未实名出售",
+      "reason": "2+1 雅、2+1 叶瞬光、1+1 仪玄，122 加密母带，官方验号，找回包赔"
+    },
+    {
+      "listing_id": "JHYXJ3302",
+      "platform": "pxb7",
+      "price": 999,
+      "email_status": "邮箱不出售",
+      "reason": "满命雅但资源少，邮箱不出售增加找回风险"
+    }
+  ],
+  "final_response": "JHYXJ0699 推荐靠前；但当次规则没有明确把邮箱未实名出售作为低找回风险加分项。当前社区证据快照按 30 天窗口判断，真实买号数据更新太长。",
+  "missing_fields": [
+    "邮箱交付/实名状态需要在最终验号确认",
+    "HoYoverse/PSN/TAP 绑定状态"
+  ],
+  "rule_update_suggestions": [
+    "邮箱未实名出售是加分项，可以有效避免找回，在同等资产下应提高优先级",
+    "数据更新30天太长，真实买号筛选应缩短社区证据刷新窗口"
+  ],
+  "user_feedback": [
+    "游戏账户交易中邮箱未实名出售是加分项，可以有效避免找回，在优先级中也一些排名",
+    "数据更新30天太长了，需要优化"
+  ]
+}

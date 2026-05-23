@@ -1,0 +1,69 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "千元内性价比高，硬性标准全部虚狩",
+  "budget_max": 1000,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "JHYXJ0699",
+      "status": "success",
+      "duration_ms": 8200,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "adapter_available": true,
+      "adapter_verified": true,
+      "adapter_command": "opencli pxb7 detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/detail --strict-memory",
+      "evidence": "verified private adapter returned binding/resources/counts/voidHunters for JHYXJ0699"
+    },
+    {
+      "platform": "pzds",
+      "query": "QL9CHD",
+      "status": "success",
+      "duration_ms": 9000,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "adapter_available": true,
+      "adapter_verified": true,
+      "adapter_command": "opencli pzds detail QL9CHD -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/detail --strict-memory",
+      "evidence": "verified private adapter returned binding/resources/counts/voidHunters for QL9CHD"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "opencli subtitle",
+      "query": "绝区零 叶瞬光 配队 星见雅 仪玄",
+      "status": "success",
+      "duration_ms": 8000,
+      "wait_budget_ms": 15000,
+      "result_count": 3,
+      "evidence": "社群证据已读取"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ0699",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2187082765844721999/1",
+      "price": 788,
+      "recommendation_tier": "primary",
+      "reason": "verified adapter found all void hunters and low binding risk"
+    },
+    {
+      "listing_id": "QL9CHD",
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsDetails/QL9CHD/6",
+      "price": 799,
+      "recommendation_tier": "backup",
+      "reason": "verified adapter found all void hunters"
+    }
+  ],
+  "backup_listings": [],
+  "excluded_listings": [],
+  "missing_fields": [],
+  "final_response": "已优先使用 verified OpenCLI adapter 读取 pxb7 和 pzds 详情。",
+  "user_feedback": []
+}

@@ -17,7 +17,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 - `game-account-preflight`
 - `game-account-toolkit`
 - `game-account-skill-generator`（当游戏未支持时）
-- `game-account-skill-evaluator`（当生成或更新 skill 后）
+- `game-account-skill-evaluator`（当生成、更新 skill 后，以及每次筛选的收尾质量门禁）
 - `game-account-community-updater`（当社区证据过期或用户要求刷新时）
 - `game-account-skill-optimizer`（筛选结束后分析慢路径、空结果、平台覆盖、输出格式、估值误判和质量门禁问题）
 
@@ -32,7 +32,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
 
-读取 `references/selection-state-machine.md`，按状态机执行。不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。
+读取 `references/selection-state-machine.md`，按状态机执行。不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。每次真实查询都必须执行状态机里的 `POST_RUN_OPTIMIZE` 收尾阶段：先生成 raw run artifact，运行 `game-account-skill-optimizer`，再运行 `game-account-skill-evaluator --from-report=<run-artifact>`，根据门禁结果补查、降级、改写推荐或打回重做。
 
 ## 标准输入输出
 
@@ -99,12 +99,20 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 每次筛选完成后，应把本次运行摘要交给 `game-account-skill-optimizer`，至少包括：
 
-- 平台尝试、查询词、耗时、结果数和失败文本。
-- 入选与排除账号。
-- 最终回复是否用了结构化标签。
-- 用户反馈和规则更新建议。
-- 目标 skill 的 evaluator 报告；若已有优化产物，还要包含 `score`、`passed`、`redo_required` 和阻塞问题。
+- 平台尝试、查询词、耗时、等待预算、结果数、失败文本、列表/详情 adapter 可用性、降级路径。
+- 社区证据尝试、工具、等待预算、失败文本、正文/字幕/评论是否可读、降级路径。
+- 主推荐、价格浮动备选、风险备选和排除账号，全部保留 URL、价格、分层、降级原因。
+- 最终回复草稿是否用了结构化标签、是否包含自然语言结论、风险和人工确认项。
+- 用户反馈、规则更新建议和残留问题。
+- 目标 skill 的 evaluator 报告；若已有优化产物，还要包含 `score`、`passed`、`redo_required`、`mode`、`optimizer_findings` 和阻塞问题。
 
-自动优化阶段默认只产出 `<skill_optimization_report>` 和用户可读摘要，不静默写入其它 skill。用户明确要求“实现/应用这些优化”时，才按报告修改对应文件并运行验证。
+自动优化阶段默认只产出优化报告、评估结果和用户可读摘要，不静默写入其它 skill。用户明确要求“实现/应用这些优化”时，才按报告修改对应文件并运行验证。
 
-应用优化后必须运行 `game-account-skill-evaluator`。若低于门槛、存在阻塞问题或 `redo_required: true`，本轮产物必须打回重做，不得继续用于真实账号推荐。
+每次筛选的收尾阶段都必须运行：
+
+```bash
+node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input <run-artifact.json> --json
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=<run-artifact.json> --json
+```
+
+若 evaluator 对 raw run artifact 输出 `redo_required: true`，必须处理非 info `optimizer_findings`：能补查的回到对应状态补查；不能补查的平台/卖家/登录限制必须降置信并写入最终风险。应用优化后还必须运行目标 skill 的 `game-account-skill-evaluator`；若低于门槛、存在阻塞问题或 `redo_required: true`，本轮产物必须打回重做，不得继续用于真实账号推荐。

@@ -4,7 +4,7 @@ updated_at: {{date}}
 
 ## 社区证据要求
 
-评分前读取 `references/community-evidence.md` 和 `references/asset-knowledge.md`。如果快照超过 30 天、出现未覆盖的新核心资产、或来源覆盖不足，`confidence` 最高为 `medium`。
+评分前读取 `references/community-evidence.md` 和 `references/asset-knowledge.md`。真实买号筛选默认只信任 7 天内的社区证据；如果快照已满 7 天、出现未覆盖的新核心资产、或来源覆盖不足，`confidence` 最高为 `medium`。
 
 ## 最高优先级规则
 

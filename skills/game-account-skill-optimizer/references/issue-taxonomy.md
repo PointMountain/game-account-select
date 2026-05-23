@@ -41,6 +41,7 @@ updated_at: 2026-05-17
 - 给该平台设置等待预算。
 - 失败后进入降级路径，不反复重试。
 - 把失败原因写入数据来源限制。
+- 对社区来源同样适用等待预算；`duration_ms` 较长但缺少 `wait_budget_ms` 时，应补运行记录字段，便于下次判断是否该提前降级。
 
 ### empty_result
 
@@ -76,6 +77,47 @@ updated_at: 2026-05-17
 
 - 更新平台访问策略和主筛选状态机。
 - 不要声明已覆盖没有实际读取的平台。
+- 若平台经常复用、浏览器可见且当前 `opencli list` 没有对应站点命令，应生成 `platform-opencli-adapter-gap` finding，建议按 OpenCLI adapter 流程建立私有 adapter。
+- Adapter 实现不是默认自动补丁；必须完成站点侦察、endpoint 验证、字段核对和 `opencli browser verify <site>/<command>` 后，才能把该 adapter 当作可靠平台来源。
+- 若已存在并验证通过，应生成 `platform-opencli-adapter-reuse` finding，提醒下次优先复用 adapter 命令，而不是继续临时 DOM 抽取。
+- 列表页和详情页能力要分开判断：只有详情 adapter 可用时，不应把整个平台标成“无 adapter”；应对详情输出复用建议，对列表页缺口单独记录。
+
+### adapter_gap
+
+目标网站没有可复用 OpenCLI adapter，导致每次都靠临时 CDP/DOM 抽取、手动解析或截图降级。
+
+常见信号：
+
+- `adapter_available: false` 或 `opencli_adapter_available: false`
+- `list_adapter_available: false` 且列表页需要反复通过 CDP/DOM 读取
+- `detail_adapter_available: false` 且详情页需要反复通过 CDP/DOM 读取
+- 运行记录包含 `no opencli adapter`、`missing adapter`、`没有适配器`
+- `fallback_used: browser_cdp` / `manual_browser_dom` 且同平台会反复用于账号筛选
+
+建议：
+
+- 先用 `opencli list -f yaml` 和 `opencli <site> -h` 确认确实没有现成站点命令。
+- 对浏览器可见、数据来自 HTTP/JSON/HTML、无需绕过验证码/风控/付费墙的平台，调用 `opencli-adapter-author` workflow：`opencli browser analyze <url>`、`opencli browser init <site>/<command>`、字段解码、`opencli browser verify <site>/<command> --write-fixture`。
+- 把 endpoint、字段映射、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`，下次筛选优先复用 adapter。
+- 若数据只在不可稳定访问的交互、图片、验证码或付费内容里，停止 adapter 化，降级为用户提供链接、截图或复制文本。
+
+### adapter_reuse
+
+目标网站已有通过 OpenCLI verify 的 adapter，后续筛选应优先使用结构化命令，并把验证命令写入运行记录。
+
+常见信号：
+
+- `adapter_available: true` 或 `opencli_adapter_available: true`
+- `detail_adapter_available: true`
+- `adapter_verified: true`
+- `adapter_command` 类似 `opencli pxb7 detail <url> -f json`
+- `verify_command` 类似 `opencli browser <session> verify pxb7/detail --strict-memory`
+
+建议：
+
+- 输出 `platform-opencli-adapter-reuse` finding，并把 `adapter_command` 与 `verify_command` 放入 evidence。
+- 不再输出 `platform-opencli-adapter-gap`，除非 adapter 验证失败或能力不足。
+- 若 adapter 输出字段缺失、fixture mismatch 或网页肉眼值不一致，修 adapter；不要用游戏估值规则掩盖解析错误。
 
 ### output_format
 
@@ -86,11 +128,14 @@ updated_at: 2026-05-17
 - 最终回复包含 `<game_account_evaluation>`
 - 最终回复包含 `<recommendations>` 且没有自然语言摘要
 - JSON 过长且没有解释
+- 推荐、备选或排除账号缺商品链接，用户无法打开比较。
+- 用户允许预算上下浮动，但输出没有单独列出价格浮动备选。
 
 建议：
 
 - 用户可见部分先给推荐结论、理由、风险和人工确认项。
 - 机器标签只在调试、日志或用户明确要求结构化输出时展示。
+- Top 推荐、价格浮动备选、风险备选和排除列表都保留 URL；超预算 200-300 元的账号只进“价格浮动备选”，不得混入主推荐。
 
 ### valuation
 
@@ -102,11 +147,30 @@ updated_at: 2026-05-17
 - 忽略热门配队、主 C 是否带专武、队伍角色关系。
 - 忽略绝区零专属音擎/队伍/邦布，明日方舟专精/模组/限定联动，异环弧盘/觉醒等游戏特有资产。
 - 用户反馈某个队伍或角色价值判断错误。
+- 用户要求多个核心分别成队，但推荐把共享队友重复计算，例如“三虚狩 + 两个辅助”被当成三支完整队。
+- 用户指出需要优先找最适配队友，再列下位替代，例如绝区零星见雅优先确认柚叶，不能只说有泛用辅助。
 
 建议：
 
 - 更新对应游戏的 `valuation-rules.md`、知识表和验证样例。
 - 新增验证样例，确保相同误判不复发。
+- 对“多核心多队”类硬条件，验证样例应包含一个共享辅助陷阱和一个独立成队正例。
+
+### hard_condition_budget
+
+用户给了预算和硬条件，但预算内候选不满足硬条件时，筛选流程错误地推荐了便宜但不合格的账号，或没有扩大价格范围寻找最低满足条件账号。
+
+常见信号：
+
+- 用户说“给定金额没有满足条件可以扩大金额/搜索范围”。
+- 用户要求“尽可能找价格最低且满足条件的号”。
+- 预算内主推缺硬条件，例如缺指定角色、专武、绑定状态、独立三队或低风险交付。
+
+建议：
+
+- 主筛选状态机应先在 `primary_budget` 内找硬条件完整账号。
+- 预算内无合格账号时扩大到 `flex_budget`，输出“最低满足价”备选。
+- 预算内不合格账号只能进排除或风险备选，不能作为 Top 1。
 
 ### evidence
 
@@ -117,11 +181,14 @@ updated_at: 2026-05-17
 - `community_confidence: low|medium`
 - `rule_update_suggestion` 非空
 - 新角色或新队伍未出现在快照中
+- 用户要求按社群配队、强度或避坑经验排序，但运行记录没有成功的 `community_attempts`。
+- B站字幕、小红书正文、评论或攻略页面读取失败，并且没有记录工具降级路径。
 
 建议：
 
 - 调用 `game-account-community-updater` 或按社区调研协议刷新证据。
 - 在刷新前不要把单次观察升级为硬规则。
+- 对 opencli 超时、正文不可读、登录墙或空卡片，改用浏览器 DOM、页面 metadata、Jina/WebFetch/curl、官方公告、Wiki/攻略站或用户截图/文本，并记录 `fallback_used`。
 
 ### risk
 

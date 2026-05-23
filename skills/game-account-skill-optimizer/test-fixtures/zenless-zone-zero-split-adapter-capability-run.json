@@ -1,0 +1,73 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-select",
+  "user_request": "千元内三虚狩账号，平台列表页低频筛选后抽详情",
+  "budget_max": 1000,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 三虚狩 列表页",
+      "status": "success",
+      "duration_ms": 9000,
+      "wait_budget_ms": 15000,
+      "result_count": 20,
+      "list_adapter_available": false,
+      "detail_adapter_available": true,
+      "adapter_verified": true,
+      "detail_adapter_command": "opencli pxb7 detail 2186225899602137215 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/detail --strict-memory",
+      "fallback_used": "browser_cdp_for_list",
+      "evidence": "列表页仍通过 browser DOM 低频读取；详情页已用 verified pxb7/detail adapter 抽取 binding/resources/voidHunters"
+    },
+    {
+      "platform": "pzds",
+      "query": "仪玄 星见雅 叶瞬光 列表页",
+      "status": "success",
+      "duration_ms": 8500,
+      "wait_budget_ms": 15000,
+      "result_count": 10,
+      "list_adapter_available": false,
+      "detail_adapter_available": true,
+      "adapter_verified": true,
+      "detail_adapter_command": "opencli pzds detail QL9CHD -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/detail --strict-memory",
+      "fallback_used": "browser_cdp_for_list",
+      "evidence": "列表页筛选仍靠自然导航；详情页已用 verified pzds/detail adapter 抽取 binding/resources/voidHunters"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "opencli bilibili search",
+      "query": "绝区零 三虚狩 配队 柚叶 琉音 千夏",
+      "status": "success",
+      "duration_ms": 3000,
+      "wait_budget_ms": 15000,
+      "result_count": 8
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ2853",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2186225899602137215/1",
+      "price": 699,
+      "recommendation_tier": "primary",
+      "reason": "详情 adapter 确认三虚狩和绑定字段"
+    }
+  ],
+  "backup_listings": [
+    {
+      "listing_id": "QL9CHD",
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsDetails/QL9CHD/6",
+      "price": 799,
+      "recommendation_tier": "risk_backup",
+      "reason": "详情 adapter 确认三虚狩，列表页来源仍为浏览器降级"
+    }
+  ],
+  "excluded_listings": [],
+  "missing_fields": [],
+  "final_response": "已复用 pxb7/detail 和 pzds/detail adapter；列表页仍为浏览器低频降级。",
+  "user_feedback": []
+}

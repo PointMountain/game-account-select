@@ -26,6 +26,44 @@
 
 闲鱼常见问题是登录推荐页、空商品卡片、验证码和搜索无输出。遇到这些信号时应快速降级，不要把时间耗在重复等待上。
 
+## OpenCLI adapter 缺口
+
+当目标平台没有现成 `opencli <site>` 命令，但该平台会反复用于账号筛选时，先判断是否值得生成 adapter：
+
+1. 运行 `opencli list -f yaml` 和 `opencli <site> -h` 确认没有可复用站点命令或命令能力不足。
+2. 若页面在浏览器中可见、数据来自可验证的 HTTP/JSON/HTML，且不需要绕过验证码、登录墙、风控或付费墙，可按 `opencli-adapter-author` 走 adapter 化：`opencli browser analyze <url>`、`opencli browser init <site>/<command>`、字段解码、`opencli browser verify <site>/<command> --write-fixture`。
+3. Adapter 验证通过且字段与网页肉眼值对齐后，才能把该 adapter 作为可靠平台来源；验证前只能标记为实验性或降级来源。
+4. 若数据只靠图片、强交互、验证码、登录推荐流或不稳定风控页面获得，不做 adapter，改为请求用户提供链接、截图或复制文本。
+
+筛选运行记录中应保留 `adapter_available` / `opencli_adapter_available`、`fallback_used` 和 adapter 验证状态，供 `game-account-skill-optimizer` 判断是否生成 `platform-opencli-adapter-gap`。
+
+## OpenCLI adapter 复用
+
+当平台已有通过 `opencli browser <session> verify <site>/<command> --strict-memory` 的 adapter 时，账号筛选应优先使用 adapter 命令：
+
+1. 运行 `opencli list -f json` 或 `opencli <site> <command> -h` 确认可用命令。
+2. 用 `opencli <site> <command> <input> -f json` 读取结构化字段，并把 `adapter_command` 写入运行记录。
+3. 在关键推荐前或 adapter 改动后运行 `opencli browser <session> verify <site>/<command> --strict-memory`，并把 `verify_command` 写入运行记录。
+4. 只有 adapter 报错、fixture mismatch、字段缺失或网页肉眼值不一致时，才降级到 `browser state/eval`、截图、用户复制文本或其它平台。
+5. 已验证 adapter 的运行记录应设置 `adapter_available: true`、`adapter_verified: true`；优化器据此生成复用建议，而不是 adapter 缺口建议。
+
+## 性能预算与降级
+
+平台访问必须设置明确等待预算并可提前放弃：
+
+- 列表页/搜索页：通常 10-15 秒。
+- 商品详情页：通常 15-20 秒。
+- 字幕、评论、图片密集页或登录态页面：通常不超过 30 秒，除非用户明确要求深挖。
+
+同一平台同一意图出现超时、空卡片、登录墙、验证码、`503`、详情页加载失败或无输出命令时，最多再用一种不同工具或自然导航路径复查一次。仍失败则立刻降级并记录，不要继续堆等待。
+
+推荐降级顺序：
+
+1. 公开详情页不可读但列表卡片可读：保留列表卡片字段，标记 `source_status: partial` 和 `fallback_used: list_card`。
+2. 结构化工具超时：改用浏览器 CDP 读取 DOM/可见文本/页面 metadata。
+3. 浏览器也不可读：请求用户提供链接、截图或复制文本。
+4. 标记平台当前不可用，并把失败文本交给优化器。
+
 ## 禁止的访问方式
 
 - 全站实时抓取。
@@ -53,6 +91,8 @@
 - 绑定状态
 - 原始描述文本
 
+每个推荐、备选和排除账号都应保留商品 URL；没有 URL 时必须保留平台、商品编号和原始标题，方便用户二次定位。
+
 ## 风险提示
 
 每次访问平台前，如果使用浏览器自动化，应提示：
@@ -74,8 +114,10 @@
 
 - 平台和 URL/查询词。
 - 耗时。
+- 等待预算。
 - 结果数。
 - 失败文本。
+- 降级路径。
 - 是否登录/验证/风控/503/空结果。
 
 筛选结束后把这些字段交给 `game-account-skill-optimizer`，用于下次避免相同慢路径。

@@ -1,5 +1,5 @@
 {
-  "expected_top_id": "limited-engine-team-good",
+  "expected_top_id": "void-hunters-three-team-complete",
   "community_snapshot_date": "2026-05-16",
   "listings": [
     {
@@ -21,6 +21,7 @@
         "resources": {},
         "progression": { "inter_knot_level": 60 },
         "risk": {
+          "email_status": "unknown",
           "hoyoverse_binding": "unknown",
           "psn_binding": "unknown",
           "tap_binding": "unknown",
@@ -56,6 +57,7 @@
         },
         "progression": { "inter_knot_level": 52 },
         "risk": {
+          "email_status": "unbound",
           "hoyoverse_binding": "changeable",
           "psn_binding": "clean",
           "tap_binding": "clean",
@@ -81,11 +83,160 @@
         "resources": {},
         "progression": { "inter_knot_level": 50 },
         "risk": {
+          "email_status": "unknown",
           "hoyoverse_binding": "unknown",
           "psn_binding": "bound",
           "tap_binding": "unknown",
           "guarantee": "none",
           "official_verification": false
+        }
+      }
+    },
+    {
+      "id": "email-unverified-safe",
+      "price": 788,
+      "title": "未实名邮箱出售限定核心号",
+      "server": "官服",
+      "raw_text": "2命雅、2命叶瞬光、1命仪玄；加密母带122；邮箱未实名出售，未绑定TAP，未绑定PSN，官方验号，找回包赔。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 1, "role": "defense" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 0, "role": "support" }
+        ],
+        "w_engines": [
+          { "name": "Miyabi signature engine", "signature_for": "Miyabi" },
+          { "name": "Yixuan signature engine", "signature_for": "Yixuan" }
+        ],
+        "resources": {
+          "polychrome": 1424,
+          "encrypted_master_tape": 122,
+          "master_tape": 0,
+          "boopon": 0,
+          "residual_signal": 0
+        },
+        "progression": { "inter_knot_level": 59 },
+        "risk": {
+          "email_status": "unverified_email_included",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "email-not-included-risk",
+      "price": 999,
+      "title": "邮箱不出售限定核心号",
+      "server": "官服",
+      "raw_text": "满命雅、2命仪玄、1命叶瞬光；邮箱不出售，未绑定TAP，未绑定PSN，官方验号，找回包赔。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 6, "role": "attack" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 2, "role": "defense" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 1, "role": "attack" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 0, "role": "support" }
+        ],
+        "w_engines": [
+          { "name": "Miyabi signature engine", "signature_for": "Miyabi" },
+          { "name": "Yixuan signature engine", "signature_for": "Yixuan" }
+        ],
+        "resources": {
+          "polychrome": 104,
+          "encrypted_master_tape": 13,
+          "master_tape": 0,
+          "boopon": 0,
+          "residual_signal": 0
+        },
+        "progression": { "inter_knot_level": 60 },
+        "risk": {
+          "email_status": "not_included",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "void-hunters-shared-support-trap",
+      "price": 788,
+      "title": "三虚狩都有但只有两名关键辅助",
+      "server": "官服",
+      "raw_text": "2命星见雅、2命叶瞬光、1命仪玄；有琉音和耀嘉音，但缺柚叶、千夏、照、卢西娅等独立队友。看起来三虚狩都有辅助，实战只能拆出不足三队。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 1, "role": "defense" },
+          { "name": "Liuyin", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 0, "role": "support" }
+        ],
+        "w_engines": [
+          { "name": "Miyabi signature engine", "signature_for": "Miyabi" },
+          { "name": "Ye Shunguang signature engine", "signature_for": "Ye Shunguang" },
+          { "name": "Yixuan signature engine", "signature_for": "Yixuan" }
+        ],
+        "resources": {
+          "polychrome": 1424,
+          "encrypted_master_tape": 122,
+          "master_tape": 0,
+          "boopon": 0,
+          "residual_signal": 0
+        },
+        "progression": { "inter_knot_level": 59 },
+        "risk": {
+          "email_status": "unverified_email_included",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "void-hunters-three-team-complete",
+      "price": 1150,
+      "title": "三虚狩三队完整低风险号",
+      "server": "官服",
+      "raw_text": "星见雅、叶瞬光、仪玄均有专属音擎；星见雅有柚叶+苍角，叶瞬光有照+千夏，仪玄有橘福福+卢西娅。预算内若找不到三队完整号，应扩大金额寻找最低满足条件的账号。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Yuzuha", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Soukaku", "category": "standard", "mindscape": 6, "role": "support" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Zhao", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Qianxia", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 1, "role": "defense" },
+          { "name": "Ju Fufu", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Lucia", "category": "limited", "mindscape": 0, "role": "support" }
+        ],
+        "w_engines": [
+          { "name": "Miyabi signature engine", "signature_for": "Miyabi" },
+          { "name": "Ye Shunguang signature engine", "signature_for": "Ye Shunguang" },
+          { "name": "Yixuan signature engine", "signature_for": "Yixuan" }
+        ],
+        "resources": {
+          "polychrome": 9800,
+          "encrypted_master_tape": 45,
+          "master_tape": 0,
+          "boopon": 20,
+          "residual_signal": 120
+        },
+        "progression": { "inter_knot_level": 60 },
+        "risk": {
+          "email_status": "unbound",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
         }
       }
     }
