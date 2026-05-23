@@ -160,6 +160,7 @@ const communityAttempts = Array.isArray(artifact.community_attempts) ? artifact.
 const recommendations = Array.isArray(artifact.recommendations) ? artifact.recommendations : [];
 const backupListings = Array.isArray(artifact.backup_listings) ? artifact.backup_listings : [];
 const excludedListings = Array.isArray(artifact.excluded_listings) ? artifact.excluded_listings : [];
+const finalResponse = String(artifact.final_response ?? '');
 const executionIssues = [
   ...(Array.isArray(artifact.errors) ? artifact.errors : []),
   ...(Array.isArray(artifact.exceptions) ? artifact.exceptions : []),
@@ -383,6 +384,86 @@ if (verifiedAdapterAttempts.length) {
   });
 }
 
+function isZenlessRun() {
+  const text = [
+    artifact.game,
+    targetSkill,
+    artifact.user_request,
+    finalResponse,
+    ...recommendations.map((item) => JSON.stringify(item)),
+    ...backupListings.map((item) => JSON.stringify(item)),
+    ...excludedListings.map((item) => JSON.stringify(item))
+  ].join('\n');
+  return /zenless|绝区零|zzz|虚狩|星见雅|仪玄|叶瞬光/i.test(text);
+}
+
+function listingPlatform(listing) {
+  return platformName({
+    platform: listing.platform,
+    source: listing.source,
+    url: listing.url ?? listing.href
+  });
+}
+
+function hasAgentStatuses(listing) {
+  const assets = listing.game_assets ?? {};
+  const statusCandidates = [
+    listing.agentStatuses,
+    listing.agent_statuses,
+    listing.asset_statuses,
+    listing.agent_status_map,
+    assets.agent_statuses,
+    assets.agentStatuses,
+    assets.game_specific?.agent_statuses,
+    assets.game_specific?.agentStatuses
+  ];
+
+  return statusCandidates.some((value) => {
+    if (!value) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value).length > 0;
+    return String(value).trim().length > 0;
+  });
+}
+
+const verifiedDetailPlatforms = new Set(verifiedAdapterAttempts
+  .map(platformName)
+  .filter((platform) => ['pxb7', 'pzds'].includes(platform)));
+const statusRelevantListings = [...recommendations, ...backupListings, ...excludedListings]
+  .filter((listing) => verifiedDetailPlatforms.has(listingPlatform(listing)))
+  .filter((listing) => {
+    const text = JSON.stringify(listing);
+    return /voidHunters|虚狩|星见雅|仪玄|叶瞬光|S级代理人|S代理人/i.test(text) || isZenlessRun();
+  });
+const listingsMissingAgentStatuses = statusRelevantListings.filter((listing) => !hasAgentStatuses(listing));
+if (isZenlessRun() && verifiedDetailPlatforms.size > 0 && listingsMissingAgentStatuses.length > 0) {
+  addFinding({
+    id: 'platform-agent-status-asset-cards-missing',
+    severity: 'high',
+    category: 'platform_coverage',
+    summary: 'ZZZ pxb7/pzds detail results should preserve asset-card agentStatuses before valuation',
+    evidence: [
+      ...verifiedAdapterAttempts
+        .filter((attempt) => verifiedDetailPlatforms.has(platformName(attempt)))
+        .map((attempt) => `${platformName(attempt)} verified detail adapter: ${attempt.adapter_command ?? attempt.detail_adapter_command ?? attempt.opencli_adapter ?? 'command missing'}`),
+      ...listingsMissingAgentStatuses.map((listing) => {
+        const id = listing.listing_id ?? listing.id ?? listing.title ?? listing.url ?? 'unknown';
+        return `${listingPlatform(listing)} ${id}: missing agentStatuses while using ZZZ asset-card detail data`;
+      })
+    ],
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-zenless-zone-zero/references/valuation-rules.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
 const attemptedPlatforms = new Set(attempts.map(platformName));
 const explicitMissing = new Set(Array.isArray(artifact.missing_platforms) ? artifact.missing_platforms.map((platform) => platformAliasMap.get(String(platform).toLowerCase()) ?? String(platform)) : []);
 const missingRequiredPlatforms = DEFAULT_REQUIRED_PLATFORMS.filter((platform) => {
@@ -405,7 +486,6 @@ if (missingRequiredPlatforms.length) {
   });
 }
 
-const finalResponse = String(artifact.final_response ?? '');
 if (/<(?:game_account_evaluation|recommendations|skill_quality_report|community_refresh_report)\b/.test(finalResponse)) {
   addFinding({
     id: 'output-format-raw-tags',

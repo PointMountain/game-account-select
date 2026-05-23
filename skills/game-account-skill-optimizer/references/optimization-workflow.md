@@ -88,6 +88,7 @@ Adapter 代码实现默认不是自动补丁。只有用户明确要求“实现
 3. `verify_command` 必须能通过 `--strict-memory`，即 `~/.opencli/sites/<site>/endpoints.json` 和 `notes.md` 都存在。
 4. 若 adapter 输出和网页肉眼值不一致，应按 `opencli-autofix` 或 adapter-author workflow 修 adapter，不要在游戏估值规则里补偿解析错误。
 5. 私有 adapter 不进仓库时，repo 内只记录“如何识别/复用/验证”，实际 adapter 文件和站点记忆保留在 `~/.opencli/`。
+6. 绝区零的 `pxb7/detail` / `pzds/detail` 必须保留详情页角色角标 `agentStatuses`。如果推荐记录只有 `voidHunters` 或标题几命，没有 `agentStatuses`，优化器应输出 `platform-agent-status-asset-cards-missing` 并要求回到 adapter 或标准化层修复。
 
 ## 手动执行模式
 

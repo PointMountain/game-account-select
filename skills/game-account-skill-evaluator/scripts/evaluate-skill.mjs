@@ -167,6 +167,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const zzzCommunityPerformanceFixture = path.join(fixtureDir, 'zenless-zone-zero-community-performance-run.json');
   const zzzOpencliAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-opencli-adapter-run.json');
   const zzzSplitAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-split-adapter-capability-run.json');
+  const zzzAssetStatusFixture = path.join(fixtureDir, 'zenless-zone-zero-asset-status-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -302,6 +303,22 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing ZZZ split adapter capability optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzAssetStatusFixture)) {
+    const zzzAssetStatusReport = runFixture(zzzAssetStatusFixture);
+    const findings = zzzAssetStatusReport?.findings ?? [];
+    const findingIds = new Set(findings.map((finding) => finding.id));
+    const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasAssetStatusFinding = findingIds.has('platform-agent-status-asset-cards-missing');
+    const preservesAssetCardEvidence = /agentStatuses|asset-card|角标|pxb7 detail|pzds detail/i.test(evidence);
+    if (hasAssetStatusFinding && preservesAssetCardEvidence) addScore(4);
+    else {
+      if (!hasAssetStatusFinding) issue('Optimizer did not require ZZZ pxb7/pzds asset-card agentStatuses');
+      if (!preservesAssetCardEvidence) issue('Optimizer did not preserve asset-card status evidence');
+    }
+  } else {
+    issue('Missing ZZZ asset-status optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {

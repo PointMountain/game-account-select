@@ -23,6 +23,7 @@ updated_at: 2026-05-17
 - OpenCLI adapter generation is only appropriate when the data is browser-visible, backed by verifiable HTTP/JSON/HTML, and can pass `opencli browser verify`; otherwise the correct fallback is user-provided links, screenshots, or copied text.
 - Once an OpenCLI adapter has passed `browser verify --strict-memory`, future runs should emit adapter-reuse guidance and prefer `opencli <site> <command>` over one-off browser DOM parsing.
 - Detail-page adapters and list-page adapters are separate capabilities. A run with `detail_adapter_available: true` and `list_adapter_available: false` should reuse the detail adapter while reporting only the missing list adapter capability.
+- ZZZ Pxb7/PZDS detail adapters should preserve the asset-card status badges as `agentStatuses`; for `x+y`, `x` is dupes/影画 and `y` is the matching signature W-engine count. If a verified detail adapter run recommends accounts without this field, emit an asset-status extraction finding instead of relying on title text.
 
 ## Harness Philosophy
 
@@ -69,4 +70,5 @@ Regression coverage should include:
 - A run where valuable platforms have no reusable OpenCLI adapter and should trigger an adapter-generation recommendation.
 - A run where pxb7/pzds detail adapters are verified and should be reused without re-triggering the adapter-gap finding.
 - A run where pxb7/pzds detail adapters are verified but list adapters are missing, proving the optimizer can emit both detail reuse and list-capability gap evidence without conflating the two.
+- A run where verified pxb7/pzds detail adapters are used for ZZZ but the recommendation drops `agentStatuses`, proving the optimizer catches missing asset-card status data.
 - A failed evaluator run to prove redo behavior.

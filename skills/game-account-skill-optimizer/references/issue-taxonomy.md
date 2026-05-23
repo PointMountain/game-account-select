@@ -81,6 +81,7 @@ updated_at: 2026-05-17
 - Adapter 实现不是默认自动补丁；必须完成站点侦察、endpoint 验证、字段核对和 `opencli browser verify <site>/<command>` 后，才能把该 adapter 当作可靠平台来源。
 - 若已存在并验证通过，应生成 `platform-opencli-adapter-reuse` finding，提醒下次优先复用 adapter 命令，而不是继续临时 DOM 抽取。
 - 列表页和详情页能力要分开判断：只有详情 adapter 可用时，不应把整个平台标成“无 adapter”；应对详情输出复用建议，对列表页缺口单独记录。
+- 对绝区零的螃蟹/盼之详情，已验证 adapter 还应输出角色资产角标 `agentStatuses`；如果推荐只保留 `voidHunters` 或标题文本，应生成 `platform-agent-status-asset-cards-missing` finding。
 
 ### adapter_gap
 
@@ -118,6 +119,23 @@ updated_at: 2026-05-17
 - 输出 `platform-opencli-adapter-reuse` finding，并把 `adapter_command` 与 `verify_command` 放入 evidence。
 - 不再输出 `platform-opencli-adapter-gap`，除非 adapter 验证失败或能力不足。
 - 若 adapter 输出字段缺失、fixture mismatch 或网页肉眼值不一致，修 adapter；不要用游戏估值规则掩盖解析错误。
+
+### asset_status_extraction
+
+账号详情页存在角色卡片角标，但运行记录没有把它结构化保存，导致影画和专属音擎归属只能靠标题猜测。
+
+常见信号：
+
+- 绝区零账号来自 `pxb7/detail` 或 `pzds/detail` verified adapter。
+- 运行记录包含 `voidHunters`、S 代理人总数、标题“几命”，但推荐/备选缺少 `agentStatuses` 或 `game_assets.agent_statuses`。
+- 用户要求“全部虚狩和对应辅助/专武”，但输出没有说明资产卡角标来源。
+
+建议：
+
+- 修复或复用 OpenCLI detail adapter，让它滚动到资产卡片区域并输出浅层 `agentStatuses`。
+- 在 `shared-listing-schema.md`、`selection-state-machine.md` 和对应游戏 `valuation-rules.md` 中要求保留该字段。
+- `x+y` 只表示该角色有 `y` 个对应专属音擎；只有 `x` 时不要推断专武。
+- 不能读取角标时，把账号降级为 `source_status: partial` 并列为人工确认。
 
 ### output_format
 
