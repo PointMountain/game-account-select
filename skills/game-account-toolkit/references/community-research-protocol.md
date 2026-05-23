@@ -6,6 +6,17 @@
 
 当用户要求筛选、估值或比较游戏账号时，只要判断依赖当前版本强度、抽卡规划、队伍生态、命座/专武价值，就必须先使用本协议，或读取最近一次已记录且仍未过期的证据快照。
 
+真实买号筛选的默认证据有效期为 7 天。若游戏版本节奏较慢且账号资产不依赖当前强度榜，可在对应游戏 skill 中放宽到 14 天；不得继续使用 30 天作为默认有效期。跨版本、出现新角色/装备、或用户偏好依赖当前深渊/高难环境时，即使未满 7 天也应刷新。
+
+当结论不确定时，必须先找社群答案：
+
+- 候选账号出现本地知识未覆盖的新角色、新武器/音擎、新队伍、新皮肤高溢价或新高难环境。
+- 用户明确让“看社群配对/强度/避坑”或类似要求决定排序。
+- 平台标题写法和游戏设定口径不一致，例如交易标题把多个角色统称为同一标签。
+- 多个候选在资产接近但风险/辅助/资源不同，排名需要当前版本配队共识支撑。
+
+找不到足够证据时允许继续筛选，但必须把相关排序降为 `community_confidence: low|medium`，并输出人工确认项。
+
 ## 证据等级
 
 从高到低使用：
@@ -44,6 +55,7 @@
 2. 读取搜索结果标题、作者、互动分、URL。
 3. 对代表性视频读取 metadata、字幕和少量高赞评论。
 4. 若字幕不可用，只能摘要标题/简介/评论，不得声称已理解完整视频内容。
+5. 若结构化命令超时或无输出，立即改用浏览器 CDP 读取页面 DOM、`meta[name=description]`、合集/相关视频标题和页面可见评论；仍失败时记录 `fallback_used: browser_dom_or_metadata` 或 `failed`，不要继续等待同一命令。
 
 ### 小红书
 
@@ -54,6 +66,7 @@
 1. 查询角色强度、账号购买、专武、资源、绑定风险。
 2. 读取笔记正文和互动数。
 3. 用评论补充争议点，但不要把单条评论升级为规则。
+4. 若搜索或详情工具超时，改用浏览器 CDP 读取搜索结果卡片、标题、作者、互动数和可见正文；若登录墙、验证码或空卡片阻断，记录失败并改用 B站、贴吧/微博、通用搜索、官方公告或攻略站交叉验证。
 
 ### 抖音
 
@@ -69,6 +82,17 @@
 
 作为补充来源，用于发现争议、找回风险、账号交易风险和版本讨论。
 
+### 工具降级与性能预算
+
+社区取证必须低频、可中断，并记录每次尝试：
+
+- `tool`：opencli、browser_cdp、web_fetch、jina、curl、search_engine、user_provided_text 等。
+- `wait_budget_ms`：搜索/列表通常 10000-15000，字幕/评论/详情通常 15000-20000；除非用户明确要求深入，不要让单条命令超过 30000。
+- `duration_ms`、`status`、`result_count`、`error_text`。
+- `fallback_used`：例如 `browser_dom`、`page_metadata`、`guide_site`、`official_source`、`user_screenshot`。
+
+同一来源同一意图超时一次后，不要换词反复追打；先换工具或换独立来源。只有标题、卡片或元数据时，结论必须标为低到中置信。
+
 ## 证据快照字段
 
 游戏 skill 的证据快照建议使用：
@@ -78,6 +102,7 @@ community_evidence:
   game: string
   version_context: string
   updated_at: YYYY-MM-DD
+  max_age_for_live_purchase_days: number
   source_coverage:
     bilibili: available|limited|failed|not_checked
     douyin: available|limited|failed|not_checked
@@ -85,8 +110,12 @@ community_evidence:
     other: string[]
   query_log:
     - source: string
+      tool: string
       query: string
       status: success|failed|timeout|limited
+      duration_ms: number | null
+      wait_budget_ms: number | null
+      fallback_used: string | null
       notes: string
   consensus:
     high_value_assets: string[]

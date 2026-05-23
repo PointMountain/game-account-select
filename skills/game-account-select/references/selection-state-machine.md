@@ -79,6 +79,18 @@ limitations: string[]
 - 价格优势
 - 数据完整度
 
+同时生成预算分层：
+
+- `primary_budget`：用户明示预算内，默认只把这层作为主推荐。
+- `flex_budget`：用户允许价格波动时使用；没有明示时可把预算上下 20%-30% 或约 200-300 元作为“价格浮动备选”，但不得放进主推荐。
+- `excluded_price`：明显超出预算和浮动范围，只能进入排除列表或数据点，不得诱导购买。
+
+如果用户声明了硬条件，例如“全部虚狩”“必须带某角色/专武/三队完整”，预算分层不得弱化硬条件：
+
+- 先在 `primary_budget` 内寻找满足硬条件的账号。
+- 若 `primary_budget` 内没有满足硬条件的账号，扩大到 `flex_budget`，找价格最低且硬条件完整的账号，作为“最低满足价”备选。
+- 预算内但不满足硬条件的账号只能进入排除或风险备选，用于解释为什么不推荐；不能因为便宜而替代硬条件完整账号。
+
 ## COLLECT_LISTINGS
 
 按保守访问策略获取候选账号：
@@ -86,9 +98,13 @@ limitations: string[]
 1. 优先用户提供的链接、截图、复制文本或指定平台。
 2. 用户没有指定平台时，按 `game-account-toolkit/references/platform-priority.json` 的 `default_order` 低频尝试：螃蟹账号代售、盼之代售、交易猫、淘手游；闲鱼只作为补充来源。
 3. 每个平台最多做少量用户意图明确的列表页/搜索页读取。不要全站扫描。
-4. 对每个平台记录：查询词、开始/结束时间、耗时、结果数、失败文本、是否进入详情页。
-5. 平台页面不可读时，请用户提供截图/链接/复制文本。
-6. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
+4. 每条平台路径必须有等待预算：列表页通常 10-15 秒，详情页通常 15-20 秒；单个平台同一意图连续失败后立即降级，不让无输出命令长期挂起。
+5. 对每个平台记录：查询词、开始/结束时间、耗时、等待预算、结果数、失败文本、是否进入详情页、是否使用列表卡片/截图/用户文本降级。
+6. 平台页面不可读时，请用户提供截图/链接/复制文本；若列表卡片可读但详情页不可读，可保留为 `source_status: partial`，不能假装已验明详情。
+7. 若高价值平台没有现成 OpenCLI adapter，记录 `adapter_available: false`、当前降级路径和是否适合 adapter 化；只有用户明确要求实现并且 `opencli browser <session> verify <site>/<command>` 通过后，才把新 adapter 当作可靠数据源。
+8. 若平台已有 verified adapter，优先运行 `opencli <site> <command> <input> -f json`，并在记录中保留 `adapter_available: true`、`adapter_verified: true`、`adapter_command`、`verify_command`；adapter 失败时再降级为浏览器 DOM 或用户材料。
+9. 区分列表页和详情页能力：例如当前只有 `pxb7/detail` 或 `pzds/detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
+10. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
 
 不要全站扫描或高频翻页。
 
@@ -127,7 +143,10 @@ community_evidence:
 
 要求：
 
+- 只要存在强度、配队、命座/影画、专武/音擎、版本环境或账号交易避坑的不确定性，就必须先找社群答案或刷新证据；不能只凭本地旧快照或平台标题直接给高置信结论。
 - 优先用 B站长视频/字幕/评论、小红书图文/评论、抖音话题或视频信号；平台不可用时记录失败原因并使用降级来源。
+- 社区读取必须有工具降级链：先用可用的结构化工具读取搜索/详情/字幕/评论；若超时或无输出，改用浏览器 CDP 读取页面 DOM、标题、简介、相关视频/笔记卡片和公开评论；再尝试 Jina/WebFetch/curl/页面元数据、官方公告、Wiki/攻略站。每一步都记录 `community_attempts`、等待预算、失败文本和 `fallback_used`。
+- B站字幕、小红书正文、抖音内容等关键正文无法读取时，`community_confidence` 最高为 `medium`；只有标题/卡片不能单独支撑“当前 meta 强规则”。
 - 不得因为单条视频标题、短帖或评论就显著提高账号排名。
 - 如果当前证据过期、冲突或覆盖不足，继续筛选时必须降低置信度并列出人工确认项。
 
@@ -147,13 +166,25 @@ community_evidence:
 
 每个入选账号必须包含：
 
+- 商品 URL 或用户可打开的来源链接。
 - 价格
+- 所属推荐分层：主推荐、价格浮动备选、风险备选或排除。
 - 核心资产
 - 为什么适合用户偏好
 - 风险和缺失信息
 - 是否需要人工二次确认
 
+输出要求：
+
+- 主推荐只放 `primary_budget` 且硬条件通过、风险可接受的账号。
+- `flex_budget` 内的账号可作为“价格浮动备选”单独展示，必须说明超出或低于预算多少、为什么不是主推。
+- 如果没有账号同时满足预算和硬条件，必须明确写出“预算内未发现合格项”，再列出 `flex_budget` 中价格最低的合格项；不要给一个预算内不合格账号当 Top 1。
+- 风险备选和被排除账号也要保留链接，方便用户自行打开比较；没有链接时必须说明来源缺口。
+- 不要用最低价覆盖质量判断；便宜但邮箱不出售、TAP/PSN/实名/找回链不清的账号应降级为风险备选或排除。
+
 用户可见答复必须是自然语言推荐和清单，不要把 `<game_account_evaluation>` 或 `<recommendations>` 原始标签作为主文案输出。机器可读标签可在内部日志或用户明确要求结构化输出时附在后面。
+
+不要在完成 `POST_RUN_OPTIMIZE` 收尾门禁前发送最终答复。若收尾门禁发现会影响推荐正确性的缺口，必须先回到相应状态补查、降级或改写推荐。
 
 ## FEEDBACK_LOOP
 
@@ -167,36 +198,72 @@ community_evidence:
 
 ## POST_RUN_OPTIMIZE
 
-筛选完成后，调用 `game-account-skill-optimizer` 分析本次执行摘要。
+强制收尾阶段。每次筛选完成后，必须先把本次运行写成 raw run artifact，再依次调用 `game-account-skill-optimizer` 和 `game-account-skill-evaluator`。这个阶段不是可选总结；它决定本次查询是否需要回到前面的状态补查、降级、改写推荐或更新 skill。
 
 输入：
 
+- `run_id`
+- `started_at`
+- `finished_at`
 - `game`
 - `target_skill`
 - `user_request`
+- `budget` / `budget_max` / `allow_budget_flex`
+- `capabilities`
+- `query_plan`
 - `platform_attempts`
+- `platform_attempts[].list_adapter_available`
+- `platform_attempts[].detail_adapter_available`
+- `platform_attempts[].adapter_command`
+- `platform_attempts[].verify_command`
 - `recommendations`
+- `backup_listings`：价格浮动备选和风险备选，必须保留 URL、价格差、降级原因。
 - `excluded_listings`
-- `final_response`
+- `final_response_draft`
 - `missing_fields`
+- `community_attempts`：社区来源、工具、等待预算、耗时、状态、失败文本、降级路径。
+- `community_evidence`
 - `rule_update_suggestions`
 - `user_feedback`
 - `evaluation_reports`：目标 skill、生成器产物或优化产物的 evaluator 输出。
 
-输出：
+执行：
 
-```xml
-<skill_optimization_report>...</skill_optimization_report>
+1. 写入临时 artifact，默认放在 `/tmp/game-account-select-runs/<timestamp>-<game>.json`；除非用户要求持久化，不把真实查询 artifact 提交进仓库。
+2. 运行优化器：
+
+```bash
+node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input <run-artifact.json> --json
+```
+
+3. 运行评估器读取同一个 raw artifact：
+
+```bash
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=<run-artifact.json> --json
 ```
 
 处理规则：
 
-- 默认只报告优化建议，不自动改文件。
-- 如果报告指出平台耗时或空结果，下次同平台应使用更短等待预算并更快降级。
-- 如果报告指出平台覆盖缺口，下次筛选应先纳入缺失平台或明确说明不可读。
-- 如果报告指出输出格式问题，下次用户可见答复必须先给自然语言摘要。
-- 如果报告指出估值规则问题，进入 `PROPOSE_RULE_UPDATE` 或在用户明确要求实现优化时修改对应 skill 并验证。
-- 如果报告指出 `quality_gate` 或 `redo_required`，必须打回重做：先修目标 skill，再运行验证脚本和 `game-account-skill-evaluator`，通过前不得用于真实推荐。
+- 优化器输出 `empty_result`、`runtime`、`platform_coverage`：若影响候选完整性，回到 `COLLECT_LISTINGS`；若平台不可读但已低频降级，在最终答复里列入数据来源限制。
+- 优化器输出 `evidence`：若影响强度/配队/版本判断，回到 `COLLECT_COMMUNITY_EVIDENCE`；若只能拿到标题、卡片或 metadata，降低置信度并列入人工确认。
+- 优化器输出 `output_format`：回到 `RANK_AND_EXPLAIN`，补齐链接、预算分层、排除理由和自然语言结论。
+- 优化器输出 `valuation` 或 `risk`：若只是当前账号缺字段，补人工确认项；若是规则缺陷，进入 `PROPOSE_RULE_UPDATE`。用户已明确要求“优化/应用”时，允许修改对应 skill 后继续质量门禁。
+- 评估器输出 `mode: run_artifact_analysis` 且 `redo_required: true`：逐条处理 `optimizer_findings`。能在本次查询内补救的先补救；外部平台限制、验证码、登录墙、卖家未披露字段等不能补救的问题，必须在最终答复中明确为残留风险，不能给高置信结论。
+- 评估器输出目标 skill 低于门槛、存在阻塞问题或 `quality_gate` finding：打回重做。先修目标 skill，再运行目标验证脚本和 `game-account-skill-evaluator`；通过前不得把优化后的 skill 用于真实推荐。
+- 若本次筛选触发了文件修改，至少评估这些目标：
+
+```bash
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-select --json
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs <target-game-skill> --json
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-skill-optimizer --json
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-skill-evaluator --json
+```
+
+输出给用户：
+
+- 主推荐和风险结论仍然放在最前面。
+- 收尾阶段只输出简短摘要：`optimizer` 是否发现问题、`evaluator` 是否通过、哪些问题已补救、哪些因平台/卖家/登录限制保留为人工确认。
+- 不把完整 `<skill_optimization_report>` 或 `<skill_quality_report>` 当作主文案；只有用户要求结构化调试时才附上。
 
 ## PROPOSE_RULE_UPDATE
 

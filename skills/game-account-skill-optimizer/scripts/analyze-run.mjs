@@ -137,7 +137,7 @@ function addFinding({ id, severity, category, summary, evidence = [], suggestedT
 }
 
 function platformName(attempt) {
-  const raw = String(attempt.platform ?? 'unknown');
+  const raw = String(attempt.platform ?? attempt.source ?? attempt.tool ?? 'unknown');
   const normalized = raw.toLowerCase();
   if (platformAliasMap.has(normalized)) return platformAliasMap.get(normalized);
   for (const [alias, platform] of platformAliasMap.entries()) {
@@ -156,6 +156,10 @@ function platformName(attempt) {
 }
 
 const attempts = Array.isArray(artifact.platform_attempts) ? artifact.platform_attempts : [];
+const communityAttempts = Array.isArray(artifact.community_attempts) ? artifact.community_attempts : [];
+const recommendations = Array.isArray(artifact.recommendations) ? artifact.recommendations : [];
+const backupListings = Array.isArray(artifact.backup_listings) ? artifact.backup_listings : [];
+const excludedListings = Array.isArray(artifact.excluded_listings) ? artifact.excluded_listings : [];
 const executionIssues = [
   ...(Array.isArray(artifact.errors) ? artifact.errors : []),
   ...(Array.isArray(artifact.exceptions) ? artifact.exceptions : []),
@@ -210,7 +214,7 @@ if (failedEvaluations.length) {
   });
 }
 
-const slowAttempts = attempts.filter((attempt) => Number(attempt.duration_ms ?? 0) >= 30000 || attempt.status === 'timeout');
+const slowAttempts = [...attempts, ...communityAttempts].filter((attempt) => Number(attempt.duration_ms ?? 0) >= 30000 || attempt.status === 'timeout');
 if (slowAttempts.length) {
   const platforms = [...new Set(slowAttempts.map(platformName))];
   addFinding({
@@ -218,10 +222,35 @@ if (slowAttempts.length) {
     severity: 'high',
     category: 'runtime',
     summary: `Slow or timed-out platform path detected: ${platforms.join(', ')}`,
-    evidence: slowAttempts.map((attempt) => `${platformName(attempt)} ${attempt.query ?? ''}: ${attempt.duration_ms ?? 'unknown'}ms ${attempt.evidence ?? ''}`.trim()),
+    evidence: slowAttempts.map((attempt) => {
+      const budget = attempt.wait_budget_ms ? `budget=${attempt.wait_budget_ms}ms` : 'budget=missing';
+      return `${platformName(attempt)} ${attempt.tool ?? ''} ${attempt.query ?? ''}: ${attempt.duration_ms ?? 'unknown'}ms ${budget} ${attempt.evidence ?? attempt.error_text ?? ''}`.trim();
+    }),
     suggestedTargets: [
       'skills/game-account-select/references/selection-state-machine.md',
-      'skills/game-account-toolkit/references/platform-access-policy.md'
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-toolkit/references/community-research-protocol.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+const missingBudgetAttempts = [...attempts, ...communityAttempts].filter((attempt) => {
+  const duration = Number(attempt.duration_ms ?? 0);
+  return duration >= 10000 && attempt.wait_budget_ms == null;
+});
+if (missingBudgetAttempts.length) {
+  addFinding({
+    id: 'runtime-missing-wait-budget',
+    severity: 'medium',
+    category: 'runtime',
+    summary: 'Slow platform or community attempts should record an explicit wait budget',
+    evidence: missingBudgetAttempts.map((attempt) => `${platformName(attempt)} ${attempt.tool ?? ''} ${attempt.query ?? ''}: duration=${attempt.duration_ms ?? 'unknown'}ms`),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-toolkit/references/community-research-protocol.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md'
     ],
     autopatchSafe: true
   });
@@ -248,6 +277,107 @@ if (emptyAttempts.length) {
     suggestedTargets: [
       'skills/game-account-select/references/selection-state-machine.md',
       'skills/game-account-toolkit/references/platform-access-policy.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+function explicitFalse(value) {
+  return value === false || String(value).toLowerCase() === 'false';
+}
+
+function explicitTrue(value) {
+  return value === true || String(value).toLowerCase() === 'true';
+}
+
+function hasVerifiedAdapter(attempt) {
+  const text = [
+    explicitTrue(attempt.adapter_available) ? 'adapter_available_true' : '',
+    explicitTrue(attempt.opencli_adapter_available) ? 'opencli_adapter_available_true' : '',
+    explicitTrue(attempt.detail_adapter_available) ? 'detail_adapter_available_true' : '',
+    explicitTrue(attempt.adapter_verified) ? 'adapter_verified_true' : '',
+    explicitTrue(attempt.detail_adapter_verified) ? 'detail_adapter_verified_true' : '',
+    attempt.opencli_adapter,
+    attempt.adapter_command,
+    attempt.detail_adapter_command,
+    attempt.verify_command
+  ].filter(Boolean).join('\n');
+  return /adapter_available_true|opencli_adapter_available_true|detail_adapter_available_true|adapter_verified_true|detail_adapter_verified_true|opencli\s+(?:browser\s+\S+\s+verify\s+)?(?:pxb7|pzds)\/detail|opencli\s+(?:pxb7|pzds)\s+detail/i.test(text);
+}
+
+function hasExplicitAdapterGap(attempt) {
+  const text = [
+    explicitFalse(attempt.adapter_available) ? 'adapter_available_false' : '',
+    explicitFalse(attempt.opencli_adapter_available) ? 'opencli_adapter_available_false' : '',
+    explicitFalse(attempt.list_adapter_available) ? 'list_adapter_available_false' : '',
+    explicitFalse(attempt.detail_adapter_available) ? 'detail_adapter_available_false' : '',
+    attempt.tool,
+    attempt.fallback_used,
+    attempt.error_text,
+    attempt.evidence
+  ].filter(Boolean).join('\n');
+  return /adapter_available_false|opencli_adapter_available_false|list_adapter_available_false|detail_adapter_available_false|no\s+opencli\s+adapter|missing\s+adapter|没有.*adapter|没有.*适配器|无.*adapter/i.test(text);
+}
+
+const adapterGapAttempts = attempts.filter((attempt) => {
+  if (hasVerifiedAdapter(attempt) && !explicitFalse(attempt.list_adapter_available) && !explicitFalse(attempt.detail_adapter_available)) return false;
+  if (hasExplicitAdapterGap(attempt)) return true;
+
+  const text = [
+    attempt.tool,
+    attempt.fallback_used,
+    attempt.error_text,
+    attempt.evidence
+  ].filter(Boolean).join('\n');
+  return !hasVerifiedAdapter(attempt) && /browser_cdp|manual_browser_dom/i.test(text);
+});
+const verifiedAdapterAttempts = attempts.filter((attempt) => {
+  return hasVerifiedAdapter(attempt);
+});
+if (adapterGapAttempts.length) {
+  addFinding({
+    id: 'platform-opencli-adapter-gap',
+    severity: 'medium',
+    category: 'platform_coverage',
+    summary: 'Repeat platform paths without a reusable OpenCLI adapter should become adapter-generation candidates',
+    evidence: adapterGapAttempts.map((attempt) => {
+      const source = `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}`.trim();
+      const capability = [
+        explicitFalse(attempt.list_adapter_available) ? 'list_adapter_available=false' : null,
+        explicitFalse(attempt.detail_adapter_available) ? 'detail_adapter_available=false' : null,
+        explicitTrue(attempt.detail_adapter_available) ? 'detail_adapter_available=true' : null
+      ].filter(Boolean).join(' ');
+      const fallback = attempt.fallback_used ? `fallback=${attempt.fallback_used}` : 'fallback=missing';
+      const note = attempt.error_text ?? attempt.evidence ?? '';
+      return `${source}: ${capability} ${fallback} ${note}`.trim();
+    }),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
+    ],
+    autopatchSafe: false
+  });
+}
+if (verifiedAdapterAttempts.length) {
+  addFinding({
+    id: 'platform-opencli-adapter-reuse',
+    severity: 'low',
+    category: 'platform_coverage',
+    summary: 'Verified OpenCLI adapters should be reused before falling back to manual browser DOM reads',
+    evidence: verifiedAdapterAttempts.map((attempt) => {
+      const source = `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}`.trim();
+      const command = attempt.detail_adapter_command ?? attempt.adapter_command ?? attempt.opencli_adapter ?? 'adapter command missing';
+      const verify = attempt.verify_command ? `verify=${attempt.verify_command}` : 'verify=missing';
+      return `${source}: ${command}; ${verify}; ${attempt.evidence ?? ''}`.trim();
+    }),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
     ],
     autopatchSafe: true
   });
@@ -297,6 +427,18 @@ const feedback = [
 ].join('\n');
 
 const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色/i;
+const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
+const hardConditionBudgetPattern = /给定金额.*(?:没有|无|不足).*满足|预算.*(?:没有|无|不足).*满足|没有满足条件|无满足条件|扩大(?:金额|预算|价格|范围)|价格最低.*满足|最低.*满足|最低满足价|硬性标准.*预算/i;
+const uncertaintyText = [
+  finalResponse,
+  feedback,
+  String(artifact.user_request ?? ''),
+  ...(Array.isArray(artifact.rule_update_suggestions) ? artifact.rule_update_suggestions : []),
+  ...(Array.isArray(artifact.evidence_notes) ? artifact.evidence_notes : []),
+  ...recommendations.map((item) => JSON.stringify(item)),
+  ...backupListings.map((item) => JSON.stringify(item)),
+  ...excludedListings.map((item) => JSON.stringify(item))
+].join('\n');
 if (valuationPattern.test(feedback)) {
   addFinding({
     id: 'valuation-team-archetypes',
@@ -306,6 +448,76 @@ if (valuationPattern.test(feedback)) {
     evidence: feedback.split('\n').filter((line) => valuationPattern.test(line)),
     suggestedTargets: targetSkillTargets({ includeFixtures: true, includeValidation: true }),
     autopatchSafe: false
+  });
+}
+
+if (independentTeamPattern.test(feedback) || independentTeamPattern.test(finalResponse)) {
+  addFinding({
+    id: 'valuation-independent-team-completeness',
+    severity: 'high',
+    category: 'valuation',
+    summary: 'Hard team requirements should verify independent team completeness instead of counting shared supports as complete teams',
+    evidence: [
+      ...feedback.split('\n').filter((line) => independentTeamPattern.test(line)),
+      ...finalResponse.split('\n').filter((line) => independentTeamPattern.test(line))
+    ].filter(Boolean),
+    suggestedTargets: [
+      ...targetSkillTargets({ includeFixtures: true, includeValidation: true }),
+      'skills/game-account-select/references/selection-state-machine.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
+if (hardConditionBudgetPattern.test(uncertaintyText)) {
+  addFinding({
+    id: 'output-hard-condition-budget-expansion',
+    severity: 'high',
+    category: 'output_format',
+    summary: 'When no in-budget listing satisfies hard conditions, expand to a flexible budget and show the cheapest satisfying account separately',
+    evidence: uncertaintyText.split('\n').filter((line) => hardConditionBudgetPattern.test(line)),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      ...targetSkillTargets()
+    ],
+    autopatchSafe: true
+  });
+}
+
+const needsCommunityEvidence = valuationPattern.test(uncertaintyText)
+  || /不确定|无法确认|没读到|未稳定读取|社区证据.*不足|社群|社区|小红书|B站|bilibili|字幕|评论|正文/i.test(uncertaintyText);
+const successfulCommunityAttempts = communityAttempts.filter((attempt) => ['success', 'partial', 'limited'].includes(String(attempt.status ?? '')));
+if (needsCommunityEvidence && successfulCommunityAttempts.length === 0) {
+  addFinding({
+    id: 'evidence-community-answer-required',
+    severity: 'high',
+    category: 'evidence',
+    summary: 'Uncertain meta or team valuation should trigger community evidence collection before high-confidence ranking',
+    evidence: uncertaintyText.split('\n').filter((line) => valuationPattern.test(line) || /不确定|无法确认|没读到|未稳定读取|社群|社区|小红书|B站|bilibili|字幕|评论|正文/i.test(line)),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/community-research-protocol.md',
+      ...targetSkillTargets()
+    ],
+    autopatchSafe: false
+  });
+}
+
+const failedCommunityAttempts = communityAttempts.filter((attempt) => ['timeout', 'failed', 'blocked', 'login_required'].includes(String(attempt.status ?? '')));
+const communityWithoutFallback = failedCommunityAttempts.filter((attempt) => !attempt.fallback_used);
+if (communityWithoutFallback.length) {
+  addFinding({
+    id: 'evidence-community-tool-fallback-missing',
+    severity: 'high',
+    category: 'evidence',
+    summary: 'Failed community-source reads should switch tools or record a fallback path',
+    evidence: communityWithoutFallback.map((attempt) => `${attempt.source ?? platformName(attempt)} ${attempt.tool ?? ''} ${attempt.status}: ${attempt.error_text ?? attempt.query ?? ''}`),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/community-research-protocol.md'
+    ],
+    autopatchSafe: true
   });
 }
 
@@ -320,6 +532,108 @@ if (missingFields.some((field) => /TAP|Wegame|PS5|HoYoverse|实名|绑定|换绑
     suggestedTargets: [
       ...targetSkillTargets(),
       'skills/game-account-toolkit/references/shared-listing-schema.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
+const accountRiskText = [
+  finalResponse,
+  feedback,
+  missingFields.join('\n'),
+  ...recommendations.map((item) => JSON.stringify(item)),
+  ...backupListings.map((item) => JSON.stringify(item)),
+  ...excludedListings.map((item) => JSON.stringify(item))
+].join('\n');
+if (/邮箱未实名出售|未实名邮箱|unverified_email/i.test(accountRiskText) && /加分|优先|避免找回|低找回|误扣|排名/i.test(accountRiskText)) {
+  addFinding({
+    id: 'risk-email-unverified-positive-signal',
+    severity: 'high',
+    category: 'risk',
+    summary: 'Email-unverified-included account status should be treated as a positive low-retrieval-risk signal',
+    evidence: accountRiskText.split('\n').filter((line) => /邮箱未实名出售|未实名邮箱|unverified_email/i.test(line)),
+    suggestedTargets: [
+      ...targetSkillTargets({ includeFixtures: true, includeValidation: true }),
+      'skills/game-account-toolkit/references/shared-listing-schema.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
+const listingGroups = [
+  ['recommendations', recommendations],
+  ['backup_listings', backupListings],
+  ['excluded_listings', excludedListings]
+];
+const listingsMissingUrl = listingGroups.flatMap(([group, listings]) => listings
+  .filter((listing) => !listing.url && !listing.href)
+  .map((listing) => `${group}:${listing.listing_id ?? listing.id ?? listing.title ?? 'unknown'}`));
+if (listingsMissingUrl.length) {
+  addFinding({
+    id: 'output-listing-links-missing',
+    severity: 'medium',
+    category: 'output_format',
+    summary: 'Recommendations, backups, and excluded listings should keep source links for user comparison',
+    evidence: listingsMissingUrl,
+    suggestedTargets: [
+      'skills/game-account-select/SKILL.md',
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+const budget = Number(artifact.budget?.max ?? artifact.budget_max ?? artifact.max_budget ?? Number.NaN);
+const allowFlex = artifact.allow_budget_flex === true
+  || artifact.budget_flex != null
+  || /上下波动|浮动|备选|2,?300|200|300/.test(feedback);
+const flexListings = backupListings.filter((listing) => {
+  const tier = String(listing.recommendation_tier ?? listing.tier ?? '');
+  const price = Number(listing.price ?? Number.NaN);
+  return /flex|浮动|over_budget|price/i.test(tier)
+    || Number.isFinite(budget) && Number.isFinite(price) && price > budget && price <= budget + 300;
+});
+if (allowFlex && flexListings.length === 0) {
+  addFinding({
+    id: 'output-flex-budget-backups-missing',
+    severity: 'medium',
+    category: 'output_format',
+    summary: 'When budget flexibility is allowed, near-budget backup listings should be shown separately from primary recommendations',
+    evidence: [
+      Number.isFinite(budget) ? `budget_max=${budget}` : 'budget_max=unknown',
+      feedback.split('\n').find((line) => /上下波动|浮动|备选|2,?300|200|300/.test(line)) ?? 'budget flexibility requested'
+    ],
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+const evidenceText = [
+  finalResponse,
+  feedback,
+  ...(Array.isArray(artifact.rule_update_suggestions) ? artifact.rule_update_suggestions : []),
+  ...(Array.isArray(artifact.evidence_notes) ? artifact.evidence_notes : []),
+  String(artifact.community_snapshot_age_days ?? '')
+].join('\n');
+const snapshotAge = Number(artifact.community_snapshot_age_days ?? Number.NaN);
+if (/30\s*天|30\s*day|刷新.*太长|数据更新.*太长|证据.*太久/i.test(evidenceText) || snapshotAge >= 7) {
+  addFinding({
+    id: 'evidence-refresh-window-too-long',
+    severity: 'high',
+    category: 'evidence',
+    summary: 'Live purchase recommendations need a shorter community-evidence refresh window than 30 days',
+    evidence: [
+      Number.isFinite(snapshotAge) ? `community_snapshot_age_days=${snapshotAge}` : null,
+      ...evidenceText.split('\n').filter((line) => /30\s*天|30\s*day|刷新.*太长|数据更新.*太长|证据.*太久/i.test(line))
+    ].filter(Boolean),
+    suggestedTargets: [
+      ...targetSkillTargets(),
+      'skills/game-account-toolkit/references/community-research-protocol.md',
+      'skills/game-account-toolkit/templates/game-skill/references/valuation-rules.md'
     ],
     autopatchSafe: false
   });

@@ -21,7 +21,7 @@ argument-hint: "[listing json or account description]"
 
 ## 执行前准备
 
-先调用 `game-account-preflight`，并在账号估值前显示 `<preflight_report>`。如果缺少必需依赖，停止估值并给出补齐步骤；如果社区证据过期、跨版本、或账号核心代理人/音擎未覆盖，调用 `game-account-community-updater` 或按社区调研协议刷新。
+先调用 `game-account-preflight`，并在账号估值前显示 `<preflight_report>`。如果缺少必需依赖，停止估值并给出补齐步骤；如果社区证据超过 7 天、跨版本、或账号核心代理人/音擎未覆盖，调用 `game-account-community-updater` 或按社区调研协议刷新。
 
 ## 核心维度
 
@@ -31,13 +31,13 @@ argument-hint: "[listing json or account description]"
 - 队伍完整度：强攻/击破/支援/异常/防护等定位是否成队
 - 菲林、加密母带、原装母带、邦布券、余波信号等资源
 - 绳匠等级、式舆防卫/零号空洞进度、养成材料
-- HoYoverse、PSN、TAP、B服/渠道服绑定与找回风险
+- HoYoverse、邮箱交付/实名、PSN、TAP、B服/渠道服绑定与找回风险
 
 ## 输入
 
 接受标准化挂牌、卖家描述或截图 OCR 后文本。
 
-若输入没有社区证据快照，读取 `references/community-evidence.md`。如果快照超过 30 天、跨大版本、或账号核心代理人未覆盖，必须降低 `confidence` 并输出规则更新建议。
+若输入没有社区证据快照，读取 `references/community-evidence.md`。真实买号筛选默认只信任 7 天内的社区证据；如果快照已满 7 天、跨大版本、或账号核心代理人未覆盖，必须降低 `confidence` 并输出规则更新建议。
 
 ## 输出
 

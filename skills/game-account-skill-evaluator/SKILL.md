@@ -18,6 +18,7 @@ argument-hint: "[skill path or --from-report=optimizer-report.json]"
 - `game-account-skill-generator` / `game-account-community-updater`：生成或刷新流程是否有质量门禁和证据边界。
 - `game-account-skill-optimizer`：Troubleshooting、仓库级路由、回归样例和质量门禁打回。
 - 优化器报告：读取报告引用的目标 skill，逐个评分。
+- 原始运行记录：当 `--from-report` 收到平台尝试、社区尝试、推荐/备选/排除项等 raw artifact 时，先调用优化器分析；若存在非 info findings，则输出 `run_artifact_analysis` 并打回，避免把“待优化的问题记录”误判成通过的优化报告。
 
 ## 必须读取
 
@@ -36,12 +37,13 @@ argument-hint: "[skill path or --from-report=optimizer-report.json]"
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-skill-optimizer --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=skills/game-account-skill-optimizer/test-fixtures/optimizer-report-sample.json --json
+node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-community-performance-run.json --json
 ```
 
 ## 输出
 
 输出 `<skill_quality_report>`，包含分数、是否通过、是否需要重做、阻塞问题、警告和建议修复。
 
-默认门槛：80 分。生成器创建的新 skill、优化器修改后的 skill、优化器报告引用的目标 skill，都必须通过此评估后才建议用于真实购买筛选。
+默认门槛：80 分。生成器创建的新 skill、优化器修改后的 skill、优化器报告引用的目标 skill，都必须通过此评估后才建议用于真实购买筛选。原始运行记录若仍有 optimizer 非 info findings，必须先处理或明确延期，不能直接当作通过报告使用。
 
 低于门槛、存在阻塞问题或输出 `redo_required: true` 时，调用方必须打回重做，不能把该 skill 继续用于真实推荐。

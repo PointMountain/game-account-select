@@ -68,6 +68,10 @@ function containsAny(text, terms) {
   return terms.some((term) => text.includes(term));
 }
 
+function unique(items) {
+  return [...new Set(items.filter(Boolean))];
+}
+
 function frontmatterName(text) {
   const match = text.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return null;
@@ -117,12 +121,52 @@ function runNode(scriptArgs) {
   return spawnSync('node', scriptArgs, { encoding: 'utf8' });
 }
 
+function looksLikeRunArtifact(report) {
+  if (Array.isArray(report.findings) && Array.isArray(report.suggested_changes)) return false;
+  return [
+    'platform_attempts',
+    'community_attempts',
+    'recommendations',
+    'backup_listings',
+    'excluded_listings',
+    'final_response',
+    'user_feedback',
+    'rule_update_suggestions',
+    'missing_fields'
+  ].some((field) => report[field] != null);
+}
+
+function analyzeRunArtifact(reportPath, issue) {
+  const analyzer = path.resolve(repoRoot, 'skills/game-account-skill-optimizer/scripts/analyze-run.mjs');
+  if (!fs.existsSync(analyzer)) {
+    issue('Cannot evaluate raw run artifact because optimizer analyzer is missing');
+    return null;
+  }
+
+  const run = runNode([analyzer, '--input', reportPath, '--json']);
+  if (run.status !== 0) {
+    issue(`Optimizer analyzer failed for run artifact: ${(run.stderr || run.stdout).trim()}`);
+    return null;
+  }
+
+  try {
+    return JSON.parse(run.stdout);
+  } catch (error) {
+    issue(`Optimizer analyzer did not emit parseable JSON: ${error.message}`);
+    return null;
+  }
+}
+
 function evaluateOptimizerFixtures(root, addScore, issue) {
   const analyzer = path.join(root, 'scripts', 'analyze-run.mjs');
   const fixtureDir = path.join(root, 'test-fixtures');
   const wutheringFixture = path.join(fixtureDir, 'wuthering-waves-77175988-run.json');
   const cleanFixture = path.join(fixtureDir, 'clean-run.json');
   const repoWideFixture = path.join(fixtureDir, 'zenless-zone-zero-run.json');
+  const zzzEmailRefreshFixture = path.join(fixtureDir, 'zenless-zone-zero-email-refresh-run.json');
+  const zzzCommunityPerformanceFixture = path.join(fixtureDir, 'zenless-zone-zero-community-performance-run.json');
+  const zzzOpencliAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-opencli-adapter-run.json');
+  const zzzSplitAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-split-adapter-capability-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -177,6 +221,87 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     else issue('Repo-wide optimizer fixture did not target the affected non-Wuthering skill');
   } else {
     issue('Missing repo-wide optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzEmailRefreshFixture)) {
+    const zzzRiskEvidenceReport = runFixture(zzzEmailRefreshFixture);
+    const findingIds = new Set((zzzRiskEvidenceReport?.findings ?? []).map((finding) => finding.id));
+    const requiredFindingIds = [
+      'risk-email-unverified-positive-signal',
+      'evidence-refresh-window-too-long'
+    ];
+    const missingFindingIds = requiredFindingIds.filter((id) => !findingIds.has(id));
+    if (missingFindingIds.length === 0) addScore(4);
+    else issue(`Optimizer missed ZZZ email/evidence findings: ${missingFindingIds.join(', ')}`);
+  } else {
+    issue('Missing ZZZ email/evidence optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzCommunityPerformanceFixture)) {
+    const zzzCommunityPerformanceReport = runFixture(zzzCommunityPerformanceFixture);
+    const findingIds = new Set((zzzCommunityPerformanceReport?.findings ?? []).map((finding) => finding.id));
+    const requiredFindingIds = [
+      'runtime-slow-platform-path',
+      'runtime-missing-wait-budget',
+      'platform-opencli-adapter-gap',
+      'evidence-refresh-window-too-long',
+      'evidence-community-tool-fallback-missing',
+      'output-listing-links-missing',
+      'output-flex-budget-backups-missing',
+      'valuation-independent-team-completeness',
+      'output-hard-condition-budget-expansion'
+    ];
+    const missingFindingIds = requiredFindingIds.filter((id) => !findingIds.has(id));
+    const evidence = (zzzCommunityPerformanceReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
+    const preservesCommunityEvidence = /bilibili|xiaohongshu|subtitle|小红书|B站/i.test(evidence);
+    const preservesLinkEvidence = /recommendations:QL9CHD|excluded_listings:JHYXJ3302/.test(evidence);
+    const preservesAdapterGapEvidence = /pxb7|pzds|no opencli adapter|browser_cdp/i.test(evidence);
+    if (missingFindingIds.length === 0 && preservesCommunityEvidence && preservesLinkEvidence && preservesAdapterGapEvidence) addScore(6);
+    else {
+      if (missingFindingIds.length) issue(`Optimizer missed ZZZ community/performance findings: ${missingFindingIds.join(', ')}`);
+      if (!preservesCommunityEvidence) issue('Optimizer did not preserve community-source failure evidence');
+      if (!preservesLinkEvidence) issue('Optimizer did not preserve missing listing-link evidence');
+      if (!preservesAdapterGapEvidence) issue('Optimizer did not preserve OpenCLI adapter-gap evidence');
+    }
+  } else {
+    issue('Missing ZZZ community/performance optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzOpencliAdapterFixture)) {
+    const zzzOpencliAdapterReport = runFixture(zzzOpencliAdapterFixture);
+    const findingIds = new Set((zzzOpencliAdapterReport?.findings ?? []).map((finding) => finding.id));
+    const evidence = (zzzOpencliAdapterReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
+    const avoidsGapFinding = !findingIds.has('platform-opencli-adapter-gap');
+    const preservesVerifyEvidence = /pxb7\/detail|pzds\/detail|--strict-memory/i.test(evidence);
+    if (hasReuseFinding && avoidsGapFinding && preservesVerifyEvidence) addScore(4);
+    else {
+      if (!hasReuseFinding) issue('Optimizer did not recognize verified OpenCLI adapters as reusable');
+      if (!avoidsGapFinding) issue('Optimizer still reported an adapter gap for verified OpenCLI adapters');
+      if (!preservesVerifyEvidence) issue('Optimizer did not preserve verified adapter command evidence');
+    }
+  } else {
+    issue('Missing ZZZ OpenCLI adapter optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzSplitAdapterFixture)) {
+    const zzzSplitAdapterReport = runFixture(zzzSplitAdapterFixture);
+    const findings = zzzSplitAdapterReport?.findings ?? [];
+    const findingIds = new Set(findings.map((finding) => finding.id));
+    const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasGapFinding = findingIds.has('platform-opencli-adapter-gap');
+    const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
+    const gapIsListSpecific = /list_adapter_available=false|browser_cdp_for_list/i.test(evidence);
+    const reusePreservesDetailCommands = /pxb7 detail|pzds detail|pxb7\/detail|pzds\/detail/i.test(evidence);
+    if (hasGapFinding && hasReuseFinding && gapIsListSpecific && reusePreservesDetailCommands) addScore(4);
+    else {
+      if (!hasGapFinding) issue('Optimizer did not report missing list adapter capability');
+      if (!hasReuseFinding) issue('Optimizer did not preserve verified detail adapter reuse');
+      if (!gapIsListSpecific) issue('Optimizer did not distinguish list adapter gaps from detail adapter reuse');
+      if (!reusePreservesDetailCommands) issue('Optimizer did not preserve verified detail adapter commands');
+    }
+  } else {
+    issue('Missing ZZZ split adapter capability optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {
@@ -286,6 +411,12 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
       else addIssue('Selector state machine lacks core collect/score/rank states');
       if (containsAny(selectorText, ['POST_RUN_OPTIMIZE', 'game-account-skill-optimizer'])) addScore(9);
       else addIssue('Selector state machine lacks post-run optimization state');
+      if (containsAny(selectorText, ['run artifact', 'raw run artifact', 'run-artifact', '运行摘要', 'final_response_draft'])) addScore(5);
+      else addIssue('Selector post-run stage does not require a raw run artifact');
+      if (containsAny(selectorText, ['--from-report=<run-artifact', '--from-report=<run artifact', '--from-report', 'run_artifact_analysis'])) addScore(5);
+      else addIssue('Selector post-run stage does not require evaluator analysis of raw run artifacts');
+      if (containsAny(selectorText, ['redo_required', '打回重做', '补查', '降级'])) addScore(5);
+      else addIssue('Selector post-run stage lacks redo/degrade handling for optimizer findings');
       if (containsAny(selectorText, ['platform-priority.json', 'pxb7', 'pzds', '螃蟹', '盼之'])) addScore(10);
       else addIssue('Selector lacks mainstream platform priority guidance');
       if (containsAny(selectorText, ['平台尝试', '耗时', '结果数', '失败文本'])) addScore(6);
@@ -356,6 +487,28 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
         const run = runNode([path.join(root, 'scripts', 'evaluate-skill.mjs'), fixturePath, '--json']);
         if (run.status !== 0) addScore(10);
         else addIssue('Evaluator incomplete fixture should fail the quality gate');
+      }
+      const rawArtifactFixture = path.resolve(repoRoot, 'skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-community-performance-run.json');
+      if (fs.existsSync(rawArtifactFixture) && exists('scripts/evaluate-skill.mjs')) {
+        const run = runNode([path.join(root, 'scripts', 'evaluate-skill.mjs'), `--from-report=${rawArtifactFixture}`, '--json']);
+        let report = null;
+        try {
+          report = JSON.parse(run.stdout);
+        } catch {
+          // The issue below will include the raw stdout/stderr context.
+        }
+        const findingIds = new Set((report?.optimizer_findings ?? []).map((finding) => finding.id));
+        const expectedFindingIds = [
+          'evidence-community-answer-required',
+          'evidence-community-tool-fallback-missing',
+          'output-listing-links-missing',
+          'output-flex-budget-backups-missing',
+          'valuation-independent-team-completeness',
+          'output-hard-condition-budget-expansion'
+        ];
+        const hasExpectedFindings = expectedFindingIds.every((id) => findingIds.has(id));
+        if (run.status !== 0 && report?.mode === 'run_artifact_analysis' && report?.redo_required === true && hasExpectedFindings) addScore(8);
+        else addIssue(`Evaluator should fail raw run artifacts with optimizer findings: ${(run.stderr || run.stdout).trim()}`);
       }
       addScore(12);
       break;
@@ -486,26 +639,61 @@ function skillIdsFromOptimizerReport(report) {
 
 function evaluateOptimizerReport(reportPath, thresholdValue) {
   const absoluteReportPath = path.resolve(repoRoot, reportPath);
-  const report = JSON.parse(fs.readFileSync(absoluteReportPath, 'utf8'));
+  const source = JSON.parse(fs.readFileSync(absoluteReportPath, 'utf8'));
+  const { blockingIssues, warnings, suggestedFixes, issue } = issueCollector();
+  const rawRunArtifact = looksLikeRunArtifact(source);
+  const report = rawRunArtifact ? analyzeRunArtifact(absoluteReportPath, issue) : source;
+  if (!report) {
+    return {
+      mode: rawRunArtifact ? 'run_artifact_analysis' : 'optimizer_report',
+      report_path: path.relative(repoRoot, absoluteReportPath).split(path.sep).join('/'),
+      evaluated_skills: [],
+      passed: false,
+      redo_required: true,
+      blocking_issues: blockingIssues,
+      warnings,
+      suggested_fixes: suggestedFixes
+    };
+  }
+
   const skillIds = skillIdsFromOptimizerReport(report);
   const evaluatedSkills = skillIds.map((skillId) => evaluateSkill(skillId, thresholdValue));
-  const blockingIssues = evaluatedSkills
+  const failedSkillIssues = evaluatedSkills
     .filter((result) => result.redo_required)
     .map((result) => ({
       message: `${result.skill_path} requires redo: ${result.redo_reasons.join('; ')}`,
       blocking: true
     }));
+  blockingIssues.push(...failedSkillIssues);
+
+  const actionableFindings = rawRunArtifact
+    ? (report.findings ?? []).filter((finding) => String(finding.severity ?? '').toLowerCase() !== 'info')
+    : [];
+  blockingIssues.push(...actionableFindings.map((finding) => ({
+    message: `Run artifact still has ${finding.id}: ${finding.summary}`,
+    blocking: true
+  })));
+
+  if (rawRunArtifact && actionableFindings.length) {
+    suggestedFixes.push('Apply or intentionally defer the optimizer findings, then evaluate the resulting optimizer report or target skills again.');
+  }
+
   const passed = evaluatedSkills.length > 0 && blockingIssues.length === 0;
 
   return {
-    mode: 'optimizer_report',
+    mode: rawRunArtifact ? 'run_artifact_analysis' : 'optimizer_report',
     report_path: path.relative(repoRoot, absoluteReportPath).split(path.sep).join('/'),
     evaluated_skills: evaluatedSkills,
+    optimizer_findings: rawRunArtifact ? report.findings ?? [] : undefined,
+    optimizer_safe_to_autopatch: rawRunArtifact ? report.safe_to_autopatch : undefined,
     passed,
     redo_required: !passed,
     blocking_issues: blockingIssues,
-    warnings: evaluatedSkills.length ? [] : [{ message: 'Optimizer report did not reference any skill targets', blocking: false }],
-    suggested_fixes: blockingIssues.length ? ['Redo the failed target skill before using the optimizer output.'] : []
+    warnings: evaluatedSkills.length ? warnings : [...warnings, { message: 'Optimizer report did not reference any skill targets', blocking: false }],
+    suggested_fixes: blockingIssues.length ? unique([
+      ...suggestedFixes,
+      'Redo the failed target skill before using the optimizer output.'
+    ]) : unique(suggestedFixes)
   };
 }
 
@@ -525,6 +713,8 @@ function emitResult(result) {
   console.log(`  <redo_required>${result.redo_required}</redo_required>`);
   if (result.redo_reasons) console.log(`  <redo_reasons format="json">${JSON.stringify(result.redo_reasons)}</redo_reasons>`);
   if (result.evaluated_skills) console.log(`  <evaluated_skills format="json">${JSON.stringify(result.evaluated_skills)}</evaluated_skills>`);
+  if (result.optimizer_findings) console.log(`  <optimizer_findings format="json">${JSON.stringify(result.optimizer_findings)}</optimizer_findings>`);
+  if (typeof result.optimizer_safe_to_autopatch === 'boolean') console.log(`  <optimizer_safe_to_autopatch>${result.optimizer_safe_to_autopatch}</optimizer_safe_to_autopatch>`);
   console.log(`  <blocking_issues format="json">${JSON.stringify(result.blocking_issues)}</blocking_issues>`);
   console.log(`  <warnings format="json">${JSON.stringify(result.warnings)}</warnings>`);
   console.log(`  <suggested_fixes format="json">${JSON.stringify(result.suggested_fixes)}</suggested_fixes>`);
