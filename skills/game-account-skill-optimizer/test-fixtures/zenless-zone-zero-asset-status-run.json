@@ -1,0 +1,77 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "两千元内性价比高，硬性标准全部虚狩和对应辅助，需要一定抽卡资源",
+  "budget_max": 2000,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "JHYXJ0699",
+      "status": "success",
+      "duration_ms": 8400,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "adapter_available": true,
+      "adapter_verified": true,
+      "detail_adapter_available": true,
+      "detail_adapter_verified": true,
+      "adapter_command": "opencli pxb7 detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/detail --strict-memory",
+      "evidence": "verified detail adapter returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
+    },
+    {
+      "platform": "pzds",
+      "query": "QLA18X",
+      "status": "success",
+      "duration_ms": 9100,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "adapter_available": true,
+      "adapter_verified": true,
+      "detail_adapter_available": true,
+      "detail_adapter_verified": true,
+      "adapter_command": "opencli pzds detail QLA18X -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/detail --strict-memory",
+      "evidence": "verified detail adapter returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "opencli subtitle",
+      "query": "绝区零 三虚狩 配队 柚叶 琉音 千夏",
+      "status": "success",
+      "duration_ms": 8200,
+      "wait_budget_ms": 15000,
+      "result_count": 2,
+      "evidence": "社群配队证据已读取"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ0699",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2187082765844721999/1",
+      "price": 788,
+      "recommendation_tier": "risk_backup",
+      "voidHunters": "星见雅:2+1; 仪玄:1+1; 叶瞬光:2+1",
+      "reason": "标题和 voidHunters 显示三虚狩，但没有把角色卡片角标 agentStatuses 结构化传给估值"
+    },
+    {
+      "listing_id": "QLA18X",
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsDetails/QLA18X/6",
+      "price": 1200,
+      "recommendation_tier": "primary",
+      "voidHunters": "叶瞬光:0+1; 星见雅:0+1; 仪玄:0+1",
+      "reason": "称三虚狩和资源充足，但缺少 agentStatuses，无法确认辅助和专武归属字段是否进入评分"
+    }
+  ],
+  "backup_listings": [],
+  "excluded_listings": [],
+  "missing_fields": [],
+  "final_response": "推荐 QLA18X，备选 JHYXJ0699；已用 pxb7/pzds detail adapter 读取三虚狩。",
+  "user_feedback": [
+    "螃蟹详情页下面有商品图片，角色右上角数字 x+y 可以直接预览，之后 skill 查询要一起看一下"
+  ]
+}
