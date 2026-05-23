@@ -1,0 +1,59 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "1500元左右虚狩齐全，对应辅助和专武也必须齐全",
+  "budget_max": 1500,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "JHYXJ8008",
+      "status": "success",
+      "duration_ms": 8700,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "adapter_available": true,
+      "adapter_verified": true,
+      "detail_adapter_available": true,
+      "detail_adapter_verified": true,
+      "adapter_command": "opencli pxb7 zzz-detail https://www.pxb7.com/product/2188320633570023405/1 -f json",
+      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
+      "evidence": "verified detail adapter returned agentStatuses, but the run did not retain S-rank W-Engine names for x-only badges"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "opencli subtitle",
+      "query": "绝区零 三虚狩 专武 买号",
+      "status": "success",
+      "duration_ms": 7200,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "evidence": "社区证据已读取"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ8008",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2188320633570023405/1",
+      "price": 1500,
+      "recommendation_tier": "primary",
+      "agentStatuses": {
+        "星见雅": "2",
+        "叶瞬光": "2",
+        "仪玄": "1",
+        "耀佳音": "1"
+      },
+      "voidHunters": "星见雅:2; 仪玄:1; 叶瞬光:2",
+      "reason": "推荐文案称三虚狩和对应专武齐全，但运行记录没有 sWEngineNames，无法用本地专武表交叉确认 x-only 角标"
+    }
+  ],
+  "backup_listings": [],
+  "excluded_listings": [],
+  "missing_fields": [],
+  "final_response": "推荐 JHYXJ8008，三虚狩和对应专武齐全。",
+  "user_feedback": [
+    "即使有专武角色右上角数字不一定带y，需要同步校验页面中的 S级武器是否有和角色对应的专武"
+  ]
+}

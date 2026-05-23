@@ -167,7 +167,7 @@
       "price": 788,
       "title": "三虚狩都有但只有两名关键辅助",
       "server": "官服",
-      "raw_text": "2命星见雅、2命叶瞬光、1命仪玄；有琉音和耀嘉音，但缺柚叶、千夏、照、卢西娅等独立队友。看起来三虚狩都有辅助，实战只能拆出不足三队。",
+      "raw_text": "2命星见雅、2命叶瞬光、1命仪玄；有琉音和耀佳音，但缺柚叶、照、卢西娅、橘福福/南宫羽等独立队友。看起来三虚狩都有辅助，实战只能拆出不足三队。",
       "game_assets": {
         "agents": [
           { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
@@ -200,27 +200,104 @@
       }
     },
     {
-      "id": "void-hunters-three-team-complete",
-      "price": 1150,
-      "title": "三虚狩三队完整低风险号",
+      "id": "old-team-archetype-trap",
+      "price": 1500,
+      "title": "旧口径三队但叶队和雅队不合新规则",
       "server": "官服",
-      "raw_text": "星见雅、叶瞬光、仪玄均有专属音擎；星见雅有柚叶+苍角，叶瞬光有照+千夏，仪玄有橘福福+卢西娅。预算内若找不到三队完整号，应扩大金额寻找最低满足条件的账号。",
+      "raw_text": "星见雅2+1、叶瞬光2+1、仪玄2+1；卖家按旧口径写星见雅+柚叶+月城柳、叶瞬光+照+千夏、仪玄+橘福福+卢西娅。缺南宫/狼/苍角，叶瞬光也缺耀嘉音或琉音，所以不能算当前三支虚狩队完整。",
       "game_assets": {
         "agents": [
           { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
           { "name": "Yuzuha", "category": "limited", "mindscape": 0, "role": "support" },
-          { "name": "Soukaku", "category": "standard", "mindscape": 6, "role": "support" },
+          { "name": "Yanagi", "category": "limited", "mindscape": 0, "role": "anomaly" },
           { "name": "Ye Shunguang", "category": "limited", "mindscape": 2, "role": "attack" },
           { "name": "Zhao", "category": "limited", "mindscape": 0, "role": "support" },
           { "name": "Qianxia", "category": "limited", "mindscape": 0, "role": "support" },
-          { "name": "Yixuan", "category": "limited", "mindscape": 1, "role": "defense" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 2, "role": "defense" },
           { "name": "Ju Fufu", "category": "limited", "mindscape": 0, "role": "support" },
           { "name": "Lucia", "category": "limited", "mindscape": 0, "role": "support" }
         ],
+        "agent_statuses": {
+          "星见雅": "2+1",
+          "叶瞬光": "2+1",
+          "仪玄": "2+1",
+          "千夏": "0+1"
+        },
+        "w_engines": [],
+        "resources": {
+          "polychrome": 11800,
+          "encrypted_master_tape": 68,
+          "master_tape": 0,
+          "boopon": 20,
+          "residual_signal": 120
+        },
+        "progression": { "inter_knot_level": 60 },
+        "risk": {
+          "email_status": "unbound",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "void-hunters-three-team-complete",
+      "price": 1150,
+      "title": "三虚狩三队完整低风险号",
+      "server": "官服",
+      "raw_text": "星见雅、叶瞬光、仪玄均为2+1；星见雅有柚叶+南宫羽/狼/苍角，叶瞬光有照+耀嘉音，仪玄有卢西娅+橘福福。还带直伤电队希希芙+希德+耀佳音，异放队妄想天使三小只千夏+爱芮+南宫羽，薇薇安紊乱队；耀嘉音1+1。预算内若找不到三队完整号，应扩大金额寻找最低满足条件的账号。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Yuzuha", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Nangong Yu", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Zhao", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 1, "role": "defense" },
+          { "name": "Ju Fufu", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Lucia", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Xixifu", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Sid", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Qianxia", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Airi", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Vivian", "category": "limited", "mindscape": 0, "role": "anomaly" },
+          { "name": "Jane", "category": "limited", "mindscape": 0, "role": "anomaly" }
+        ],
+        "agent_statuses": {
+          "星见雅": "2",
+          "叶瞬光": "2",
+          "仪玄": "1",
+          "耀佳音": "1",
+          "希希芙": "0",
+          "希德": "0",
+          "千夏": "0+1",
+          "爱芮": "0+1",
+          "南宫羽": "0+1",
+          "薇薇安": "0",
+          "简": "0"
+        },
+        "s_w_engine_names": [
+          "霰落星殿",
+          "云霓孤光",
+          "青溟笼舍",
+          "玲珑妆匣",
+          "鳞齿寻踪",
+          "机巧心种",
+          "飞鸟星梦",
+          "淬锋钳刺"
+        ],
         "w_engines": [
-          { "name": "Miyabi signature engine", "signature_for": "Miyabi" },
-          { "name": "Ye Shunguang signature engine", "signature_for": "Ye Shunguang" },
-          { "name": "Yixuan signature engine", "signature_for": "Yixuan" }
+          { "name": "霰落星殿" },
+          { "name": "云霓孤光" },
+          { "name": "青溟笼舍" },
+          { "name": "玲珑妆匣" },
+          { "name": "鳞齿寻踪" },
+          { "name": "机巧心种" },
+          { "name": "飞鸟星梦" },
+          { "name": "淬锋钳刺" }
         ],
         "resources": {
           "polychrome": 9800,

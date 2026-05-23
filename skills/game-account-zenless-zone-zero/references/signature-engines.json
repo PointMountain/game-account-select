@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-05-23",
+  "notes": [
+    "Used to cross-check ZZZ account pages where agent asset badges show only x instead of x+y.",
+    "A matching S-rank W-Engine name on the page can confirm a signature engine even when the agent badge omits +y.",
+    "Keep aliases conservative; uncertain future or beta names should be added only after a listing/page shows the exact W-Engine name."
+  ],
+  "entries": [
+    {
+      "agent": "miyabi",
+      "agent_names": ["星见雅", "雅", "Miyabi", "Hoshimi Miyabi"],
+      "signature_engines": ["霰落星殿", "Hailstorm Shrine"]
+    },
+    {
+      "agent": "yixuan",
+      "agent_names": ["仪玄", "儀玄", "Yixuan"],
+      "signature_engines": ["青溟笼舍", "青溟籠舍"]
+    },
+    {
+      "agent": "ye_shunguang",
+      "agent_names": ["叶瞬光", "叶曙光", "Ye Shunguang"],
+      "signature_engines": ["云霓孤光", "雲霓孤光", "Cloudcleave Radiance"]
+    },
+    {
+      "agent": "astra_yao",
+      "agent_names": ["耀嘉音", "耀佳音", "嘉音", "佳音", "Astra Yao"],
+      "signature_engines": ["玲珑妆匣", "玲瓏妝匣", "Elegant Vanity"]
+    },
+    {
+      "agent": "yuzuha",
+      "agent_names": ["浮波柚叶", "柚叶", "Ukinami Yuzuha", "Yuzuha"],
+      "signature_engines": ["狸法七变化", "狸法七變化", "Metanukimorphosis"]
+    },
+    {
+      "agent": "lucia",
+      "agent_names": ["卢西娅", "盧西婭", "Lucia"],
+      "signature_engines": ["铸梦炉歌", "鑄夢爐歌"]
+    },
+    {
+      "agent": "ju_fufu",
+      "agent_names": ["橘福福", "Ju Fufu"],
+      "signature_engines": ["福虓炉炉", "福虓爐爐"]
+    },
+    {
+      "agent": "qianxia",
+      "agent_names": ["千夏", "Qianxia"],
+      "signature_engines": ["思络成歌", "思絡成歌"]
+    },
+    {
+      "agent": "vivian",
+      "agent_names": ["薇薇安", "Vivian", "Vivian Banshee"],
+      "signature_engines": ["飞鸟星梦", "飛鳥星夢", "Flight of Fancy"]
+    },
+    {
+      "agent": "sid",
+      "agent_names": ["席德", "希德", "Sid", "Sidhe"],
+      "signature_engines": ["机巧心种", "機巧心種"]
+    },
+    {
+      "agent": "xixifu",
+      "agent_names": ["希希芙", "Xixifu", "Cissia"],
+      "signature_engines": ["鳞齿寻踪", "鱗齒尋蹤", "Serpentine Seeker"]
+    },
+    {
+      "agent": "nangong_yu",
+      "agent_names": ["南宫羽", "南宮羽", "南宫", "Nangong Yu"],
+      "signature_engines": ["霓虹妄想", "Neon Fantasies"]
+    },
+    {
+      "agent": "airi",
+      "agent_names": ["爱芮", "愛芮", "Airi"],
+      "signature_engines": ["壳中之灵", "殼中之靈"]
+    },
+    {
+      "agent": "jane",
+      "agent_names": ["简", "簡", "Jane", "Jane Doe"],
+      "signature_engines": ["淬锋钳刺", "淬鋒鉗刺", "Sharpened Stinger"]
+    },
+    {
+      "agent": "burnice",
+      "agent_names": ["柏妮思", "Burnice", "Burnice White"],
+      "signature_engines": ["灼心摇壶", "灼心搖壺", "Flamemaker Shaker"]
+    },
+    {
+      "agent": "yanagi",
+      "agent_names": ["月城柳", "柳", "Tsukishiro Yanagi", "Yanagi"],
+      "signature_engines": ["时流贤者", "時流賢者", "Timeweaver"]
+    },
+    {
+      "agent": "alice",
+      "agent_names": ["爱丽丝", "愛麗絲", "Alice"],
+      "signature_engines": ["十方锻星", "十方鍛星"]
+    },
+    {
+      "agent": "lycaon",
+      "agent_names": ["莱卡恩", "萊卡恩", "狼", "Lycaon", "Von Lycaon"],
+      "signature_engines": ["拘缚者", "拘縛者", "The Restrained"]
+    },
+    {
+      "agent": "koleda",
+      "agent_names": ["珂蕾妲", "Koleda"],
+      "signature_engines": ["燃狱齿轮", "燃獄齒輪", "Hellfire Gears"]
+    },
+    {
+      "agent": "soldier_11",
+      "agent_names": ["11号", "Soldier 11"],
+      "signature_engines": ["硫磺石", "The Brimstone"]
+    },
+    {
+      "agent": "grace",
+      "agent_names": ["格莉丝", "Grace"],
+      "signature_engines": ["嵌合编译器", "嵌合編譯器", "Fusion Compiler"]
+    },
+    {
+      "agent": "rina",
+      "agent_names": ["丽娜", "Rina"],
+      "signature_engines": ["啜泣摇篮", "啜泣搖籃", "Weeping Cradle"]
+    },
+    {
+      "agent": "nekomata",
+      "agent_names": ["猫又", "貓又", "Nekomata"],
+      "signature_engines": ["钢铁肉垫", "鋼鐵肉墊", "Steel Cushion"]
+    }
+  ]
+}

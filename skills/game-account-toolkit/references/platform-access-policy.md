@@ -51,12 +51,14 @@
 
 ### Pxb7/PZDS 绝区零详情资产角标
 
-螃蟹和盼之的绝区零详情页可能在下方资产/验号报告区域展示角色卡片。角色右上角的 `x` 或 `x+y` 比标题更可靠：`x` 是影画/命座数，`+y` 是该角色对应专属音擎数量。读取这类页面时：
+螃蟹和盼之的绝区零详情页可能在下方资产/验号报告区域展示角色卡片和 S 级音擎列表。角色右上角的 `x` 或 `x+y` 比标题更可靠：`x` 是影画/命座数，`+y` 是该角色对应专属音擎数量；但平台有时只显示 `x`，即使账号实际有对应专武。读取这类页面时：
 
 - 优先复用已验证的 `opencli pxb7 zzz-detail <url> -f json` 或 `opencli pzds zzz-detail <id> -f json`。
 - Adapter 应在必要时滚动到资产卡片区域，读取 DOM 中可见的角色卡片文本或角标元素，并输出浅层 `agentStatuses` 对象。
+- Adapter 还应读取页面 `S级音擎` / `S级武器` 名称清单，并输出浅层 `sWEngineNames` 数组。
 - 筛选流程必须把该对象标准化到 `game_assets.agent_statuses`，并记录 `agent_status_source` 或 `asset_status_source`。
-- 如果只能读到标题里的 S 数量、黄数或几命描述，不能据此确认专属音擎归属；应降级为 `source_status: partial` 并列为人工确认项。
+- 筛选流程必须把 `sWEngineNames` 标准化到 `game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name`，由游戏 skill 使用本地专武表确认归属。
+- 如果只能读到标题里的 S 数量、黄数或几命描述，不能据此确认专属音擎归属；如果角色角标只有 `x` 且没有可匹配的 S 音擎名称，也应降级为 `source_status: partial` 并列为人工确认项。
 
 ### PZDS 绝区零列表路由
 

@@ -12,6 +12,14 @@ function cleanText(value) {
   return String(value ?? '').replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ').trim();
 }
 
+function cleanWEngineName(value) {
+  return cleanText(value)
+    .replace(/^(?:精\s*\d+|精炼\s*\d+|精煉\s*\d+|Lv\.?\s*\d+)\s*/i, '')
+    .replace(/^(?:S级音擎|S級音擎|S级武器|S級武器|音擎)\s*[：:]?\s*/i, '')
+    .replace(/[。；;，,、]+$/g, '')
+    .trim();
+}
+
 function normalizeAgentName(value) {
   const name = cleanText(value);
   return name === '雅' ? '星见雅' : name;
@@ -160,6 +168,53 @@ function parseAgentStatuses(nodes, text, cards = []) {
   return Array.from(byName.values());
 }
 
+function parseWEngineNamesFromText(text) {
+  const blocks = [];
+  const raw = String(text ?? '');
+  for (const match of raw.matchAll(/(?:(\d+)\s*个)?S级(?:音擎|武器)[：:]\s*([^；;\n]+)/g)) {
+    const names = [];
+    for (const part of String(match[2] ?? '').split(/[，,、；;|/]/)) {
+      const name = cleanWEngineName(part);
+      if (name) names.push(name);
+    }
+    if (names.length) blocks.push({ hasCount: match[1] != null, names });
+  }
+  const countedBlock = blocks.find((block) => block.hasCount);
+  return countedBlock ? countedBlock.names : blocks.flatMap((block) => block.names);
+}
+
+function parseWEngineNames(nodes, text, cards = []) {
+  const uniqueNames = (candidates) => {
+    const seen = new Set();
+    return candidates.filter((name) => {
+      const key = name.toLowerCase().replace(/\s+/g, '');
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const textNames = uniqueNames(parseWEngineNamesFromText(text));
+  if (textNames.length) return textNames;
+
+  const candidates = parseWEngineNamesFromText(nodes.map((item) => `${item.title}\n${item.text}`).join('\n'));
+
+  for (const card of cards) {
+    const section = cleanText(card.section);
+    if (section && !/S级(?:音擎|武器)/.test(section)) continue;
+    const lines = String(card.text ?? '').split(/\n+/).map(cleanText).filter(Boolean);
+    const nameLine = lines.find((line) => (
+      !/^\d+(?:\s*\+\s*\d+)?$/.test(line)
+      && !/^Lv\.\s*\d+/i.test(line)
+      && !/^S级/.test(line)
+    ));
+    const name = cleanWEngineName(nameLine);
+    if (name) candidates.push(name);
+  }
+
+  return uniqueNames(candidates);
+}
+
 function statusForAgent(agentStatuses, names, text) {
   const node = agentStatuses.find((item) => names.some((name) => item.name === name || item.name.includes(name)));
   if (node) return node.status || 'present';
@@ -189,6 +244,7 @@ function parseDetail(raw) {
   const nodes = Array.isArray(raw.titleNodes) ? raw.titleNodes : [];
   const cards = Array.isArray(raw.agentCards) ? raw.agentCards : [];
   const agentStatusRows = parseAgentStatuses(nodes, text, cards);
+  const sWEngineNames = parseWEngineNames(nodes, text, raw.wEngineCards ?? []);
   const title = firstMatch(text, [/(【JHYXJ[^】]+】[^\n]+)/, /(JHYXJ[A-Z0-9]+[^\n]+)/]) || cleanText(raw.title);
   const listingId = firstMatch(`${raw.title}\n${text}`, [/【([^】]+)】/, /\b(JHYXJ[A-Z0-9]+)\b/i]);
   const polychromeText = text.replace(/菲林底片[:：]?\s*\d+/g, '');
@@ -217,6 +273,7 @@ function parseDetail(raw) {
       sBangboo: numberMatch(text, [/S级邦布\s*[：:]?\s*(\d+)/, /(\d+)个S级邦布/]),
       skins: firstMatch(text, [/时装[：:]([^；\n]+)/]),
     },
+    sWEngineNames,
     agentStatuses: formatAgentStatuses(agentStatusRows),
     voidHunters: parseVoidHunters(agentStatusRows, text),
     highlights: firstMatch(text, [/商品亮点\s*x\d+\s*([^\n]+(?:\n[^\n]+){0,4})/]).replace(/\n/g, '; '),
@@ -242,7 +299,7 @@ cli({
   ],
   columns: [
     'listingId', 'priceCny', 'title', 'binding', 'resources', 'counts',
-    'agentStatuses', 'voidHunters', 'highlights', 'sellerNote', 'verifiedAt', 'url',
+    'sWEngineNames', 'agentStatuses', 'voidHunters', 'highlights', 'sellerNote', 'verifiedAt', 'url',
   ],
   func: async (page, kwargs) => {
     if (!page) throw new CliError('INTERNAL_ERROR', 'Browser page is required for pxb7 zzz-detail');
@@ -276,6 +333,14 @@ cli({
           section: sectionLabel,
           text: card.innerText || '',
         })).filter((card) => /^\\s*\\d+(?:\\s*\\+\\s*\\d+)?\\s*\\n\\s*Lv\\./.test(card.text));
+      }),
+      wEngineCards: Array.from(document.querySelectorAll('.ReportCharacter')).flatMap((section) => {
+        const sectionText = section.innerText || '';
+        const sectionLabel = (sectionText.match(/S级(?:音擎|武器)|A级(?:音擎|武器)/) || [])[0] || '';
+        return Array.from(section.querySelectorAll('[class*="cursor-pointer"]')).map((card) => ({
+          section: sectionLabel,
+          text: card.innerText || '',
+        })).filter((card) => sectionLabel && /S级(?:音擎|武器)/.test(sectionLabel));
       }),
     }))()`);
 

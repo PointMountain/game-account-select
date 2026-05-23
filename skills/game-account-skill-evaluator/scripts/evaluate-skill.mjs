@@ -275,7 +275,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const evidence = (zzzOpencliAdapterReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
     const avoidsGapFinding = !findingIds.has('platform-opencli-adapter-gap');
-    const preservesVerifyEvidence = /pxb7\/detail|pzds\/detail|--strict-memory/i.test(evidence);
+    const preservesVerifyEvidence = /pxb7\/(?:detail|zzz-detail)|pzds\/(?:detail|zzz-detail)|--strict-memory/i.test(evidence);
     if (hasReuseFinding && avoidsGapFinding && preservesVerifyEvidence) addScore(4);
     else {
       if (!hasReuseFinding) issue('Optimizer did not recognize verified OpenCLI adapters as reusable');
@@ -320,6 +320,23 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing ZZZ asset-status optimizer fixture');
+  }
+
+  const zzzSignatureNameFixture = path.join(fixtureDir, 'zenless-zone-zero-signature-engine-name-run.json');
+  if (fs.existsSync(zzzSignatureNameFixture)) {
+    const zzzSignatureNameReport = runFixture(zzzSignatureNameFixture);
+    const findings = zzzSignatureNameReport?.findings ?? [];
+    const findingIds = new Set(findings.map((finding) => finding.id));
+    const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasSignatureNameFinding = findingIds.has('platform-signature-engine-name-list-missing');
+    const preservesSignatureNameEvidence = /sWEngineNames|S-rank W-Engine|专武|x-only|single-number|signature W-Engine/i.test(evidence);
+    if (hasSignatureNameFinding && preservesSignatureNameEvidence) addScore(4);
+    else {
+      if (!hasSignatureNameFinding) issue('Optimizer did not require S-rank W-Engine names for x-only ZZZ asset badges');
+      if (!preservesSignatureNameEvidence) issue('Optimizer did not preserve signature-engine name-list evidence');
+    }
+  } else {
+    issue('Missing ZZZ signature-engine-name optimizer fixture');
   }
 
   if (fs.existsSync(zzzPzdsRouteMismatchFixture)) {

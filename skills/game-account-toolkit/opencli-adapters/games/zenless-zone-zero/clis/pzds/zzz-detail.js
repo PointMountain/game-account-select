@@ -8,6 +8,14 @@ function cleanText(value) {
   return String(value ?? '').replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ').trim();
 }
 
+function cleanWEngineName(value) {
+  return cleanText(value)
+    .replace(/^(?:精\s*\d+|精炼\s*\d+|精煉\s*\d+|Lv\.?\s*\d+)\s*/i, '')
+    .replace(/^(?:S级音擎|S級音擎|S级武器|S級武器|音擎)\s*[：:]?\s*/i, '')
+    .replace(/[。；;，,、]+$/g, '')
+    .trim();
+}
+
 function normalizeUrl(input) {
   const raw = cleanText(input);
   if (!raw) throw new CliError('INVALID_ARGUMENT', 'pzds zzz-detail requires a goods detail URL or listing id');
@@ -85,6 +93,40 @@ function parseAgentStatuses(nodes) {
   return Array.from(byName.values());
 }
 
+function parseWEngineNamesFromText(text) {
+  const names = [];
+  const raw = String(text ?? '');
+  for (const match of raw.matchAll(/(?:\d+\s*个)?S级(?:音擎|武器)[：:]\s*([^；;\n]+)/g)) {
+    for (const part of String(match[1] ?? '').split(/[，,、；;|/]/)) {
+      const name = cleanWEngineName(part);
+      if (name && !/^\d+(?:\s*\/\s*\d+)?$/.test(name)) names.push(name);
+    }
+  }
+  return names;
+}
+
+function parseWEngineNames(nodes, text) {
+  const candidates = [
+    ...parseWEngineNamesFromText(text),
+    ...parseWEngineNamesFromText(nodes.map((item) => `${item.title}\n${item.text}`).join('\n')),
+  ];
+
+  for (const item of nodes) {
+    const nodeText = cleanText(`${item.title}\n${item.text}`);
+    if (!/S级(?:音擎|武器)|音擎/.test(nodeText)) continue;
+    const name = cleanWEngineName(item.title);
+    if (name && !/S级(?:代理人|角色|邦布)|账号|商品|绝区零/.test(name)) candidates.push(name);
+  }
+
+  const seen = new Set();
+  return candidates.filter((name) => {
+    const key = name.toLowerCase().replace(/\s+/g, '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function parseAssetStatus(agentStatuses, name) {
   const node = agentStatuses.find((item) => item.name === name);
   return node?.status || '';
@@ -103,6 +145,7 @@ function parseDetail(raw) {
   const text = cleanText(raw.text).replace(/\n+/g, '\n');
   const nodes = Array.isArray(raw.titleNodes) ? raw.titleNodes : [];
   const agentStatusRows = parseAgentStatuses(nodes);
+  const sWEngineNames = parseWEngineNames(nodes, text);
   const listingId = firstMatch(`${raw.title}\n${text}`, [/账号编号([A-Z0-9]+)/, /商品编号\s*([A-Z0-9]+)/, /\b([A-Z0-9]{5,8})\s+号/]);
   const title = firstMatch(text, [new RegExp(`${listingId ? listingId : '[A-Z0-9]+'}\\s+号\\s+([^\\n]+)`), /绝区零-[^\n]+账号编号[^\n]+出售/]) || cleanText(raw.title);
   const polychromeText = text.replace(/菲林底片\s*\n?\s*\d+/g, '');
@@ -132,6 +175,7 @@ function parseDetail(raw) {
       sBangboo: numberMatch(text, [/(\d+)个S级邦布/]),
       skins: firstMatch(text, [/(\d+时装)/, /时装[：:]([^，。\n]+)/]),
     },
+    sWEngineNames,
     agentStatuses: formatAgentStatuses(agentStatusRows),
     voidHunters,
     sellerNote: firstMatch(text, [/卖家\s*\n留言\s*\n([^\n]+)/, /卖家 留言\s*([^\n]+)/]),
@@ -156,7 +200,7 @@ cli({
   ],
   columns: [
     'listingId', 'priceCny', 'title', 'binding', 'resources', 'counts',
-    'agentStatuses', 'voidHunters', 'sellerNote', 'listedAt', 'url',
+    'sWEngineNames', 'agentStatuses', 'voidHunters', 'sellerNote', 'listedAt', 'url',
   ],
   func: async (page, kwargs) => {
     if (!page) throw new CliError('INTERNAL_ERROR', 'Browser page is required for pzds zzz-detail');
