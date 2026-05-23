@@ -24,6 +24,7 @@ updated_at: 2026-05-17
 - Once an OpenCLI adapter has passed `browser verify --strict-memory`, future runs should emit adapter-reuse guidance and prefer `opencli <site> <command>` over one-off browser DOM parsing.
 - Detail-page adapters and list-page adapters are separate capabilities. A run with `detail_adapter_available: true` and `list_adapter_available: false` should reuse the detail adapter while reporting only the missing list adapter capability.
 - ZZZ Pxb7/PZDS detail adapters should preserve the asset-card status badges as `agentStatuses`; for `x+y`, `x` is dupes/影画 and `y` is the matching signature W-engine count. If a verified detail adapter run recommends accounts without this field, emit an asset-status extraction finding instead of relying on title text.
+- PZDS ZZZ detail URLs can end in `/6`, but that segment is not the ZZZ list game id. If a run visits `goodsList/6` for ZZZ or records wrong-game evidence, emit `platform-pzds-zzz-list-route-mismatch`; use `gameList` natural navigation or the browser-confirmed `goodsList/275` entry instead, and do not count the wrong route as PZDS coverage.
 
 ## Harness Philosophy
 
@@ -71,4 +72,5 @@ Regression coverage should include:
 - A run where pxb7/pzds zzz-detail adapters are verified and should be reused without re-triggering the adapter-gap finding.
 - A run where pxb7/pzds zzz-detail adapters are verified but list adapters are missing, proving the optimizer can emit both detail reuse and list-capability gap evidence without conflating the two.
 - A run where verified pxb7/pzds zzz-detail adapters are used for ZZZ but the recommendation drops `agentStatuses`, proving the optimizer catches missing asset-card status data.
+- A ZZZ run where PZDS was "covered" through `goodsList/6` or other wrong-game evidence, proving the optimizer catches route mismatch instead of treating PZDS as a valid covered source.
 - A failed evaluator run to prove redo behavior.

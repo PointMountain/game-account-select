@@ -83,6 +83,22 @@ updated_at: 2026-05-17
 - 列表页和详情页能力要分开判断：只有详情 adapter 可用时，不应把整个平台标成“无 adapter”；应对详情输出复用建议，对列表页缺口单独记录。
 - 对绝区零的螃蟹/盼之详情，已验证 adapter 还应输出角色资产角标 `agentStatuses`；如果推荐只保留 `voidHunters` 或标题文本，应生成 `platform-agent-status-asset-cards-missing` finding。
 
+### pzds_route_mismatch
+
+盼之列表页 URL 被错误构造，导致看似访问了 PZDS，实际进入了错误游戏或错误频道。
+
+常见信号：
+
+- 绝区零详情 URL 形如 `goodsDetails/<listingId>/6`，执行记录据此访问 `goodsList/6`。
+- `goodsList/6` 页面标题、面包屑、筛选项或商品卡显示为英雄联盟、其它游戏或非绝区零内容。
+- 运行记录写了 PZDS `partial/success`，但证据里有 `wrong_game`、`非绝区零`、`错误频道` 或“详情页末尾 /6 被当作列表 gameId”。
+
+建议：
+
+- 输出 `platform-pzds-zzz-list-route-mismatch`，严重级别为 `high`，目标文件包括 selector 状态机和平台访问策略。
+- 绝区零列表从 `https://www.pzds.com/gameList` 自然导航，或使用已由浏览器确认标题/筛选项为绝区零的 `https://www.pzds.com/goodsList/275`。
+- 错路由不得计为 PZDS 覆盖；如果正确列表为空，记录为空结果并降级到已知详情样本、用户链接、截图或复制文本。
+
 ### adapter_gap
 
 目标网站没有可复用 OpenCLI adapter，导致每次都靠临时 CDP/DOM 抽取、手动解析或截图降级。

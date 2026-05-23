@@ -48,6 +48,7 @@ updated_at: 2026-05-17
 - 缺 adapter：对照 `opencli list -f yaml` 和 `opencli <site> -h`，确认目标平台是否有现成命令；没有时判断是否适合按 OpenCLI adapter 流程固化。
 - 已验证 adapter：若记录里有 `adapter_available: true`、`adapter_verified: true`、`adapter_command` 或 `verify_command`，下次同平台详情读取应先复用该命令，并定期跑 `opencli browser <session> verify <site>/<command> --strict-memory`。
 - 列表/详情能力差异：若只有详情 adapter 可用而列表仍靠浏览器 DOM，记录 `list_adapter_available: false` 和 `detail_adapter_available: true`。优化器应只对缺失的列表能力报 adapter 缺口，同时继续对详情输出 adapter 复用建议。
+- 盼之绝区零列表错路由：若执行记录把 `goodsDetails/<id>/6` 里的末尾 `/6` 当成 `goodsList/6`，或页面标题/面包屑显示为其它游戏，应输出 `platform-pzds-zzz-list-route-mismatch`。正确做法是从 `gameList` 自然导航，或使用已由浏览器确认标题和筛选项为绝区零的 `goodsList/275`；错路由不能计为 PZDS 覆盖。
 - 社区证据缺口：检查是否有成功的 `community_attempts`；若只有标题、metadata 或列表卡片，应限制置信度并要求人工确认。
 - 工具不可读：检查 B站字幕、小红书正文、评论等失败后是否切换到浏览器 DOM、页面 metadata、Jina/WebFetch/curl、官方公告、Wiki/攻略站或用户截图/文本。
 - 文案怪：检查最终用户回复是否把 `<game_account_evaluation>`、`<recommendations>`、`<skill_quality_report>` 等标签当主文案暴露。

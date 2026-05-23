@@ -464,6 +464,46 @@ if (isZenlessRun() && verifiedDetailPlatforms.size > 0 && listingsMissingAgentSt
   });
 }
 
+const pzdsWrongListRouteAttempts = attempts.filter((attempt) => {
+  if (platformName(attempt) !== 'pzds' || !isZenlessRun()) return false;
+
+  const text = [
+    attempt.url,
+    attempt.query,
+    attempt.error_text,
+    attempt.evidence,
+    attempt.final_url
+  ].filter(Boolean).join('\n');
+  const usedDetailCategoryAsList = /goodsList\/6(?:\b|[/?#])/i.test(text)
+    || /goodsDetails\/[0-9A-Z]+\/6.*goodsList\/6|goodsList\/6.*goodsDetails\/[0-9A-Z]+\/6/i.test(text)
+    || /详情.*\/6.*(?:列表|gameId|区服|频道)|(?:列表|gameId|区服|频道).*详情.*\/6/i.test(text);
+  const wrongGameEvidence = /英雄联盟|League of Legends|非\s*ZZZ|非绝区零|wrong[_ -]?game|wrong game|不是绝区零|错误频道/i.test(text);
+
+  return usedDetailCategoryAsList || wrongGameEvidence;
+});
+if (pzdsWrongListRouteAttempts.length) {
+  addFinding({
+    id: 'platform-pzds-zzz-list-route-mismatch',
+    severity: 'high',
+    category: 'platform_coverage',
+    summary: 'PZDS ZZZ list coverage used the detail-page category segment as a goodsList game id',
+    evidence: pzdsWrongListRouteAttempts.map((attempt) => {
+      const source = `${platformName(attempt)} ${attempt.url ?? attempt.query ?? ''}`.trim();
+      const status = attempt.status ? `status=${attempt.status}` : 'status=unknown';
+      const note = attempt.error_text ?? attempt.evidence ?? '';
+      return `${source}: ${status}; ${note}`.trim();
+    }),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
 const attemptedPlatforms = new Set(attempts.map(platformName));
 const explicitMissing = new Set(Array.isArray(artifact.missing_platforms) ? artifact.missing_platforms.map((platform) => platformAliasMap.get(String(platform).toLowerCase()) ?? String(platform)) : []);
 const missingRequiredPlatforms = DEFAULT_REQUIRED_PLATFORMS.filter((platform) => {
