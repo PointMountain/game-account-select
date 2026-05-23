@@ -19,3 +19,4 @@
 - 增加 ZZZ 详情页资产角标诊断：verified pxb7/pzds zzz-detail adapter 推荐结果必须保留 `agentStatuses`，避免只靠标题猜影画和专属音擎。
 - 增加硬条件预算扩展诊断：预算内无合格账号时，应扩大到价格浮动层并返回最低满足价。
 - 增加多队完整性诊断：例如 ZZZ 三虚狩要求三支独立队伍，不能把共享辅助重复计入多个核心。
+- 增加 PZDS 绝区零列表错路由诊断：详情页 `goodsDetails/<id>/6` 的末尾 `/6` 不能当作列表 `goodsList/6`，错路由或 wrong-game 页面会触发 `platform-pzds-zzz-list-route-mismatch`。

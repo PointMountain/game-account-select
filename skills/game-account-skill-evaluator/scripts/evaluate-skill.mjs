@@ -168,6 +168,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const zzzOpencliAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-opencli-adapter-run.json');
   const zzzSplitAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-split-adapter-capability-run.json');
   const zzzAssetStatusFixture = path.join(fixtureDir, 'zenless-zone-zero-asset-status-run.json');
+  const zzzPzdsRouteMismatchFixture = path.join(fixtureDir, 'zenless-zone-zero-pzds-route-mismatch-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -319,6 +320,22 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing ZZZ asset-status optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzPzdsRouteMismatchFixture)) {
+    const zzzPzdsRouteMismatchReport = runFixture(zzzPzdsRouteMismatchFixture);
+    const findings = zzzPzdsRouteMismatchReport?.findings ?? [];
+    const findingIds = new Set(findings.map((finding) => finding.id));
+    const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasRouteMismatchFinding = findingIds.has('platform-pzds-zzz-list-route-mismatch');
+    const preservesRouteEvidence = /goodsList\/6|goodsList\/275|gameList|wrong_game|League of Legends|non-ZZZ/i.test(evidence);
+    if (hasRouteMismatchFinding && preservesRouteEvidence) addScore(4);
+    else {
+      if (!hasRouteMismatchFinding) issue('Optimizer did not catch PZDS ZZZ list route mismatch');
+      if (!preservesRouteEvidence) issue('Optimizer did not preserve PZDS wrong-route evidence');
+    }
+  } else {
+    issue('Missing ZZZ PZDS route-mismatch optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {

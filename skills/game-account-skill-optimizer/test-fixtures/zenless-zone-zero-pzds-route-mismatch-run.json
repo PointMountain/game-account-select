@@ -1,0 +1,102 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "2000元左右虚狩齐全、辅助齐全、妄想天使三小只且有3.0抽数储备",
+  "budget": {
+    "currency": "CNY",
+    "max": 2000,
+    "flex_max": 2200
+  },
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/buy/10312/1",
+      "query": "绝区零 虚狩 妄想天使 2000",
+      "status": "success",
+      "duration_ms": 9300,
+      "wait_budget_ms": 15000,
+      "result_count": 25,
+      "list_adapter_available": false,
+      "detail_adapter_available": true,
+      "fallback_used": "browser_cdp_for_list_then_opencli_detail_adapter",
+      "evidence": "PXB canonical list rendered ZZZ cards; details verified with pxb7/zzz-detail"
+    },
+    {
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsList/6",
+      "query": "绝区零 goodsList/6 from goodsDetails/<listingId>/6",
+      "status": "partial",
+      "duration_ms": 11000,
+      "wait_budget_ms": 15000,
+      "result_count": 0,
+      "list_adapter_available": false,
+      "detail_adapter_available": true,
+      "fallback_used": "detail_sample_only",
+      "error_text": "wrong_game: goodsList/6 rendered League of Legends / non-ZZZ page",
+      "evidence": "The run inferred goodsList/6 from pzds goodsDetails/QL9XV5/6; page title and filters were not Zenless Zone Zero. Correct ZZZ list route must be confirmed through gameList or goodsList/275."
+    },
+    {
+      "platform": "pzds",
+      "query": "QL9XV5",
+      "url": "https://www.pzds.com/goodsDetails/QL9XV5/6",
+      "status": "success",
+      "duration_ms": 7600,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "detail_adapter_available": true,
+      "detail_adapter_verified": true,
+      "detail_adapter_command": "opencli pzds zzz-detail QL9XV5 -f json",
+      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
+      "evidence": "PZDS detail adapter was usable, but list coverage was invalid because goodsList/6 was a wrong-game route."
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "local_community_evidence",
+      "status": "success",
+      "duration_ms": 1000,
+      "wait_budget_ms": 1000,
+      "result_count": 1
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ8542",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2187715982869441334/1",
+      "price": 1899,
+      "agentStatuses": {
+        "星见雅": "2+2",
+        "仪玄": "2+1",
+        "叶瞬光": "2+1",
+        "爱芮": "1+1",
+        "南宫羽": "1+1",
+        "千夏": "0+1"
+      },
+      "reason": "预算内最接近硬条件，但 PZDS 列表覆盖无效"
+    }
+  ],
+  "backup_listings": [
+    {
+      "listing_id": "QL9XV5",
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsDetails/QL9XV5/6",
+      "price": 888,
+      "agentStatuses": {
+        "星见雅": "2+1",
+        "仪玄": "2+1",
+        "叶瞬光": "2+1"
+      },
+      "reason": "PZDS detail sample only; not discovered from a valid ZZZ list path"
+    }
+  ],
+  "excluded_listings": [],
+  "missing_fields": [
+    "PZDS ZZZ list route was invalid because goodsList/6 was inferred from a detail URL suffix",
+    "Need gameList natural navigation or browser-confirmed goodsList/275 before claiming PZDS list coverage"
+  ],
+  "final_response": "这轮主要来自螃蟹；盼之只复核了一个详情样例，列表误用了 goodsList/6。",
+  "user_feedback": [
+    "为什么都是螃蟹的，没有盼之的？找下原因然后修复 optimizer"
+  ]
+}
