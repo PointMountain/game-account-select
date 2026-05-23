@@ -307,11 +307,21 @@ function hasVerifiedAdapter(attempt) {
 }
 
 function hasExplicitAdapterGap(attempt) {
+  const fallbackText = [
+    attempt.tool,
+    attempt.fallback_used,
+    attempt.error_text,
+    attempt.evidence
+  ].filter(Boolean).join('\n');
+  const listGap = explicitFalse(attempt.list_adapter_available)
+    && /browser_cdp|manual_browser_dom|browser DOM|自然导航|one-?off|临时|手工|截图|list adapter|列表.*(?:adapter|适配器).*缺|列表.*降级/i.test(fallbackText);
+  const detailGap = explicitFalse(attempt.detail_adapter_available)
+    && /browser_cdp|manual_browser_dom|browser DOM|detail|详情|one-?off|临时|手工|截图|detail adapter|详情.*(?:adapter|适配器).*缺|详情.*降级/i.test(fallbackText);
   const text = [
     explicitFalse(attempt.adapter_available) ? 'adapter_available_false' : '',
     explicitFalse(attempt.opencli_adapter_available) ? 'opencli_adapter_available_false' : '',
-    explicitFalse(attempt.list_adapter_available) ? 'list_adapter_available_false' : '',
-    explicitFalse(attempt.detail_adapter_available) ? 'detail_adapter_available_false' : '',
+    listGap ? 'list_adapter_available_false' : '',
+    detailGap ? 'detail_adapter_available_false' : '',
     attempt.tool,
     attempt.fallback_used,
     attempt.error_text,
@@ -365,7 +375,7 @@ if (adapterGapAttempts.length) {
 if (verifiedAdapterAttempts.length) {
   addFinding({
     id: 'platform-opencli-adapter-reuse',
-    severity: 'low',
+    severity: 'info',
     category: 'platform_coverage',
     summary: 'Verified OpenCLI adapters should be reused before falling back to manual browser DOM reads',
     evidence: verifiedAdapterAttempts.map((attempt) => {
@@ -487,7 +497,7 @@ function claimsSignatureCompleteness(listing) {
 const verifiedDetailPlatforms = new Set(verifiedAdapterAttempts
   .map(platformName)
   .filter((platform) => ['pxb7', 'pzds'].includes(platform)));
-const statusRelevantListings = [...recommendations, ...backupListings, ...excludedListings]
+const statusRelevantListings = [...recommendations, ...backupListings]
   .filter((listing) => verifiedDetailPlatforms.has(listingPlatform(listing)))
   .filter((listing) => {
     const text = JSON.stringify(listing);
