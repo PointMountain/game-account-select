@@ -58,6 +58,43 @@
 - 筛选流程必须把该对象标准化到 `game_assets.agent_statuses`，并记录 `agent_status_source` 或 `asset_status_source`。
 - 如果只能读到标题里的 S 数量、黄数或几命描述，不能据此确认专属音擎归属；应降级为 `source_status: partial` 并列为人工确认项。
 
+### PZDS 绝区零列表路由
+
+PZDS 详情页和列表页的数字段含义不同，不要从详情 URL 反推列表 URL。绝区零详情页通常形如 `https://www.pzds.com/goodsDetails/<listingId>/6`，其中末尾 `/6` 不能当作 `goodsList` 的游戏 ID；直接访问 `https://www.pzds.com/goodsList/6` 可能进入错误游戏或错误频道。
+
+读取盼之绝区零列表时：
+
+- 优先从 `https://www.pzds.com/gameList` 自然导航到绝区零，保留最终 URL。
+- 若使用直达列表 URL，必须先用浏览器确认页面标题、面包屑或筛选项包含绝区零；当前已验证的绝区零列表入口是 `https://www.pzds.com/goodsList/275`。
+- 如果页面标题、面包屑、筛选项或商品卡文本显示为其它游戏，例如英雄联盟，记录 `wrong_game` / `platform-pzds-zzz-list-route-mismatch`，不要把这次尝试计为 PZDS 覆盖。
+- 如果正确列表页面可打开但显示空列表或“新品筹备中”，记录为空结果并降级到已知详情样本、用户提供链接、截图或复制文本；不要构造其它未验证 `goodsList/<id>` 反复重试。
+
+### PZDS 浏览器状态健康检查
+
+盼之页面在普通 Chrome 配置中可能被站点持久化状态污染：无痕窗口正常、普通窗口控制台报错或页面卡在加载时，优先怀疑 `pzds.com` 相关 cookie、localStorage、sessionStorage、CacheStorage、IndexedDB、service worker、WAF/埋点状态不一致，而不是直接判断站点不可用。
+
+每次完成盼之列表或详情处理后，必须运行一次页面健康检查：
+
+```bash
+npm run pzds:health -- --json
+```
+
+健康标准：
+
+- `https://www.pzds.com/gameList` 能打开。
+- 页面标题为盼之代售相关标题。
+- 正文包含“欢迎来到盼之代售”“请选择要购买的游戏”，并至少出现一个游戏入口，例如“绝区零”“鸣潮”“明日方舟”。
+- `opencli browser <session> console --level error` 没有近期 error。
+- 页面没有“验证、滑块、访问过于频繁、安全校验、人机”等阻断文本。
+
+若健康检查失败，执行定向修复：
+
+```bash
+npm run pzds:repair -- --json
+```
+
+修复只允许清理 PZDS 站点范围的数据，不清全局浏览器缓存、不退出用户 Chrome、不删除其它站点登录态。修复后必须重新运行健康检查；仍不正常时记录 `pzds_browser_state_unhealthy`、console error、页面可见文本和降级路径，请用户提供截图、链接或复制文本。
+
 ## 性能预算与降级
 
 平台访问必须设置明确等待预算并可提前放弃：

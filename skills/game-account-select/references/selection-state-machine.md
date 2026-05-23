@@ -101,12 +101,14 @@ limitations: string[]
 4. 每条平台路径必须有等待预算：列表页通常 10-15 秒，详情页通常 15-20 秒；单个平台同一意图连续失败后立即降级，不让无输出命令长期挂起。
 5. 对每个平台记录：查询词、开始/结束时间、耗时、等待预算、结果数、失败文本、是否进入详情页、是否使用列表卡片/截图/用户文本降级。
 6. 平台页面不可读时，请用户提供截图/链接/复制文本；若列表卡片可读但详情页不可读，可保留为 `source_status: partial`，不能假装已验明详情。
-7. 若高价值平台没有现成 OpenCLI adapter，记录 `adapter_available: false`、当前降级路径和是否适合 adapter 化；只有用户明确要求实现并且 `opencli browser <session> verify <site>/<command>` 通过后，才把新 adapter 当作可靠数据源。
-8. 若平台已有 verified adapter，优先运行 `opencli <site> <command> <input> -f json`，并在记录中保留 `adapter_available: true`、`adapter_verified: true`、`adapter_command`、`verify_command`；adapter 失败时再降级为浏览器 DOM 或用户材料。
-9. 绝区零详情页若来自螃蟹 `pxb7/zzz-detail` 或盼之 `pzds/zzz-detail`，必须读取并保留 `agentStatuses` 角色角标字段。该字段来自详情页资产卡片右上角的 `x` 或 `x+y`，`x+y` 表示影画/命座和对应专属音擎，只有 `x` 时不得推断有专武；它优先于标题里的 S 角色数量、黄数和“几命”描述。
-10. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses`，先用浏览器低频滚动到资产/验号报告角色卡区域复核一次；仍缺失时把 `asset_status_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
-11. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
-12. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
+7. 盼之详情 URL 末尾的分类段不能反推列表页游戏 ID。例如绝区零详情页 `goodsDetails/<id>/6` 中的 `/6` 不是绝区零列表 ID；不要构造 `goodsList/6` 当作盼之绝区零列表。绝区零列表应从 `https://www.pzds.com/gameList` 自然进入，或使用已经由浏览器确认标题和筛选项为绝区零的 `https://www.pzds.com/goodsList/275`。若进入后标题、面包屑或筛选项不是绝区零，记录 `platform-pzds-zzz-list-route-mismatch` 证据并降级，不得把该尝试计为盼之覆盖。
+8. 每次完成盼之列表或详情处理后，必须运行 `npm run pzds:health -- --json`。如果健康检查发现页面缺少盼之游戏入口、console error、阻断文本或卡在加载，先运行 `npm run pzds:repair -- --json` 做 PZDS 站点范围清理并复验；仍失败时记录 `pzds_browser_state_unhealthy`、console error、页面文本和降级路径，不得把本轮 PZDS 结果作为健康覆盖。
+9. 若高价值平台没有现成 OpenCLI adapter，记录 `adapter_available: false`、当前降级路径和是否适合 adapter 化；只有用户明确要求实现并且 `opencli browser <session> verify <site>/<command>` 通过后，才把新 adapter 当作可靠数据源。
+10. 若平台已有 verified adapter，优先运行 `opencli <site> <command> <input> -f json`，并在记录中保留 `adapter_available: true`、`adapter_verified: true`、`adapter_command`、`verify_command`；adapter 失败时再降级为浏览器 DOM 或用户材料。
+11. 绝区零详情页若来自螃蟹 `pxb7/zzz-detail` 或盼之 `pzds/zzz-detail`，必须读取并保留 `agentStatuses` 角色角标字段。该字段来自详情页资产卡片右上角的 `x` 或 `x+y`，`x+y` 表示影画/命座和对应专属音擎，只有 `x` 时不得推断有专武；它优先于标题里的 S 角色数量、黄数和“几命”描述。
+12. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses`，先用浏览器低频滚动到资产/验号报告角色卡区域复核一次；仍缺失时把 `asset_status_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
+13. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
+14. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
 
 不要全站扫描或高频翻页。
 
