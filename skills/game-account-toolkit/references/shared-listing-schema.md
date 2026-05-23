@@ -33,6 +33,8 @@ game_assets:
   agent_statuses: object | null
   agent_status_source: asset_card_dom|title_dom|title_text|screenshot|user_text|unknown|null
   premium_currency: object
+  estimated_pulls: number | null
+  pull_estimate_formula: string | null
   skins_or_cosmetics: object[]
   progression: object
   game_specific: object
@@ -84,6 +86,7 @@ score:
 - 原始文本保留用于追溯，但推荐时必须引用结构化字段。
 - 缺失字段不能当作好消息，应降低数据完整度分。
 - 邮箱未绑定、邮箱未实名出售应结构化为低找回风险信号；邮箱实名出售、邮箱不出售、邮箱已注销或状态不明必须保留原始标签并进入人工确认。
+- 绝区零资源折算必须区分字段语义：`菲林` 和 `菲林底片` 都按 160:1 折算抽数，`加密母带` / `原装母带` / `邦布券` 按 1:1 折算。不要把 `菲林底片` 当作一张一抽；推荐记录应保留 `estimated_pulls` 和 `pull_estimate_formula`，并与卖家备注或截图交叉确认。
 - 详情页能读到角色卡片角标时，必须保留 `game_assets.agent_statuses`。绝区零在螃蟹/盼之详情中使用 `{"代理人":"x"}` 或 `{"代理人":"x+y"}`，其中 `x` 是影画/命座数，`+y` 是对应专属音擎数量；只有 `x` 时不能直接推断有专武，但也不能直接判定无专武，必须同步保留 `game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name` 供游戏 skill 用本地专武表交叉确认。
 - 主推荐、价格浮动备选、风险备选和排除项都必须保留 `url`；价格浮动备选应写入 `recommendation_tier: flex_budget` 和 `budget_delta`。
 - 社区证据工具超时或正文不可读时，必须记录 `community_attempt` 和 `fallback_used`，不能只在最终文案里笼统说“未覆盖”。

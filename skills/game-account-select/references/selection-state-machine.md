@@ -105,10 +105,13 @@ limitations: string[]
 8. 每次完成盼之列表或详情处理后，必须运行 `npm run pzds:health -- --json`。如果健康检查发现页面缺少盼之游戏入口、console error、阻断文本或卡在加载，先运行 `npm run pzds:repair -- --json` 做 PZDS 站点范围清理并复验；仍失败时记录 `pzds_browser_state_unhealthy`、console error、页面文本和降级路径，不得把本轮 PZDS 结果作为健康覆盖。
 9. 若高价值平台没有现成 OpenCLI adapter，记录 `adapter_available: false`、当前降级路径和是否适合 adapter 化；只有用户明确要求实现并且 `opencli browser <session> verify <site>/<command>` 通过后，才把新 adapter 当作可靠数据源。
 10. 若平台已有 verified adapter，优先运行 `opencli <site> <command> <input> -f json`，并在记录中保留 `adapter_available: true`、`adapter_verified: true`、`adapter_command`、`verify_command`；adapter 失败时再降级为浏览器 DOM 或用户材料。
-11. 绝区零详情页若来自螃蟹 `pxb7/zzz-detail` 或盼之 `pzds/zzz-detail`，必须读取并保留 `agentStatuses` 角色角标字段。该字段来自详情页资产卡片右上角的 `x` 或 `x+y`，`x+y` 表示影画/命座和对应专属音擎；只有 `x` 时不得直接推断有专武，也不得直接判定无专武，必须继续读取 `sWEngineNames` / `game_assets.s_w_engine_names` / `game_assets.w_engines[].name`，交给 ZZZ 本地专武表确认归属。它优先于标题里的 S 角色数量、黄数和“几命”描述。
-12. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses` 或 S 音擎名称清单，先用浏览器低频滚动到资产/验号报告角色卡和 S 级音擎区域复核一次；仍缺失时把 `asset_status_source: missing`、`engine_name_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
-13. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
-14. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
+11. 对 PXB 这类列表页，公开接口可能把商品数组放在 `data` 而不是 `data.records`；读取列表时必须兼容 `data[]`、`data.records`、`data.list`、`data.rows` 等形态，并把实际解析形态写入运行记录。若脚本返回空页，先用 `curl` 或浏览器核对响应结构，不要把解析错误当作“无候选”。
+12. 硬条件搜索不要用“专武词/玲珑妆匣”等标题词做唯一预筛。标题可能只列角色，不列完整专武；正确做法是先用角色集合、队伍核心、价格和资源字段找出低价可能项，再进入详情 adapter 用 `agentStatuses` + `sWEngineNames` 确认专武和 1+1。被标题预筛排除的低价项不得直接作为“未找到”的证据。
+13. 绝区零详情页若来自螃蟹 `pxb7/zzz-detail` 或盼之 `pzds/zzz-detail`，必须读取并保留 `agentStatuses` 角色角标字段。该字段来自详情页资产卡片右上角的 `x` 或 `x+y`，`x+y` 表示影画/命座和对应专属音擎；只有 `x` 时不得直接推断有专武，也不得直接判定无专武，必须继续读取 `sWEngineNames` / `game_assets.s_w_engine_names` / `game_assets.w_engines[].name`，交给 ZZZ 本地专武表确认归属。它优先于标题里的 S 角色数量、黄数和“几命”描述。
+14. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses` 或 S 音擎名称清单，先用浏览器低频滚动到资产/验号报告角色卡和 S 级音擎区域复核一次；仍缺失时把 `asset_status_source: missing`、`engine_name_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
+15. 绝区零抽卡资源折算统一写入 `estimated_pulls`：`(菲林 + 菲林底片) / 160 + 加密母带 + 原装母带 + 邦布券`。不要把 `菲林底片` 当作单抽券；如果卖家备注写“还有 N 抽”，用该公式和备注互相校验，差异较大时列人工确认。
+16. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
+17. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
 
 不要全站扫描或高频翻页。
 

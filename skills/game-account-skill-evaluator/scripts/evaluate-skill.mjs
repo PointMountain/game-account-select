@@ -169,6 +169,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const zzzSplitAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-split-adapter-capability-run.json');
   const zzzAssetStatusFixture = path.join(fixtureDir, 'zenless-zone-zero-asset-status-run.json');
   const zzzPzdsRouteMismatchFixture = path.join(fixtureDir, 'zenless-zone-zero-pzds-route-mismatch-run.json');
+  const zzzLowestStrictCleanFixture = path.join(fixtureDir, 'zenless-zone-zero-lowest-strict-clean-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -353,6 +354,21 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing ZZZ PZDS route-mismatch optimizer fixture');
+  }
+
+  if (fs.existsSync(zzzLowestStrictCleanFixture)) {
+    const zzzLowestStrictCleanReport = runFixture(zzzLowestStrictCleanFixture);
+    const blockingFindings = (zzzLowestStrictCleanReport?.findings ?? [])
+      .filter((finding) => String(finding.severity ?? '').toLowerCase() !== 'info');
+    const evidence = `${fs.readFileSync(zzzLowestStrictCleanFixture, 'utf8')}\n${JSON.stringify(zzzLowestStrictCleanReport ?? {})}`;
+    const preservesLowestStrictEvidence = /JHYXJ9111|lowest_strict_match|estimated_pulls|pull_estimate|菲林底片/i.test(evidence);
+    if (blockingFindings.length === 0 && preservesLowestStrictEvidence) addScore(4);
+    else {
+      if (blockingFindings.length) issue(`Clean ZZZ lowest-strict fixture should have no non-info findings: ${blockingFindings.map((finding) => finding.id).join(', ')}`);
+      if (!preservesLowestStrictEvidence) issue('Clean ZZZ lowest-strict fixture did not preserve lowest-match and pull-estimate evidence');
+    }
+  } else {
+    issue('Missing ZZZ lowest-strict clean optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {

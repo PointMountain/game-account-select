@@ -60,6 +60,14 @@ function tokenMatch(text, patterns) {
   return '';
 }
 
+function scopedTokenMatch(scopes, patterns) {
+  for (const scope of scopes) {
+    const value = tokenMatch(scope, patterns);
+    if (value) return value;
+  }
+  return '';
+}
+
 function parseStatusToken(value) {
   const text = cleanText(value);
   const explicit = text.match(/(\d+)\s*\+\s*(\d+)/);
@@ -248,17 +256,19 @@ function parseDetail(raw) {
   const title = firstMatch(text, [/(【JHYXJ[^】]+】[^\n]+)/, /(JHYXJ[A-Z0-9]+[^\n]+)/]) || cleanText(raw.title);
   const listingId = firstMatch(`${raw.title}\n${text}`, [/【([^】]+)】/, /\b(JHYXJ[A-Z0-9]+)\b/i]);
   const polychromeText = text.replace(/菲林底片[:：]?\s*\d+/g, '');
+  const detailPhotoTags = Array.from(title.matchAll(/【([^】]+)】/g)).map((match) => match[0]).join(' ');
+  const primaryDetailText = [title, detailPhotoTags, raw.title].filter(Boolean).join('\n');
 
   return {
     listingId,
     priceCny: numberMatch(text, [/￥\s*([0-9][0-9,]*(?:\.\d+)?)/]),
     title,
     binding: {
-      server: tokenMatch(text, [/米哈游官服/, /B服/, /渠道服/]),
-      email: tokenMatch(text, [/邮箱未实名出售/, /邮箱实名出售/, /邮箱未绑定/, /邮箱绑定/, /网易邮箱/, /QQ邮箱/]),
-      tap: tokenMatch(text, [/未绑定TAP/, /已绑定TAP/, /TAP绑定情况\s*未绑定TAP?/, /TAP绑定情况\s*已绑定TAP?/]),
-      psn: tokenMatch(text, [/未绑定PSN/, /已绑定PSN/, /PSN绑定情况\s*未绑定PSN?/, /PSN绑定情况\s*已绑定PSN?/]),
-      changeCode: tokenMatch(text, [/提供换绑码/, /不提供换绑码/]),
+      server: scopedTokenMatch([primaryDetailText, text], [/米哈游官服/, /B服/, /渠道服/]),
+      email: scopedTokenMatch([primaryDetailText, text], [/邮箱未实名出售/, /邮箱实名出售/, /邮箱未绑定/, /邮箱不出售/, /邮箱绑定/, /网易邮箱/, /QQ邮箱/]),
+      tap: scopedTokenMatch([primaryDetailText, text], [/未绑定TAP/, /已绑定TAP/, /TAP绑定情况\s*未绑定TAP?/, /TAP绑定情况\s*已绑定TAP?/]),
+      psn: scopedTokenMatch([primaryDetailText, text], [/未绑定PSN/, /已绑定PSN/, /PSN绑定情况\s*未绑定PSN?/, /PSN绑定情况\s*已绑定PSN?/]),
+      changeCode: scopedTokenMatch([primaryDetailText, text], [/提供换绑码/, /不提供换绑码/]),
     },
     resources: {
       level: numberMatch(text, [/(\d+)\s*级/]),
