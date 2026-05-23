@@ -138,20 +138,21 @@ updated_at: 2026-05-17
 
 ### asset_status_extraction
 
-账号详情页存在角色卡片角标，但运行记录没有把它结构化保存，导致影画和专属音擎归属只能靠标题猜测。
+账号详情页存在角色卡片角标或 S 级音擎清单，但运行记录没有把它结构化保存，导致影画和专属音擎归属只能靠标题猜测。
 
 常见信号：
 
 - 绝区零账号来自 `pxb7/zzz-detail` 或 `pzds/zzz-detail` verified adapter。
 - 运行记录包含 `voidHunters`、S 代理人总数、标题“几命”，但推荐/备选缺少 `agentStatuses` 或 `game_assets.agent_statuses`。
+- `agentStatuses` 存在但多为 `x` 单数字，推荐却声称“带专武/专武齐全”，同时缺少 `sWEngineNames`、`game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name`。
 - 用户要求“全部虚狩和对应辅助/专武”，但输出没有说明资产卡角标来源。
 
 建议：
 
-- 修复或复用 OpenCLI detail adapter，让它滚动到资产卡片区域并输出浅层 `agentStatuses`。
+- 修复或复用 OpenCLI detail adapter，让它滚动到资产卡片区域并输出浅层 `agentStatuses`，同时读取 S 级音擎名称清单 `sWEngineNames`。
 - 在 `shared-listing-schema.md`、`selection-state-machine.md` 和对应游戏 `valuation-rules.md` 中要求保留该字段。
-- `x+y` 只表示该角色有 `y` 个对应专属音擎；只有 `x` 时不要推断专武。
-- 不能读取角标时，把账号降级为 `source_status: partial` 并列为人工确认。
+- `x+y` 表示该角色有 `y` 个对应专属音擎；只有 `x` 时必须用本地专武表和 S 音擎名称交叉确认，不能只看总 S 音擎数。
+- 不能读取角标或 S 音擎名称时，把账号降级为 `source_status: partial` 并列为人工确认。
 
 ### output_format
 
@@ -183,12 +184,14 @@ updated_at: 2026-05-17
 - 用户反馈某个队伍或角色价值判断错误。
 - 用户要求多个核心分别成队，但推荐把共享队友重复计算，例如“三虚狩 + 两个辅助”被当成三支完整队。
 - 用户指出需要优先找最适配队友，再列下位替代，例如绝区零星见雅优先确认柚叶，不能只说有泛用辅助。
+- 用户指出绝区零三虚狩当前口径、直伤电、异放/妄想天使三小只、薇薇安紊乱队、2+1/1+1/0+1 舒适度加分等具体错误。
 
 建议：
 
 - 更新对应游戏的 `valuation-rules.md`、知识表和验证样例。
 - 新增验证样例，确保相同误判不复发。
 - 对“多核心多队”类硬条件，验证样例应包含一个共享辅助陷阱和一个独立成队正例。
+- 对绝区零三虚狩类反馈，验证样例应包含旧口径陷阱，例如叶瞬光只带照+千夏或雅队只带雅柚柳时不能按当前三队完整评分，同时包含直伤电、妄想天使三小只、薇薇安紊乱队和舒适度加分正例。
 
 ### hard_condition_budget
 

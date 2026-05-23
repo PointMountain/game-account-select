@@ -19,11 +19,12 @@ updated_at: 2026-05-17
 - User-approved budget flexibility belongs in a separate backup tier; near-budget accounts should not displace primary in-budget recommendations.
 - Hard conditions outrank budget fit. If no listing inside the stated budget satisfies a hard condition, recommend expanding to the flexible budget and identify the cheapest satisfying listing instead of promoting an in-budget miss.
 - Multi-team hard requirements must check independent team completeness. Do not count the same support or equipment slot for multiple cores; add regression samples with both shared-support traps and complete-team positives.
+- ZZZ Void Hunter feedback can include exact team archetypes and comfort breakpoints. Treat `雅+柚叶+南宫/狼/苍角`、`叶+照+耀嘉音/琉音`、`仪玄+卢西娅+橘福福/琉音`、直伤电 `希希芙+席德/希德+耀嘉音`、异放/妄想天使三小只、薇薇安紊乱队、`2+1`、`1+1`、`0+1` as valuation/team-rule signals that need target skill docs plus validation fixtures.
 - Repeated valuable platform access without a native OpenCLI command should become an adapter-gap finding, not permanent one-off DOM scraping.
 - OpenCLI adapter generation is only appropriate when the data is browser-visible, backed by verifiable HTTP/JSON/HTML, and can pass `opencli browser verify`; otherwise the correct fallback is user-provided links, screenshots, or copied text.
 - Once an OpenCLI adapter has passed `browser verify --strict-memory`, future runs should emit adapter-reuse guidance and prefer `opencli <site> <command>` over one-off browser DOM parsing.
 - Detail-page adapters and list-page adapters are separate capabilities. A run with `detail_adapter_available: true` and `list_adapter_available: false` should reuse the detail adapter while reporting only the missing list adapter capability.
-- ZZZ Pxb7/PZDS detail adapters should preserve the asset-card status badges as `agentStatuses`; for `x+y`, `x` is dupes/影画 and `y` is the matching signature W-engine count. If a verified detail adapter run recommends accounts without this field, emit an asset-status extraction finding instead of relying on title text.
+- ZZZ Pxb7/PZDS detail adapters should preserve the asset-card status badges as `agentStatuses` and the S-rank W-Engine name list as `sWEngineNames`; for `x+y`, `x` is dupes/影画 and `y` is the matching signature W-engine count. If the badge only shows `x`, the target ZZZ skill must cross-check S W-Engine names against `references/signature-engines.json`. If a verified detail adapter run recommends accounts without `agentStatuses` or cannot provide S W-Engine names for single-number badges, emit an asset-status extraction finding instead of relying on title text.
 - PZDS ZZZ detail URLs can end in `/6`, but that segment is not the ZZZ list game id. If a run visits `goodsList/6` for ZZZ or records wrong-game evidence, emit `platform-pzds-zzz-list-route-mismatch`; use `gameList` natural navigation or the browser-confirmed `goodsList/275` entry instead, and do not count the wrong route as PZDS coverage.
 
 ## Harness Philosophy
@@ -68,9 +69,11 @@ Regression coverage should include:
 - A Zenless Zone Zero run covering email-unverified risk ranking and shortened evidence refresh windows.
 - A run covering community evidence fallback, wait-budget recording, listing links, and flexible-budget backup output.
 - A run covering hard-condition budget expansion and multi-team completeness, such as ZZZ all Void Hunters needing three independent teams.
+- A ZZZ run where old team archetypes or comfort bonuses are wrong, proving the optimizer flags exact team-rule updates and the target skill validation catches old口径陷阱.
 - A run where valuable platforms have no reusable OpenCLI adapter and should trigger an adapter-generation recommendation.
 - A run where pxb7/pzds zzz-detail adapters are verified and should be reused without re-triggering the adapter-gap finding.
 - A run where pxb7/pzds zzz-detail adapters are verified but list adapters are missing, proving the optimizer can emit both detail reuse and list-capability gap evidence without conflating the two.
-- A run where verified pxb7/pzds zzz-detail adapters are used for ZZZ but the recommendation drops `agentStatuses`, proving the optimizer catches missing asset-card status data.
+- A run where verified pxb7/pzds zzz-detail adapters are used for ZZZ but the recommendation drops `agentStatuses` or lacks `sWEngineNames` while relying on single-number badges for signature W-Engines, proving the optimizer catches missing asset-card/status-name data.
+- A ZZZ run where `agentStatuses` contains only `x` values while the recommendation claims signature W-Engines are complete, proving the optimizer emits `platform-signature-engine-name-list-missing`.
 - A ZZZ run where PZDS was "covered" through `goodsList/6` or other wrong-game evidence, proving the optimizer catches route mismatch instead of treating PZDS as a valid covered source.
 - A failed evaluator run to prove redo behavior.

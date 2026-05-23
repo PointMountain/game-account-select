@@ -11,12 +11,15 @@
 
 ## 2026-05-23
 
+- 增加绝区零三虚狩配队纠偏识别：optimizer 现在会把南宫/狼/苍角、耀嘉音/琉音、卢西娅/橘福福、直伤电、异放/妄想天使、2+1/1+1/0+1 等反馈归入估值和独立队伍规则更新。
+- 增加薇薇安紊乱队关键词识别，用于把额外队伍加分反馈路由到 ZZZ 估值规则和验证样例。
 - 增加 ZZZ 邮箱未实名出售与社区证据刷新窗口回归样例。
 - 优化器现在能识别“邮箱未实名出售应作为低找回风险加分项”和“真实买号证据 30 天窗口过长”两类问题。
 - 增加社区证据缺口、社区工具降级、等待预算、备选链接和预算浮动备选的优化规则。
 - 增加 OpenCLI adapter 缺口诊断：高价值平台没有现成站点命令时，建议按 `opencli-adapter-author` 生成并验证私有 adapter，而不是长期依赖一次性 DOM 抽取。
 - 增加 OpenCLI adapter 复用诊断：pxb7/pzds 详情 adapter 通过 `browser verify --strict-memory` 后，优化器应建议优先复用 `opencli <site> detail`，且不再误报 adapter 缺口。
 - 增加 ZZZ 详情页资产角标诊断：verified pxb7/pzds zzz-detail adapter 推荐结果必须保留 `agentStatuses`，避免只靠标题猜影画和专属音擎。
+- 增加 ZZZ 专武名称清单诊断：当角色角标只有 `x` 时，verified pxb7/pzds zzz-detail 结果必须保留 `sWEngineNames`，供本地专武表交叉确认。
 - 增加硬条件预算扩展诊断：预算内无合格账号时，应扩大到价格浮动层并返回最低满足价。
 - 增加多队完整性诊断：例如 ZZZ 三虚狩要求三支独立队伍，不能把共享辅助重复计入多个核心。
 - 增加 PZDS 绝区零列表错路由诊断：详情页 `goodsDetails/<id>/6` 的末尾 `/6` 不能当作列表 `goodsList/6`，错路由或 wrong-game 页面会触发 `platform-pzds-zzz-list-route-mismatch`。

@@ -16,6 +16,7 @@ argument-hint: "[listing json or account description]"
 - `../game-account-toolkit/references/game-skill-standard.md`
 - `references/valuation-rules.md`
 - `references/agent-knowledge.md`
+- `references/signature-engines.json`
 - `references/community-evidence.md`
 - `references/changelog.md`
 

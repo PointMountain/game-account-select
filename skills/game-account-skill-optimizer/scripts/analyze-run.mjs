@@ -303,7 +303,7 @@ function hasVerifiedAdapter(attempt) {
     attempt.detail_adapter_command,
     attempt.verify_command
   ].filter(Boolean).join('\n');
-  return /adapter_available_true|opencli_adapter_available_true|detail_adapter_available_true|adapter_verified_true|detail_adapter_verified_true|opencli\s+(?:browser\s+\S+\s+verify\s+)?(?:pxb7|pzds)\/detail|opencli\s+(?:pxb7|pzds)\s+detail/i.test(text);
+  return /adapter_available_true|opencli_adapter_available_true|detail_adapter_available_true|adapter_verified_true|detail_adapter_verified_true|opencli\s+(?:browser\s+\S+\s+verify\s+)?(?:pxb7|pzds)\/(?:detail|zzz-detail)|opencli\s+(?:pxb7|pzds)\s+(?:detail|zzz-detail)/i.test(text);
 }
 
 function hasExplicitAdapterGap(attempt) {
@@ -426,6 +426,64 @@ function hasAgentStatuses(listing) {
   });
 }
 
+function valueHasEntries(value) {
+  if (!value) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+  return String(value).trim().length > 0;
+}
+
+function hasSWeaponNames(listing) {
+  const assets = listing.game_assets ?? {};
+  const candidates = [
+    listing.sWEngineNames,
+    listing.s_w_engine_names,
+    listing.signatureEngines,
+    listing.signature_engines,
+    listing.wEngines,
+    listing.w_engines,
+    assets.sWEngineNames,
+    assets.s_w_engine_names,
+    assets.sWEngines,
+    assets.s_w_engines,
+    assets.w_engines,
+    assets.wEngines,
+    assets.game_specific?.sWEngineNames,
+    assets.game_specific?.s_w_engine_names,
+    assets.game_specific?.w_engines
+  ];
+
+  return candidates.some(valueHasEntries);
+}
+
+function hasSingleNumberAgentStatus(listing) {
+  const assets = listing.game_assets ?? {};
+  const statusCandidates = [
+    listing.agentStatuses,
+    listing.agent_statuses,
+    listing.asset_statuses,
+    listing.agent_status_map,
+    assets.agent_statuses,
+    assets.agentStatuses,
+    assets.game_specific?.agent_statuses,
+    assets.game_specific?.agentStatuses
+  ].filter(Boolean);
+
+  for (const candidate of statusCandidates) {
+    const values = Array.isArray(candidate)
+      ? candidate.map((item) => item?.status ?? item?.raw ?? item?.text ?? item)
+      : typeof candidate === 'object'
+        ? Object.values(candidate).map((item) => item?.status ?? item?.raw ?? item?.text ?? item)
+        : [candidate];
+    if (values.some((value) => /^\s*\d+\s*$/.test(String(value ?? '')))) return true;
+  }
+  return false;
+}
+
+function claimsSignatureCompleteness(listing) {
+  return /专武|专属音擎|带签|签名|signature|W-Engine|S级音擎|S级武器|0\s*\+\s*1|1\s*\+\s*1|2\s*\+\s*1/i.test(JSON.stringify(listing));
+}
+
 const verifiedDetailPlatforms = new Set(verifiedAdapterAttempts
   .map(platformName)
   .filter((platform) => ['pxb7', 'pzds'].includes(platform)));
@@ -455,6 +513,37 @@ if (isZenlessRun() && verifiedDetailPlatforms.size > 0 && listingsMissingAgentSt
       'skills/game-account-select/references/selection-state-machine.md',
       'skills/game-account-toolkit/references/shared-listing-schema.md',
       'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-zenless-zone-zero/references/valuation-rules.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
+const listingsMissingSWeaponNames = statusRelevantListings
+  .filter((listing) => hasAgentStatuses(listing))
+  .filter((listing) => hasSingleNumberAgentStatus(listing))
+  .filter((listing) => !hasSWeaponNames(listing))
+  .filter((listing) => claimsSignatureCompleteness(listing) || /专武|专属音擎|带签|签名|signature|W-Engine/i.test(`${finalResponse}\n${artifact.user_request ?? ''}`));
+if (isZenlessRun() && verifiedDetailPlatforms.size > 0 && listingsMissingSWeaponNames.length > 0) {
+  addFinding({
+    id: 'platform-signature-engine-name-list-missing',
+    severity: 'high',
+    category: 'platform_coverage',
+    summary: 'ZZZ single-number asset badges need S-rank W-Engine names for signature-engine cross-checking',
+    evidence: listingsMissingSWeaponNames.map((listing) => {
+      const id = listing.listing_id ?? listing.id ?? listing.title ?? listing.url ?? 'unknown';
+      return `${listingPlatform(listing)} ${id}: agentStatuses include x-only badges but no sWEngineNames / game_assets.s_w_engine_names for signature W-Engine matching`;
+    }),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-toolkit/opencli-adapters/games/zenless-zone-zero/clis/pxb7/zzz-detail.js',
+      'skills/game-account-toolkit/opencli-adapters/games/zenless-zone-zero/clis/pzds/zzz-detail.js',
+      'skills/game-account-zenless-zone-zero/references/signature-engines.json',
       'skills/game-account-zenless-zone-zero/references/valuation-rules.md',
       'skills/game-account-skill-optimizer/references/optimization-workflow.md',
       'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
@@ -546,8 +635,8 @@ const feedback = [
   ...(Array.isArray(artifact.rule_update_suggestions) ? artifact.rule_update_suggestions : [])
 ].join('\n');
 
-const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色/i;
-const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
+const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色|2\s*\+\s*1|1\s*\+\s*1|0\s*\+\s*1|舒适度|加分项|直伤电|异放|紊乱|妄想天使|薇薇安|Vivian|希希芙|希德|席德|耀佳音|耀嘉音/i;
+const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|南宫|狼|苍角|照|耀佳音|耀嘉音|琉音|卢西娅|橘福福|希希芙|希德|席德|妄想天使|异放|紊乱|薇薇安|Vivian|直伤电|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
 const hardConditionBudgetPattern = /给定金额.*(?:没有|无|不足).*满足|预算.*(?:没有|无|不足).*满足|没有满足条件|无满足条件|扩大(?:金额|预算|价格|范围)|价格最低.*满足|最低.*满足|最低满足价|硬性标准.*预算/i;
 const uncertaintyText = [
   finalResponse,

@@ -89,7 +89,7 @@ Adapter 代码实现默认不是自动补丁。只有用户明确要求“实现
 3. `verify_command` 必须能通过 `--strict-memory`，即 `~/.opencli/sites/<site>/endpoints.json` 和 `notes.md` 都存在。
 4. 若 adapter 输出和网页肉眼值不一致，应按 `opencli-autofix` 或 adapter-author workflow 修 adapter，不要在游戏估值规则里补偿解析错误。
 5. 含本机状态的私有 adapter 不进仓库；已脱敏、可复用的 adapter 应通过 `game-account-toolkit/opencli-adapters` 和安装脚本同步，避免 skill 使用者缺失本机 OpenCLI 能力。
-6. 绝区零的 `pxb7/zzz-detail` / `pzds/zzz-detail` 必须保留详情页角色角标 `agentStatuses`。如果推荐记录只有 `voidHunters` 或标题几命，没有 `agentStatuses`，优化器应输出 `platform-agent-status-asset-cards-missing` 并要求回到 adapter 或标准化层修复。
+6. 绝区零的 `pxb7/zzz-detail` / `pzds/zzz-detail` 必须保留详情页角色角标 `agentStatuses`，并尽量保留页面 S 级音擎名称清单 `sWEngineNames`。如果推荐记录只有 `voidHunters` 或标题几命，没有 `agentStatuses`，优化器应输出 `platform-agent-status-asset-cards-missing`；如果角色角标只有 `x` 却没有 S 音擎名称清单，优化器应输出专武名称清单缺失 finding，并要求回到 adapter 或标准化层修复。
 
 ## 手动执行模式
 
