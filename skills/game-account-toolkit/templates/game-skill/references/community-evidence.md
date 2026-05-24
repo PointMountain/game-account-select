@@ -5,6 +5,7 @@ updated_at: {{date}}
 ```yaml
 source_coverage:
   bilibili: not_checked
+  youtube: not_checked
   xiaohongshu: not_checked
   douyin: not_checked
   official_or_wiki: not_checked

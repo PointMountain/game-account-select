@@ -4,12 +4,12 @@
   "finished_at": "2026-05-24T00:10:00+0800",
   "game": "zenless-zone-zero",
   "target_skill": "skills/game-account-zenless-zone-zero",
-  "user_request": "2000元左右，虚狩齐全，对应辅助齐全，有一定抽数备战3.0虚狩；还要异放队三小只、直伤电队希希芙+席德+耀嘉音，耀嘉音1+1；2000不够则继续提高额度找低价符合项。",
+  "user_request": "2000元左右，虚狩齐全，对应辅助齐全，有一定抽数备战3.0虚狩；还要异放队三小只、直伤电队希希芙+席德+耀嘉音。人工复盘后确认耀嘉音0+0可用，虚狩2+1优先级高于耀嘉音1+1，非虚狩0+1通常优先于1+0，三小只最好都有专武且至少南宫羽要有专武；2000不够则继续提高额度找低价符合项。",
   "budget": {
     "target_cny": 2000,
     "max": 2000,
     "allow_budget_flex": true,
-    "lowest_strict_match_found_cny": 1900
+    "lowest_strict_match_found_cny": 1399
   },
   "capabilities": {
     "pxb7": {
@@ -61,39 +61,163 @@
   ],
   "community_attempts": [
     {
-      "source": "local skill evidence",
-      "query": "skills/game-account-zenless-zone-zero/references/community-evidence.md and agent-knowledge.md",
+      "source": "local skill evidence plus user manual review",
+      "query": "skills/game-account-zenless-zone-zero/references/community-evidence.md, agent-knowledge.md, and user-reviewed PXB JHYXJ3297",
       "status": "success",
-      "evidence": "三小只按 千夏 + 爱芮 + 南宫羽; 三虚狩 supports must not be double-counted; 耀嘉音1+1 is a separate comfort signal."
+      "evidence": "虚狩2+1 outranks 耀嘉音1+1 as a value signal; 耀嘉音0+0 is usable; non-Void-Hunter 0+1 usually beats 1+0; Delusion Angels signatures are important and Nangong Yu signature is the minimum priority; YouTube should be added for global-synchronized evidence."
     }
   ],
   "recommendations": [
     {
-      "listing_id": "JHYXJ9111",
+      "listing_id": "JHYXJ3297",
       "platform": "pxb7",
-      "url": "https://www.pxb7.com/product/2185807643526122475/1",
-      "price": 1900,
+      "url": "https://www.pxb7.com/product/2188685601096660723/1",
+      "price": 1399,
       "currency": "CNY",
       "recommendation_tier": "primary_lowest_strict_match",
-      "verified_at": "2026-05-22",
-      "title_summary": "60级；69黄；菲林底片140；菲林1665；加密母带100；32个S级代理人；20个S级音擎；官方截图。",
+      "verified_at": "2026-05-24",
+      "title_summary": "60级；63黄；菲林底片120；菲林892；加密母带130；19个S级代理人；17个S级音擎；官方截图。",
       "binding": {
         "server": "米哈游官服",
         "email": "邮箱未绑定",
         "tap": "未绑定TAP",
         "psn": "未绑定PSN",
         "changeCode": "提供换绑码",
-        "manual_confirm": "详情复跑后邮箱字段为邮箱未绑定；仍需付款前让卖家/平台客服确认邮箱交付和换绑链路。"
+        "manual_confirm": "详情复跑后邮箱字段为邮箱未绑定；仍需付款前让卖家/平台客服确认邮箱交付、换绑码和找回包赔。"
       },
       "resources": {
         "level": 60,
-        "yellowCount": 69,
-        "polychrome": 1665,
-        "filmTape": 140,
-        "encryptedMasterTape": 100,
-        "estimated_pulls_conservative": 111,
-        "calculation": "(1665 + 140) / 160 + 100 = 111.28; seller note says 还有110抽"
+        "yellowCount": 63,
+        "polychrome": 892,
+        "filmTape": 120,
+        "encryptedMasterTape": 130,
+        "estimated_pulls_conservative": 136,
+        "calculation": "(892 + 120) / 160 + 130 = 136.33"
       },
+      "agentStatuses": {
+        "星见雅": "2+1",
+        "仪玄": "2+1",
+        "叶瞬光": "2+1",
+        "耀嘉音": "0",
+        "希希芙": "0+1",
+        "席德": "0+1",
+        "千夏": "0+1",
+        "爱芮": "0+1",
+        "南宫羽": "0+1",
+        "柚叶": "1+1",
+        "照": "0",
+        "卢西娅": "1+1",
+        "橘福福": "1+1",
+        "琉音": "missing",
+        "月城柳": "0+1",
+        "简": "0+1"
+      },
+      "sWEngineNames": [
+        "拘缚者",
+        "青溟笼舍",
+        "霰落星殿",
+        "铸梦炉歌",
+        "钢铁肉垫",
+        "福虓炉炉",
+        "硫磺石",
+        "玉壶青冰",
+        "狸法七变化",
+        "深海访客",
+        "淬锋钳刺",
+        "时流贤者",
+        "思络成歌",
+        "啜泣摇篮",
+        "云霓孤光",
+        "鳞齿寻踪",
+        "机巧心种",
+        "霓虹妄想",
+        "壳中之灵"
+      ],
+      "team_split": [
+        "星见雅 + 柚叶 + 南宫羽",
+        "仪玄 + 卢西娅 + 橘福福",
+        "叶瞬光 + 照 + 耀嘉音",
+        "异放配置：千夏 + 爱芮 + 南宫羽，三小只专武齐，南宫羽专武已确认",
+        "直伤电配置：希希芙 + 席德 + 耀嘉音；耀嘉音0+0可用但舒适度低于1+1",
+        "琉音未确认：作为同价比较项记录，不重复计入三队完整性"
+      ],
+      "hard_filter": {
+        "all_void_hunters": true,
+        "void_hunter_2_plus_1": true,
+        "void_hunter_supports_complete_without_double_counting": true,
+        "angels_complete": true,
+        "angels_signature_complete": true,
+        "nangong_yu_signature_confirmed": true,
+        "direct_electric_complete": true,
+        "yao_jiayin_0_plus_0_usable": true,
+        "yao_jiayin_1_plus_1_required": false,
+        "non_void_0_plus_1_priority_over_1_plus_0": true,
+        "some_3_0_pulls": true,
+        "official_server_low_binding_risk": true,
+        "independent_void_hunter_split": true
+      },
+      "caveats": [
+        "琉音未在详情结构化字段中确认；按人工确认项记录，已不影响本账号硬条件通过。",
+        "耀嘉音为0+0，可用但低于1+1舒适度；本账号靠三虚狩2+1和三小只专武补足性价比。",
+        "付款前复核实时截图、资源、垫池、邮箱交付、换绑码和找回包赔。"
+      ],
+      "score": {
+        "hard_filter_passed": true,
+        "asset_score": 35,
+        "engine_score": 15,
+        "team_score": 20,
+        "resource_score": 13,
+        "progression_score": 4,
+        "price_score": 10,
+        "risk_penalty": 0,
+        "confidence_penalty": 0,
+        "final_score": 97
+      },
+      "game_assets": {
+        "agent_statuses": {
+          "星见雅": "2+1",
+          "仪玄": "2+1",
+          "叶瞬光": "2+1",
+          "耀嘉音": "0",
+          "希希芙": "0+1",
+          "席德": "0+1",
+          "千夏": "0+1",
+          "爱芮": "0+1",
+          "南宫羽": "0+1",
+          "柚叶": "1+1",
+          "卢西娅": "1+1",
+          "橘福福": "1+1",
+          "月城柳": "0+1",
+          "简": "0+1"
+        },
+        "s_w_engine_names": [
+          "青溟笼舍",
+          "霰落星殿",
+          "铸梦炉歌",
+          "福虓炉炉",
+          "狸法七变化",
+          "淬锋钳刺",
+          "时流贤者",
+          "思络成歌",
+          "云霓孤光",
+          "鳞齿寻踪",
+          "机巧心种",
+          "霓虹妄想",
+          "壳中之灵"
+        ],
+        "estimated_pulls": 136,
+        "pull_estimate_formula": "(892 + 120) / 160 + 130 = 136.33"
+      }
+    }
+  ],
+  "backup_listings": [
+    {
+      "listing_id": "JHYXJ9111",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2185807643526122475/1",
+      "price": 1900,
+      "tier": "strict_but_lower_value_after_review",
+      "verdict": "角色/电队/资源齐且耀嘉音1+1，但三位虚狩不是2+1，三小只专武不如JHYXJ3297完整；人工复盘后不应压过JHYXJ3297。",
       "agentStatuses": {
         "星见雅": "0+1",
         "仪玄": "0+1",
@@ -103,13 +227,7 @@
         "席德": "0+1",
         "千夏": "0",
         "爱芮": "0",
-        "南宫羽": "0",
-        "柚叶": "0",
-        "照": "0",
-        "卢西娅": "0",
-        "橘福福": "0",
-        "琉音": "0",
-        "莱卡恩": "1+1"
+        "南宫羽": "0"
       },
       "sWEngineNames": [
         "鳞齿寻踪",
@@ -130,40 +248,6 @@
         "奔袭獠牙",
         "十方锻星"
       ],
-      "team_split": [
-        "星见雅 + 柚叶 + 莱卡恩",
-        "仪玄 + 卢西娅 + 橘福福",
-        "叶瞬光 + 照 + 琉音",
-        "异放配置：千夏 + 爱芮 + 南宫羽",
-        "直伤电配置：希希芙 + 席德 + 耀嘉音"
-      ],
-      "hard_filter": {
-        "all_void_hunters": true,
-        "void_hunter_supports_complete_without_double_counting": true,
-        "angels_complete": true,
-        "direct_electric_complete": true,
-        "yao_jiayin_1_plus_1": true,
-        "some_3_0_pulls": true,
-        "official_server_low_binding_risk": true,
-        "independent_void_hunter_split": true
-      },
-      "caveats": [
-        "三位核心不是全2+1；星见雅/仪玄为0+1，叶瞬光为1+1，属于低价齐全号，不是毕业号。",
-        "三小只和部分辅助为0命，不是高命收藏。",
-        "付款前复核实时截图、资源、垫池、邮箱交付、换绑码和找回包赔。"
-      ],
-      "score": {
-        "hard_filter_passed": true,
-        "asset_score": 30,
-        "engine_score": 15,
-        "team_score": 20,
-        "resource_score": 13,
-        "progression_score": 4,
-        "price_score": 10,
-        "risk_penalty": 2,
-        "confidence_penalty": 1,
-        "final_score": 89
-      },
       "game_assets": {
         "agent_statuses": {
           "星见雅": "0+1",
@@ -174,13 +258,7 @@
           "席德": "0+1",
           "千夏": "0",
           "爱芮": "0",
-          "南宫羽": "0",
-          "柚叶": "0",
-          "照": "0",
-          "卢西娅": "0",
-          "橘福福": "0",
-          "琉音": "0",
-          "莱卡恩": "1+1"
+          "南宫羽": "0"
         },
         "s_w_engine_names": [
           "鳞齿寻踪",
@@ -200,13 +278,9 @@
           "嵌合编译器",
           "奔袭獠牙",
           "十方锻星"
-        ],
-        "estimated_pulls": 111,
-        "pull_estimate_formula": "(1665 + 140) / 160 + 100 = 111.28; seller note says 还有110抽"
+        ]
       }
-    }
-  ],
-  "backup_listings": [
+    },
     {
       "listing_id": "JHYXJ7474",
       "platform": "pxb7",
@@ -352,12 +426,6 @@
       "url": "https://www.pxb7.com/product/2176909019136202439/1"
     },
     {
-      "listing_id": "JHYXJ5154",
-      "price": 1800,
-      "reason": "三虚狩强，但耀嘉音0、资源少；不满足耀嘉音1+1。",
-      "url": "https://www.pxb7.com/product/2186927418245753082/1"
-    },
-    {
       "listing_id": "JECUM2519",
       "price": 2588,
       "reason": "全角色标题命中但耀嘉音为0+1，不满足耀嘉音1+1。",
@@ -380,11 +448,18 @@
       "price": 6480,
       "reason": "资源多但未验到玲珑妆匣，耀嘉音不构成1+1。",
       "url": "https://www.pxb7.com/product/2175881372139692097/1"
+    },
+    {
+      "listing_id": "JHYXJ5154",
+      "price": 1800,
+      "reason": "用户更正为误给链接；不作为本轮性价比正例。",
+      "url": "https://www.pxb7.com/product/2186927418245753082/1"
     }
   ],
   "missing_fields": [
     "Live seller screenshots should be rechecked immediately before payment.",
-    "PZDS first-page coverage produced no strict low-price match; PXB had the matching inventory in this run."
+    "PZDS first-page coverage produced no strict low-price match; PXB had the matching inventory in this run.",
+    "Liuyin is a comparison bonus if present, not a blocker for this reviewed JHYXJ3297 run."
   ],
-  "final_response": "主推 PXB JHYXJ9111，1900元；约111抽，详情见推荐记录。付款前复核实时截图、资源、垫池和交付链路。"
+  "final_response": "主推 PXB JHYXJ3297，1399元；三虚狩2+1、三小只专武齐、约136抽，耀嘉音0+0可用。JHYXJ9111降为备选：耀嘉音1+1但整体性价比不如JHYXJ3297。付款前复核实时截图、资源、垫池和交付链路。"
 }

@@ -645,8 +645,9 @@ const feedback = [
   ...(Array.isArray(artifact.rule_update_suggestions) ? artifact.rule_update_suggestions : [])
 ].join('\n');
 
-const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色|2\s*\+\s*1|1\s*\+\s*1|0\s*\+\s*1|舒适度|加分项|直伤电|异放|紊乱|妄想天使|薇薇安|Vivian|希希芙|希德|席德|耀佳音|耀嘉音/i;
+const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色|2\s*\+\s*1|1\s*\+\s*1|0\s*\+\s*1|1\s*\+\s*0|0\s*\+\s*0|舒适度|加分项|性价比|直伤电|异放|紊乱|妄想天使|薇薇安|Vivian|希希芙|希德|席德|耀佳音|耀嘉音|琉音|南宫羽/i;
 const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|南宫|狼|苍角|照|耀佳音|耀嘉音|琉音|卢西娅|橘福福|希希芙|希德|席德|妄想天使|异放|紊乱|薇薇安|Vivian|直伤电|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
+const independentTeamConcernPattern = /不(?:能|足|完整|算|应)|缺|少|共享|抢|重复|无法|没法|没有证明|未证明|未验证|下位|旧口径|陷阱|误判|补齐|确认|风险/i;
 const hardConditionBudgetPattern = /给定金额.*(?:没有|无|不足).*满足|预算.*(?:没有|无|不足).*满足|没有满足条件|无满足条件|扩大(?:金额|预算|价格|范围)|价格最低.*满足|最低.*满足|最低满足价|硬性标准.*预算/i;
 const uncertaintyText = [
   finalResponse,
@@ -670,16 +671,17 @@ if (valuationPattern.test(feedback)) {
   });
 }
 
-if (independentTeamPattern.test(feedback) || independentTeamPattern.test(finalResponse)) {
+const independentTeamEvidence = [
+  ...feedback.split('\n').filter((line) => independentTeamPattern.test(line)),
+  ...finalResponse.split('\n').filter((line) => independentTeamPattern.test(line) && independentTeamConcernPattern.test(line))
+].filter(Boolean);
+if (independentTeamEvidence.length) {
   addFinding({
     id: 'valuation-independent-team-completeness',
     severity: 'high',
     category: 'valuation',
     summary: 'Hard team requirements should verify independent team completeness instead of counting shared supports as complete teams',
-    evidence: [
-      ...feedback.split('\n').filter((line) => independentTeamPattern.test(line)),
-      ...finalResponse.split('\n').filter((line) => independentTeamPattern.test(line))
-    ].filter(Boolean),
+    evidence: independentTeamEvidence,
     suggestedTargets: [
       ...targetSkillTargets({ includeFixtures: true, includeValidation: true }),
       'skills/game-account-select/references/selection-state-machine.md'
@@ -705,7 +707,7 @@ if (hardConditionBudgetPattern.test(uncertaintyText)) {
 }
 
 const needsCommunityEvidence = valuationPattern.test(uncertaintyText)
-  || /不确定|无法确认|没读到|未稳定读取|社区证据.*不足|社群|社区|小红书|B站|bilibili|字幕|评论|正文/i.test(uncertaintyText);
+  || /不确定|无法确认|没读到|未稳定读取|社区证据.*不足|社群|社区|小红书|B站|bilibili|YouTube|youtube|字幕|评论|正文/i.test(uncertaintyText);
 const successfulCommunityAttempts = communityAttempts.filter((attempt) => ['success', 'partial', 'limited'].includes(String(attempt.status ?? '')));
 if (needsCommunityEvidence && successfulCommunityAttempts.length === 0) {
   addFinding({
@@ -713,7 +715,7 @@ if (needsCommunityEvidence && successfulCommunityAttempts.length === 0) {
     severity: 'high',
     category: 'evidence',
     summary: 'Uncertain meta or team valuation should trigger community evidence collection before high-confidence ranking',
-    evidence: uncertaintyText.split('\n').filter((line) => valuationPattern.test(line) || /不确定|无法确认|没读到|未稳定读取|社群|社区|小红书|B站|bilibili|字幕|评论|正文/i.test(line)),
+    evidence: uncertaintyText.split('\n').filter((line) => valuationPattern.test(line) || /不确定|无法确认|没读到|未稳定读取|社群|社区|小红书|B站|bilibili|YouTube|youtube|字幕|评论|正文/i.test(line)),
     suggestedTargets: [
       'skills/game-account-select/references/selection-state-machine.md',
       'skills/game-account-toolkit/references/community-research-protocol.md',

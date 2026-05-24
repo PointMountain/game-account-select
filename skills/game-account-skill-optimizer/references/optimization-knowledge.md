@@ -19,7 +19,8 @@ updated_at: 2026-05-17
 - User-approved budget flexibility belongs in a separate backup tier; near-budget accounts should not displace primary in-budget recommendations.
 - Hard conditions outrank budget fit. If no listing inside the stated budget satisfies a hard condition, recommend expanding to the flexible budget and identify the cheapest satisfying listing instead of promoting an in-budget miss.
 - Multi-team hard requirements must check independent team completeness. Do not count the same support or equipment slot for multiple cores; add regression samples with both shared-support traps and complete-team positives.
-- ZZZ Void Hunter feedback can include exact team archetypes and comfort breakpoints. Treat `雅+柚叶+南宫/狼/苍角`、`叶+照+耀嘉音/琉音`、`仪玄+卢西娅+橘福福/琉音`、直伤电 `希希芙+席德/希德+耀嘉音`、异放/妄想天使三小只、薇薇安紊乱队、`2+1`、`1+1`、`0+1` as valuation/team-rule signals that need target skill docs plus validation fixtures.
+- ZZZ Void Hunter feedback can include exact team archetypes and comfort breakpoints. Treat `雅+柚叶+南宫/狼/苍角`、`叶+照+耀嘉音/琉音`、`仪玄+卢西娅+橘福福/琉音`、直伤电 `希希芙+席德/希德+耀嘉音`、异放/妄想天使三小只、薇薇安紊乱队、虚狩 `2+1` 高于耀嘉音 `1+1`、耀嘉音 `0+0` 可用、非虚狩 `0+1 > 1+0`、南宫羽专武优先、琉音机制特殊 as valuation/team-rule signals that need target skill docs plus validation fixtures.
+- Global-synchronized games should include YouTube in community-source routing. If B站/小红书 evidence is insufficient and YouTube was not attempted or recorded as unavailable, emit an evidence coverage/fallback recommendation instead of claiming high-confidence meta consensus.
 - Repeated valuable platform access without a native OpenCLI command should become an adapter-gap finding, not permanent one-off DOM scraping.
 - OpenCLI adapter generation is only appropriate when the data is browser-visible, backed by verifiable HTTP/JSON/HTML, and can pass `opencli browser verify`; otherwise the correct fallback is user-provided links, screenshots, or copied text.
 - Once an OpenCLI adapter has passed `browser verify --strict-memory`, future runs should emit adapter-reuse guidance and prefer `opencli <site> <command>` over one-off browser DOM parsing.
@@ -76,4 +77,6 @@ Regression coverage should include:
 - A run where verified pxb7/pzds zzz-detail adapters are used for ZZZ but the recommendation drops `agentStatuses` or lacks `sWEngineNames` while relying on single-number badges for signature W-Engines, proving the optimizer catches missing asset-card/status-name data.
 - A ZZZ run where `agentStatuses` contains only `x` values while the recommendation claims signature W-Engines are complete, proving the optimizer emits `platform-signature-engine-name-list-missing`.
 - A ZZZ run where PZDS was "covered" through `goodsList/6` or other wrong-game evidence, proving the optimizer catches route mismatch instead of treating PZDS as a valid covered source.
+- A ZZZ run where a user-confirmed best-value account has three Void Hunters at `2+1`, Astra/Yaojiayin at `0+0`, and Delusion Angels signatures, proving the target game validation ranks it above an Astra `1+1` account with weaker Void Hunter or Angels investment.
+- A community evidence run where YouTube is omitted for a global-synchronized game, proving the optimizer/evaluator keeps YouTube in the expected evidence-source set.
 - A failed evaluator run to prove redo behavior.

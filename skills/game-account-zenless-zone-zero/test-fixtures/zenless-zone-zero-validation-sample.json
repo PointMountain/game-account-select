@@ -1,5 +1,5 @@
 {
-  "expected_top_id": "void-hunters-three-team-complete",
+  "expected_top_id": "jhyxj3297-user-best-value",
   "community_snapshot_date": "2026-05-16",
   "listings": [
     {
@@ -230,6 +230,167 @@
           "master_tape": 0,
           "boopon": 20,
           "residual_signal": 120
+        },
+        "progression": { "inter_knot_level": 60 },
+        "risk": {
+          "email_status": "unbound",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "jhyxj3297-user-best-value",
+      "price": 1399,
+      "title": "JHYXJ3297 人工复核高性价比三虚狩号",
+      "server": "官服",
+      "raw_text": "https://www.pxb7.com/product/2188685601096660723/1；用户人工筛查确认：三虚狩都是2+1，耀嘉音0+0可用，直伤电希希芙+席德+耀嘉音较齐，妄想天使三小只都有专武，缺琉音但整体性价比最高。三小只专武尤其南宫羽专武是关键；非虚狩角色0+1一般优先于1+0。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Yuzuha", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Nangong Yu", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 2, "role": "attack" },
+          { "name": "Zhao", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 2, "role": "defense" },
+          { "name": "Ju Fufu", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Lucia", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Xixifu", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Sid", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Qianxia", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Airi", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Vivian", "category": "limited", "mindscape": 0, "role": "anomaly" },
+          { "name": "Jane", "category": "limited", "mindscape": 0, "role": "anomaly" },
+          { "name": "Yanagi", "category": "limited", "mindscape": 0, "role": "anomaly" }
+        ],
+        "agent_statuses": {
+          "星见雅": "2+1",
+          "叶瞬光": "2+1",
+          "仪玄": "2+1",
+          "耀嘉音": "0",
+          "希希芙": "0+1",
+          "席德": "0+1",
+          "千夏": "0+1",
+          "爱芮": "0+1",
+          "南宫羽": "0+1",
+          "柚叶": "1+1",
+          "卢西娅": "1+1",
+          "橘福福": "1+1",
+          "照": "0",
+          "薇薇安": "0",
+          "简": "0+1",
+          "月城柳": "0+1"
+        },
+        "s_w_engine_names": [
+          "霰落星殿",
+          "云霓孤光",
+          "青溟笼舍",
+          "狸法七变化",
+          "铸梦炉歌",
+          "福虓炉炉",
+          "鳞齿寻踪",
+          "机巧心种",
+          "思络成歌",
+          "霓虹妄想",
+          "壳中之灵",
+          "淬锋钳刺",
+          "时流贤者",
+          "飞鸟星梦"
+        ],
+        "w_engines": [
+          { "name": "霰落星殿" },
+          { "name": "云霓孤光" },
+          { "name": "青溟笼舍" },
+          { "name": "狸法七变化" },
+          { "name": "铸梦炉歌" },
+          { "name": "福虓炉炉" },
+          { "name": "鳞齿寻踪" },
+          { "name": "机巧心种" },
+          { "name": "思络成歌" },
+          { "name": "霓虹妄想" },
+          { "name": "壳中之灵" },
+          { "name": "淬锋钳刺" },
+          { "name": "时流贤者" },
+          { "name": "飞鸟星梦" }
+        ],
+        "resources": {
+          "polychrome": 892,
+          "film_tape": 120,
+          "encrypted_master_tape": 130,
+          "master_tape": 0,
+          "boopon": 0,
+          "residual_signal": 0
+        },
+        "progression": { "inter_knot_level": 60 },
+        "risk": {
+          "email_status": "unbound",
+          "hoyoverse_binding": "changeable",
+          "psn_binding": "clean",
+          "tap_binding": "clean",
+          "guarantee": "retrieval_compensation",
+          "official_verification": true
+        }
+      }
+    },
+    {
+      "id": "astra-1-plus-1-lower-value-trap",
+      "price": 1399,
+      "title": "耀嘉音1+1但虚狩和三小只投入较低",
+      "server": "官服",
+      "raw_text": "耀嘉音1+1很舒服，但三虚狩只有0+1，三小只只有角色或1+0，缺南宫羽专武。这个账号不能因为耀嘉音1+1压过三虚狩2+1且三小只0+1的账号。",
+      "game_assets": {
+        "agents": [
+          { "name": "Miyabi", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Yuzuha", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Nangong Yu", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Ye Shunguang", "category": "limited", "mindscape": 0, "role": "attack" },
+          { "name": "Zhao", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Astra Yao", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Yixuan", "category": "limited", "mindscape": 0, "role": "defense" },
+          { "name": "Ju Fufu", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Lucia", "category": "limited", "mindscape": 0, "role": "support" },
+          { "name": "Xixifu", "category": "limited", "mindscape": 1, "role": "attack" },
+          { "name": "Sid", "category": "limited", "mindscape": 1, "role": "attack" },
+          { "name": "Qianxia", "category": "limited", "mindscape": 1, "role": "support" },
+          { "name": "Airi", "category": "limited", "mindscape": 1, "role": "support" }
+        ],
+        "agent_statuses": {
+          "星见雅": "0+1",
+          "叶瞬光": "0+1",
+          "仪玄": "0+1",
+          "耀嘉音": "1+1",
+          "希希芙": "1",
+          "席德": "1",
+          "千夏": "1",
+          "爱芮": "1",
+          "南宫羽": "1",
+          "柚叶": "0",
+          "卢西娅": "0",
+          "橘福福": "0",
+          "照": "0"
+        },
+        "s_w_engine_names": [
+          "霰落星殿",
+          "云霓孤光",
+          "青溟笼舍",
+          "玲珑妆匣"
+        ],
+        "w_engines": [
+          { "name": "霰落星殿" },
+          { "name": "云霓孤光" },
+          { "name": "青溟笼舍" },
+          { "name": "玲珑妆匣" }
+        ],
+        "resources": {
+          "polychrome": 900,
+          "encrypted_master_tape": 130,
+          "master_tape": 0,
+          "boopon": 0,
+          "residual_signal": 0
         },
         "progression": { "inter_knot_level": 60 },
         "risk": {

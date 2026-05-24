@@ -260,6 +260,10 @@ function hasInvestment(agentId, agents, engines, statusMap, matchedSignatureEngi
     && signatureCountForAgent(agentId, engines, statusMap, matchedSignatureEngines) >= minSignatureCount;
 }
 
+function hasSignature(agentId, agents, engines, statusMap, matchedSignatureEngines) {
+  return signatureCountForAgent(agentId, engines, statusMap, matchedSignatureEngines) > 0;
+}
+
 function pairOptionsForCore(core, roster) {
   const specs = {
     miyabi: [
@@ -440,18 +444,23 @@ function scoreListing(listing) {
   let comfortScore = 0;
   const voidHunterTwoPlusOne = voidHunterCores.filter((core) => hasInvestment(core, agents, engines, statusMap, matchedSignatureEngines, 2, 1));
   if (voidHunterTwoPlusOne.length) {
-    comfortScore += voidHunterTwoPlusOne.length;
+    comfortScore += voidHunterTwoPlusOne.length * 2;
     highlights.push(`${voidHunterTwoPlusOne.map(labelAgent).join('、')} reach 2+1 Void Hunter comfort breakpoints`);
     if (voidHunterTwoPlusOne.length === voidHunterCores.length) comfortScore += 2;
   }
   if (hasInvestment('astra_yao', agents, engines, statusMap, matchedSignatureEngines, 1, 1)) {
-    comfortScore += 2;
-    highlights.push('耀嘉音 reaches the preferred 1+1 comfort breakpoint');
+    comfortScore += 1;
+    highlights.push('耀嘉音 reaches the 1+1 comfort breakpoint');
+  } else if (roster.has('astra_yao')) {
+    highlights.push('耀嘉音 is present; 0+0 is usable when Void Hunter investment and teams are stronger');
   }
-  const extraCarryPlusOne = ['xixifu', 'sid'].filter((core) => hasInvestment(core, agents, engines, statusMap, matchedSignatureEngines, 0, 1));
-  if (extraCarryPlusOne.length) {
-    comfortScore += extraCarryPlusOne.length;
-    highlights.push(`${extraCarryPlusOne.map(labelAgent).join('、')} have 0+1 extra-team carry value`);
+  const nonVoidZeroPlusOne = [
+    'xixifu', 'sid', 'yuzuha', 'lucia', 'ju_fufu', 'zhao',
+    'qianxia', 'airi', 'nangong_yu', 'vivian', 'jane', 'yanagi'
+  ].filter((core) => hasInvestment(core, agents, engines, statusMap, matchedSignatureEngines, 0, 1));
+  if (nonVoidZeroPlusOne.length) {
+    comfortScore += Math.min(nonVoidZeroPlusOne.length, 3);
+    highlights.push(`${nonVoidZeroPlusOne.map(labelAgent).join('、')} have 0+1 value; signature access usually beats 1+0 for non-Void-Hunter roles`);
   }
   if (directElectricTeam.every((agentId) => roster.has(agentId))) {
     comfortScore += 2;
@@ -461,11 +470,29 @@ function scoreListing(listing) {
     concerns.push('Direct electric team is mentioned but 希希芙 + 席德 + 耀嘉音 is not fully visible');
   }
   if (delusionAngelsTrio.every((agentId) => roster.has(agentId))) {
-    comfortScore += 2;
-    highlights.push(`Delusion Angels trio is visible for the anomaly-release team: ${delusionAngelsTrio.map(labelAgent).join('+')}`);
+    comfortScore += 1;
+    const angelsWithSignatures = delusionAngelsTrio.filter((agentId) => hasSignature(agentId, agents, engines, statusMap, matchedSignatureEngines));
+    if (hasSignature('nangong_yu', agents, engines, statusMap, matchedSignatureEngines)) {
+      comfortScore += 2;
+      highlights.push('南宫羽 has signature W-Engine, covering the most important Delusion Angels signature');
+    } else {
+      missingFields.push('Nangong Yu signature W-Engine for Delusion Angels');
+      concerns.push('Delusion Angels trio is present, but 南宫羽 signature W-Engine is not confirmed');
+    }
+    if (angelsWithSignatures.length === delusionAngelsTrio.length) {
+      comfortScore += 2;
+      highlights.push(`Delusion Angels trio has signature support: ${delusionAngelsTrio.map(labelAgent).join('+')}`);
+    } else {
+      missingFields.push('Delusion Angels trio signature W-Engines');
+      concerns.push('Delusion Angels trio is visible, but not every member has confirmed signature W-Engine');
+    }
   } else if (/异放|妄想天使/.test(rawText)) {
     missingFields.push('Delusion Angels trio: 千夏 + 爱芮 + 南宫羽');
     concerns.push('Anomaly-release team is mentioned but the Delusion Angels trio is not fully visible');
+  }
+  if (roster.has('liuyin')) {
+    comfortScore += 1;
+    highlights.push('琉音 is present as a special-mechanism support');
   }
   const vivianDisorderPartner = vivianDisorderPartners.find((agentId) => roster.has(agentId));
   if (roster.has('vivian') && vivianDisorderPartner) {
@@ -491,7 +518,12 @@ function scoreListing(listing) {
   }
 
   const progressionScore = clamp(Math.floor(Number(assets.progression?.inter_knot_level ?? 0) / 15), 0, 5);
-  const priceFitScore = agentScore >= 30 && engineScore >= 10 ? 8 : agentScore >= 20 ? 5 : 1;
+  const price = Number(listing.price ?? 0);
+  let priceFitScore = agentScore >= 30 && engineScore >= 10 ? 8 : agentScore >= 20 ? 5 : 1;
+  if (price > 0 && threeTeamPlan.completeTeams === 3 && agentScore >= 30 && engineScore >= 10) {
+    if (price <= 1500 && voidHunterTwoPlusOne.length === voidHunterCores.length) priceFitScore = 10;
+    else if (price <= 2000) priceFitScore = Math.max(priceFitScore, 9);
+  }
 
   let accountHygieneScore = 0;
   let riskPenalty = 0;
@@ -562,11 +594,15 @@ function scoreListing(listing) {
   if (missingFields.includes('independent three-team support roster')) missingPenalty += 10;
   if (missingFields.includes('direct electric team: 希希芙 + 席德 + 耀嘉音')) missingPenalty += 4;
   if (missingFields.includes('Delusion Angels trio: 千夏 + 爱芮 + 南宫羽')) missingPenalty += 4;
+  if (missingFields.includes('Nangong Yu signature W-Engine for Delusion Angels')) missingPenalty += 15;
+  if (missingFields.includes('Delusion Angels trio signature W-Engines')) missingPenalty += 8;
   if (missingFields.includes('Vivian disorder team partner')) missingPenalty += 3;
 
   const rawScore = agentScore + engineScore + teamScore + resourceScore + progressionScore + priceFitScore + accountHygieneScore + comfortScore;
   const finalScore = clamp(rawScore - riskPenalty - missingPenalty, 0, 100);
-  const communityComparison = threeTeamPlan.hasAllVoidHunters && threeTeamPlan.completeTeams === 3 && riskPenalty < 8
+  const hasKeyAngelsSignatureGap = missingFields.includes('Nangong Yu signature W-Engine for Delusion Angels')
+    || missingFields.includes('Delusion Angels trio signature W-Engines');
+  const communityComparison = threeTeamPlan.hasAllVoidHunters && threeTeamPlan.completeTeams === 3 && riskPenalty < 8 && !hasKeyAngelsSignatureGap
     ? 'strong alignment'
     : threeTeamPlan.hasAllVoidHunters && threeTeamPlan.completeTeams < 3
       ? 'partial alignment; three-team support incomplete'
@@ -653,6 +689,20 @@ if (!threeTeamComplete.highlights.some((item) => /from S-rank W-Engine list/.tes
 }
 if (threeTeamComplete.components.comfortScore < 6) {
   throw new Error('Expected complete account to receive comfort bonuses for 2+1 / 0+1 / 耀嘉音 1+1');
+}
+const userBestValue = results.find((result) => result.id === 'jhyxj3297-user-best-value');
+const astraTrap = results.find((result) => result.id === 'astra-1-plus-1-lower-value-trap');
+if (!userBestValue || !astraTrap || userBestValue.final_score <= astraTrap.final_score) {
+  throw new Error('Expected JHYXJ3297-style 2+1 Void Hunter account to outrank Astra 1+1 lower-value trap');
+}
+if (!userBestValue.highlights.some((item) => /南宫羽 has signature W-Engine/.test(item))) {
+  throw new Error('Expected Nangong Yu signature W-Engine to be recognized as key Delusion Angels value');
+}
+if (!astraTrap.missing_fields.includes('Nangong Yu signature W-Engine for Delusion Angels')) {
+  throw new Error('Expected missing Nangong Yu signature W-Engine to penalize lower-value trap');
+}
+if (!userBestValue.highlights.some((item) => /signature access usually beats 1\+0/.test(item))) {
+  throw new Error('Expected non-Void-Hunter 0+1 priority over 1+0 to be explained');
 }
 
 console.log(`\nValidation passed: ${fixture.expected_top_id} outranks standard S-rank-count accounts.`);

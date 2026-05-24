@@ -78,6 +78,10 @@ node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/
 4. 输出修复目标：列出具体文件、证据和验证命令。
 5. 若已应用优化，运行 `game-account-skill-evaluator`；低于门槛或 `redo_required: true` 时必须打回重做，不允许继续用于真实推荐。
 
+## 用户反馈沉淀要求
+
+用户人工复盘指出的估值优先级不能只写成一次性建议。应用优化时必须同步更新目标游戏规则、优化器知识库、回归样例和 evaluator 检查；若是全球同步进度游戏，还要检查社区证据协议是否覆盖 YouTube。绝区零这类反馈应至少保留“虚狩 `2+1` 高于耀嘉音/耀佳音 `1+1`、耀嘉音/耀佳音 `0+0` 可用、非虚狩角色通常 `0+1 > 1+0`、妄想天使三小只专武尤其南宫羽专武、琉音机制价值特殊”等信号，并用正反例防止单一舒适度项压过整体账号性价比。
+
 ## 输出
 
 面向 skill-to-skill 的机器可读输出为 `<skill_optimization_report>`；面向用户的最终答复必须先给清晰中文摘要，不要把 XML 标签作为主文案直接展示。

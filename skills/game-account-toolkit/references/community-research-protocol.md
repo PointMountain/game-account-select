@@ -1,6 +1,6 @@
 # 社区攻略证据协议
 
-该协议用于把 B站、抖音、小红书、贴吧、微博、攻略站和官方公告中的版本评价，转成可维护的游戏账号估值因子。它不负责购买建议，只负责建立“当前版本什么资产真有价值”的证据快照。
+该协议用于把 B站、YouTube、抖音、小红书、贴吧、微博、攻略站和官方公告中的版本评价，转成可维护的游戏账号估值因子。它不负责购买建议，只负责建立“当前版本什么资产真有价值”的证据快照。
 
 ## 适用场景
 
@@ -22,7 +22,7 @@
 从高到低使用：
 
 1. 官方公告和版本更新说明：确认版本、卡池、角色名、机制变化。
-2. 长视频/长文攻略：B站视频、专栏、Wiki/攻略站，适合提取强度、队伍、命座、专武结论。
+2. 长视频/长文攻略：B站、YouTube 视频、专栏、Wiki/攻略站，适合提取强度、队伍、命座、专武结论。全球同步进度游戏应把 YouTube 作为可用独立社区来源。
 3. 多平台高互动讨论：小红书图文、抖音话题/视频、贴吧/微博讨论，用于验证普通玩家关注点和争议点。
 4. 评论区共识：只能作为辅助证据，不能单独改变评分规则。
 5. 单条短帖、标题党、未列数据的观点：低置信度，只能触发人工确认或待验证项。
@@ -56,6 +56,18 @@
 3. 对代表性视频读取 metadata、字幕和少量高赞评论。
 4. 若字幕不可用，只能摘要标题/简介/评论，不得声称已理解完整视频内容。
 5. 若结构化命令超时或无输出，立即改用浏览器 CDP 读取页面 DOM、`meta[name=description]`、合集/相关视频标题和页面可见评论；仍失败时记录 `fallback_used: browser_dom_or_metadata` 或 `failed`，不要继续等待同一命令。
+
+### YouTube
+
+适合全球同步进度游戏的长视频攻略、配队展示、命座/专武价值判断和英文社区共识。绝区零、鸣潮等中外版本同步或接近同步的游戏，YouTube 应与 B站一起作为优先长视频来源。
+
+推荐流程：
+
+1. 查询词包含英文游戏名、角色英文名、team、build、signature weapon、dupe / mindscape / resonance、account value 等关键词。
+2. 读取搜索结果标题、频道、发布时间、观看量、URL 和简介。
+3. 优先读取章节、字幕、简介、置顶评论和少量高赞评论；字幕不可用时，只能把标题/简介/章节/评论作为中低置信证据。
+4. 若结构化工具不可用，改用浏览器 CDP、页面 metadata、公开字幕接口、Jina/WebFetch/curl 或通用搜索摘要；仍失败时记录 `fallback_used` 和失败原因。
+5. 不得把单条英文视频标题直接升级成硬规则；应与 B站、小红书、攻略站或官方资料交叉确认。
 
 ### 小红书
 
@@ -105,6 +117,7 @@ community_evidence:
   max_age_for_live_purchase_days: number
   source_coverage:
     bilibili: available|limited|failed|not_checked
+    youtube: available|limited|failed|not_checked
     douyin: available|limited|failed|not_checked
     xiaohongshu: available|limited|failed|not_checked
     other: string[]
