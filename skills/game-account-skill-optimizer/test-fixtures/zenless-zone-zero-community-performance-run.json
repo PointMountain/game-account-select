@@ -47,6 +47,15 @@
       "error_text": "subtitle command hung"
     },
     {
+      "source": "youtube",
+      "tool": "opencli search",
+      "query": "Zenless Zone Zero Void Hunter teams Miyabi Yixuan Ye Shunguang signature weapon",
+      "status": "timeout",
+      "duration_ms": 41000,
+      "result_count": 0,
+      "error_text": "youtube search command hung"
+    },
+    {
       "source": "xiaohongshu",
       "tool": "opencli search",
       "query": "绝区零 叶瞬光 配队 星见雅 仪玄",
@@ -99,7 +108,7 @@
   ],
   "rule_update_suggestions": [
     "社群配队不确定时必须先找社群答案，不能只用平台标题高置信排序",
-    "opencli B站字幕和小红书搜索超时时，应改用浏览器DOM、页面metadata、攻略站或用户截图降级",
+    "opencli B站字幕、YouTube搜索和小红书搜索超时时，应改用浏览器DOM、页面metadata、攻略站或用户截图降级",
     "1000元预算允许上下波动二三百的账号应作为价格浮动备选单独展示，并保留链接",
     "全部虚狩不能按三虚狩+两个辅助算完整，必须检查星见雅、仪玄、叶瞬光能否无重复队友组成三队",
     "星见雅队优先确认柚叶；没有柚叶时必须说明耀嘉音、妮可、苍角、月城柳或莱卡恩等下位替代"

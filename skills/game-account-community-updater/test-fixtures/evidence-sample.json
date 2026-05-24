@@ -3,6 +3,7 @@
   "community_confidence": "medium",
   "source_coverage": {
     "bilibili": "limited",
+    "youtube": "not_checked",
     "douyin": "failed",
     "xiaohongshu": "not_checked",
     "guide_sites": "available"

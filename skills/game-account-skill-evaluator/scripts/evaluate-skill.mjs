@@ -256,13 +256,15 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     ];
     const missingFindingIds = requiredFindingIds.filter((id) => !findingIds.has(id));
     const evidence = (zzzCommunityPerformanceReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
-    const preservesCommunityEvidence = /bilibili|xiaohongshu|subtitle|小红书|B站/i.test(evidence);
+    const preservesCommunityEvidence = /bilibili|youtube|xiaohongshu|subtitle|小红书|B站|YouTube/i.test(evidence);
+    const preservesYoutubeEvidence = /youtube|YouTube/i.test(evidence);
     const preservesLinkEvidence = /recommendations:QL9CHD|excluded_listings:JHYXJ3302/.test(evidence);
     const preservesAdapterGapEvidence = /pxb7|pzds|no opencli adapter|browser_cdp/i.test(evidence);
-    if (missingFindingIds.length === 0 && preservesCommunityEvidence && preservesLinkEvidence && preservesAdapterGapEvidence) addScore(6);
+    if (missingFindingIds.length === 0 && preservesCommunityEvidence && preservesYoutubeEvidence && preservesLinkEvidence && preservesAdapterGapEvidence) addScore(6);
     else {
       if (missingFindingIds.length) issue(`Optimizer missed ZZZ community/performance findings: ${missingFindingIds.join(', ')}`);
       if (!preservesCommunityEvidence) issue('Optimizer did not preserve community-source failure evidence');
+      if (!preservesYoutubeEvidence) issue('Optimizer did not preserve YouTube community-source evidence');
       if (!preservesLinkEvidence) issue('Optimizer did not preserve missing listing-link evidence');
       if (!preservesAdapterGapEvidence) issue('Optimizer did not preserve OpenCLI adapter-gap evidence');
     }
@@ -361,7 +363,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const blockingFindings = (zzzLowestStrictCleanReport?.findings ?? [])
       .filter((finding) => String(finding.severity ?? '').toLowerCase() !== 'info');
     const evidence = `${fs.readFileSync(zzzLowestStrictCleanFixture, 'utf8')}\n${JSON.stringify(zzzLowestStrictCleanReport ?? {})}`;
-    const preservesLowestStrictEvidence = /JHYXJ9111|lowest_strict_match|estimated_pulls|pull_estimate|菲林底片/i.test(evidence);
+    const preservesLowestStrictEvidence = /JHYXJ3297|lowest_strict_match|estimated_pulls|pull_estimate|菲林底片|南宫羽|0\+1.*1\+0|耀(?:嘉|佳)音0\+0/i.test(evidence);
     if (blockingFindings.length === 0 && preservesLowestStrictEvidence) addScore(4);
     else {
       if (blockingFindings.length) issue(`Clean ZZZ lowest-strict fixture should have no non-info findings: ${blockingFindings.map((finding) => finding.id).join(', ')}`);
@@ -465,6 +467,22 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
         else addIssue(`Validation script failed: ${(run.stderr || run.stdout).trim()}`, true, 'Fix validate-sample.mjs so the expected top listing wins.');
       } else {
         addIssue('Missing scripts/validate-sample.mjs');
+      }
+      if (path.basename(root) === 'game-account-zenless-zone-zero') {
+        const knowledge = knowledgeFile ? read(`references/${knowledgeFile}`) : '';
+        const fixtureText = readFileIfExists(path.join(root, 'test-fixtures', 'zenless-zone-zero-validation-sample.json'));
+        const validationText = readFileIfExists(path.join(root, 'scripts', 'validate-sample.mjs'));
+        const zzzValueText = `${rules}\n${knowledge}\n${fixtureText}\n${validationText}`;
+        if (/0\s*\+\s*1[\s\S]{0,80}(?:1\s*\+\s*0|1\+0)|1\s*\+\s*0[\s\S]{0,80}0\s*\+\s*1/.test(zzzValueText)) addScore(2);
+        else addIssue('ZZZ rules must encode non-Void-Hunter 0+1 priority over 1+0', false);
+        if (/南宫羽[\s\S]{0,80}专武|Nangong Yu signature W-Engine/.test(zzzValueText)) addScore(2);
+        else addIssue('ZZZ rules must encode Nangong Yu signature W-Engine as key Delusion Angels value', false);
+        if (/耀(?:嘉|佳)音[\s\S]{0,80}0\s*\+\s*0|0\s*\+\s*0[\s\S]{0,80}耀(?:嘉|佳)音/.test(zzzValueText)) addScore(2);
+        else addIssue('ZZZ rules must allow Astra/Yaojiayin 0+0 as usable when stronger value signals exist', false);
+        if (/jhyxj3297-user-best-value|JHYXJ3297/.test(zzzValueText) && /astra-1-plus-1-lower-value-trap/.test(zzzValueText)) addScore(2);
+        else addIssue('ZZZ validation must include JHYXJ3297-style best-value positive and Astra 1+1 lower-value trap', false);
+        if (/琉音[\s\S]{0,80}(?:机制|特殊|高价值)|Liuyin is present as a special-mechanism support/.test(zzzValueText)) addScore(2);
+        else addIssue('ZZZ rules must encode Liuyin as a special-mechanism support signal', false);
       }
       break;
     }
@@ -647,6 +665,8 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
       else addIssue('Toolkit lacks platform safety boundary guidance');
       if (containsAny(toolkitText, ['skill-io-contract', 'shared-listing-schema', 'platform_attempts'])) addScore(12);
       else addIssue('Toolkit lacks shared contract/schema guidance');
+      if (containsAny(toolkitText, ['YouTube', 'youtube'])) addScore(2);
+      else addIssue('Toolkit community research protocol should include YouTube as a community source', false);
       addScore(8);
       break;
     }

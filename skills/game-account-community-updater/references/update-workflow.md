@@ -10,6 +10,7 @@ updated_at: 2026-05-16
   "community_confidence": "medium",
   "source_coverage": {
     "bilibili": "limited",
+    "youtube": "not_checked",
     "douyin": "failed"
   },
   "sources": [
@@ -40,5 +41,6 @@ updated_at: 2026-05-16
 ## 推荐刷新节奏
 
 - 大版本或新卡池：立即刷新。
-- 常规使用：30 天内快照可复用，超过 30 天执行刷新。
+- 真实买号筛选：默认 7 天内快照可复用；全球同步进度游戏应尝试 YouTube 作为独立长视频来源。
+- 常规使用：若对应游戏 skill 明确放宽，可在 14 天内复用；不要继续把 30 天作为买号默认窗口。
 - 用户样本出现未覆盖角色/装备/资源体系：执行临时刷新。
