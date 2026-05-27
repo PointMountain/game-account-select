@@ -42,6 +42,7 @@ updated_at: 2026-05-17
 - 失败后进入降级路径，不反复重试。
 - 把失败原因写入数据来源限制。
 - 对社区来源同样适用等待预算；`duration_ms` 较长但缺少 `wait_budget_ms` 时，应补运行记录字段，便于下次判断是否该提前降级。
+- 浏览器/OpenCLI 查询必须有可追踪 `query_session_id`，结束后运行 `npm run query:cleanup -- --json` 并把清理报告写入 artifact。若清理后仍有本轮 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail`、`selectPageList` 或 `goodsList/275` 进程，输出 `runtime-browser-session-cleanup-missing`，先处理残留再结束。
 
 ### empty_result
 

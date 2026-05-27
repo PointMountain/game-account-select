@@ -39,7 +39,9 @@
       "fallback_used": "list_api_data_array_then_detail_adapter",
       "evidence": "PXB list endpoint returned product arrays under data[]; 2880 rows scanned with role-name prefilter, then strict candidates verified through pxb7/zzz-detail. Title-only signature-engine words were not used as the sole prefilter.",
       "duration_ms": 0,
-      "wait_budget_ms": 15000
+      "wait_budget_ms": 15000,
+      "query_session_id": "gas-zzz-pxb7-fixture",
+      "browser_targets": []
     },
     {
       "platform": "pzds",
@@ -56,7 +58,9 @@
       "fallback_used": "verified_list_route_plus_pzds_health",
       "evidence": "PZDS ZZZ goodsList/275 and pzds:health were reachable; first page did not expose a strict low-price match, so PXB detail-verified inventory produced the recommendation.",
       "duration_ms": 0,
-      "wait_budget_ms": 15000
+      "wait_budget_ms": 15000,
+      "query_session_id": "gas-zzz-pzds-fixture",
+      "browser_targets": []
     }
   ],
   "community_attempts": [
@@ -461,5 +465,16 @@
     "PZDS first-page coverage produced no strict low-price match; PXB had the matching inventory in this run.",
     "Liuyin is a comparison bonus if present, not a blocker for this reviewed JHYXJ3297 run."
   ],
-  "final_response": "主推 PXB JHYXJ3297，1399元；三虚狩2+1、三小只专武齐、约136抽，耀嘉音0+0可用。JHYXJ9111降为备选：耀嘉音1+1但整体性价比不如JHYXJ3297。付款前复核实时截图、资源、垫池和交付链路。"
+  "final_response": "主推 PXB JHYXJ3297，1399元；三虚狩2+1、三小只专武齐、约136抽，耀嘉音0+0可用。JHYXJ9111降为备选：耀嘉音1+1但整体性价比不如JHYXJ3297。付款前复核实时截图、资源、垫池和交付链路。",
+  "cleanup_reports": [
+    {
+      "command": "npm run query:cleanup -- --session gas-zzz-pxb7-fixture --session gas-zzz-pzds-fixture --json",
+      "closed_sessions": [
+        "gas-zzz-pxb7-fixture",
+        "gas-zzz-pzds-fixture"
+      ],
+      "closed_targets": [],
+      "process_audit_after": []
+    }
+  ]
 }

@@ -111,7 +111,9 @@ limitations: string[]
 14. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses` 或 S 音擎名称清单，先用浏览器低频滚动到资产/验号报告角色卡和 S 级音擎区域复核一次；仍缺失时把 `asset_status_source: missing`、`engine_name_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
 15. 绝区零抽卡资源折算统一写入 `estimated_pulls`：`(菲林 + 菲林底片) / 160 + 加密母带 + 原装母带 + 邦布券`。不要把 `菲林底片` 当作单抽券；如果卖家备注写“还有 N 抽”，用该公式和备注互相校验，差异较大时列人工确认。
 16. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
-17. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
+17. 浏览器查询必须使用可追踪 session，推荐 `gas-<game>-<platform>-<timestamp>`；不要为同一次筛选创建多个无名 Chrome 分组或空窗口。能在同一个 OpenCLI browser session 内完成的列表页、页内 `fetch`、PZDS 健康检查必须复用 session，并记录 `query_session_id` 与 `browser_targets`。
+18. 对 PXB 列表，优先使用“一次打开列表页 + 页内 fetch 少量页 + 详情 adapter 验证短名单”的路径。普通 `curl` 若返回站点脚本/风控页，不要继续重试 curl；也不要为了翻页批量打开详情页。
+19. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
 
 不要全站扫描或高频翻页。
 
@@ -235,17 +237,26 @@ community_evidence:
 - `rule_update_suggestions`
 - `user_feedback`
 - `evaluation_reports`：目标 skill、生成器产物或优化产物的 evaluator 输出。
+- `cleanup_reports`：查询结束后 `npm run query:cleanup -- --json` 的输出，至少包含关闭的 sessions/targets 和剩余匹配进程。
 
 执行：
 
 1. 写入临时 artifact，默认放在 `/tmp/game-account-select-runs/<timestamp>-<game>.json`；除非用户要求持久化，不把真实查询 artifact 提交进仓库。
-2. 运行优化器：
+2. 运行查询清理和后台审计。默认命令：
+
+```bash
+npm run query:cleanup -- --session-prefix gas- --json
+```
+
+若本轮记录了具体 session 或 CDP target，必须显式传入 `--session` / `--target`。如果清理报告仍显示本轮生成的 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail` 等进程，先处理残留或在 artifact 里记录 `cleanup_incomplete`；不要留下后台查询脚本后直接结束。
+
+3. 运行优化器：
 
 ```bash
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input <run-artifact.json> --json
 ```
 
-3. 运行评估器读取同一个 raw artifact：
+4. 运行评估器读取同一个 raw artifact：
 
 ```bash
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=<run-artifact.json> --json

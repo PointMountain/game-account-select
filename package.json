@@ -11,6 +11,7 @@
     "unlink:skills": "node scripts/unlink-local-skills.js",
     "opencli:adapters:check": "node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --check",
     "opencli:adapters:install": "node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install",
+    "query:cleanup": "node skills/game-account-toolkit/scripts/cleanup-query-session.mjs",
     "pzds:health": "node skills/game-account-toolkit/scripts/pzds-browser-health.mjs",
     "pzds:repair": "node skills/game-account-toolkit/scripts/pzds-browser-health.mjs --repair",
     "verify:frontmatter": "node scripts/verify-skill-frontmatter.js",
