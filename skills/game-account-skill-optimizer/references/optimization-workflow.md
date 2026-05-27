@@ -43,6 +43,7 @@ updated_at: 2026-05-17
 ## Troubleshooting 清单
 
 - 慢：检查 `duration_ms`、重复查询、等待预算和降级路径。
+- 浏览器残留：检查 `query_session_id`、`browser_targets`、`cleanup_reports` 和清理后的进程审计。若执行记录显示开过 OpenCLI browser/CDP/Chrome 页面却没有清理报告，或清理后仍有本轮查询进程，输出 `runtime-browser-session-cleanup-missing`，目标文件包括 selector 状态机、平台访问策略、共享 schema 和 cleanup 脚本。
 - 空：检查 `empty_result`、登录提示、验证码、详情页 503、公开列表是否可读。
 - 漏平台：对照 `platform-priority.json`，确认螃蟹、盼之、交易猫、淘手游是否按顺序尝试或明确降级。
 - 缺 adapter：对照 `opencli list -f yaml` 和 `opencli <site> -h`，确认目标平台是否有现成命令；没有时判断是否适合按 OpenCLI adapter 流程固化。

@@ -215,6 +215,69 @@ if (failedEvaluations.length) {
   });
 }
 
+const cleanupReports = [
+  ...(artifact.cleanup_report ? [artifact.cleanup_report] : []),
+  ...(Array.isArray(artifact.cleanup_reports) ? artifact.cleanup_reports : [])
+];
+const browserLikeAttempts = attempts.filter((attempt) => {
+  const text = [
+    attempt.tool,
+    attempt.method,
+    attempt.source,
+    attempt.fallback_used,
+    attempt.adapter_command,
+    attempt.detail_adapter_command,
+    attempt.verify_command,
+    attempt.evidence,
+    attempt.url
+  ].filter(Boolean).join('\n');
+  return /opencli\s+browser|browser_cdp|manual_browser_dom|CDP|Chrome|tab|target|pzds:health|goodsList|selectPageList|pxb7|pzds/i.test(text);
+});
+const attemptsMissingQuerySession = browserLikeAttempts.filter((attempt) => {
+  const hasSession = attempt.query_session_id || attempt.session || attempt.browser_session || attempt.opencli_session;
+  const explicitNoBrowser = attempt.browser_used === false || attempt.no_browser === true;
+  return !hasSession && !explicitNoBrowser;
+});
+const cleanupMissing = browserLikeAttempts.length > 0 && cleanupReports.length === 0;
+const residualProcessReports = cleanupReports.filter((report) => {
+  const residuals = [
+    ...(Array.isArray(report.process_audit_after) ? report.process_audit_after : []),
+    ...(Array.isArray(report.residual_processes) ? report.residual_processes : []),
+    ...(Array.isArray(report.leftover_processes) ? report.leftover_processes : [])
+  ];
+  return residuals.some((line) => /opencli\s+browser\s+gas-|run-with-timeout|pxb7|pzds|zzz-detail|selectPageList|goodsList\/275/i.test(String(line)));
+});
+if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessReports.length) {
+  addFinding({
+    id: 'runtime-browser-session-cleanup-missing',
+    severity: residualProcessReports.length ? 'high' : 'medium',
+    category: 'runtime',
+    summary: 'Browser/OpenCLI query sessions must be named, cleaned up, and audited before final output',
+    evidence: [
+      cleanupMissing ? 'browser-like platform attempts were recorded but no cleanup_report/cleanup_reports were attached' : null,
+      ...attemptsMissingQuerySession.map((attempt) => `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}: missing query_session_id/browser_session for browser-backed path`),
+      ...residualProcessReports.flatMap((report) => {
+        const residuals = [
+          ...(Array.isArray(report.process_audit_after) ? report.process_audit_after : []),
+          ...(Array.isArray(report.residual_processes) ? report.residual_processes : []),
+          ...(Array.isArray(report.leftover_processes) ? report.leftover_processes : [])
+        ];
+        return residuals.map((line) => `residual process after cleanup: ${line}`);
+      })
+    ].filter(Boolean),
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/platform-access-policy.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-toolkit/scripts/cleanup-query-session.mjs',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
 const slowAttempts = [...attempts, ...communityAttempts].filter((attempt) => Number(attempt.duration_ms ?? 0) >= 30000 || attempt.status === 'timeout');
 if (slowAttempts.length) {
   const platforms = [...new Set(slowAttempts.map(platformName))];

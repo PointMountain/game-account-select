@@ -1,0 +1,55 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "skills/game-account-zenless-zone-zero",
+  "user_request": "2000元左右找绝区零账号，要求虚狩2+1和多队完整。",
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "gameId=10312 pageIndex=1-12",
+      "url": "https://www.pxb7.com/buy/10312/1",
+      "status": "success",
+      "result_count": 192,
+      "duration_ms": 29000,
+      "wait_budget_ms": 30000,
+      "tool": "opencli browser plus page fetch",
+      "fallback_used": "browser_cdp",
+      "evidence": "PXB direct curl returned script page, so the run opened a browser tab and used page-context fetch for selectPageList."
+    },
+    {
+      "platform": "pzds",
+      "query": "https://www.pzds.com/goodsList/275 first page",
+      "url": "https://www.pzds.com/goodsList/275",
+      "status": "partial",
+      "result_count": 10,
+      "duration_ms": 12000,
+      "wait_budget_ms": 40000,
+      "query_session_id": "gas-zzz-pzds-0528",
+      "browser_targets": [
+        "BB185328017FF50F9D6E3E00B6BB3C8F"
+      ],
+      "tool": "opencli browser",
+      "fallback_used": "verified_list_route_plus_detail_adapter"
+    }
+  ],
+  "cleanup_reports": [
+    {
+      "command": "npm run query:cleanup -- --session-prefix gas- --json",
+      "closed_sessions": [
+        "gas-zzz-pzds-0528"
+      ],
+      "closed_targets": [],
+      "process_audit_after": [
+        "60219 35427 00:32 node /Users/dragon/Documents/AI/mo-skills/agent-session-guard/scripts/run-with-timeout.mjs --timeout-ms 30000 -- opencli browser gas-zzz-pxb7-0528 eval fetch selectPageList"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ7897",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2186745888031655837/1",
+      "price": 1600
+    }
+  ],
+  "final_response": "推荐 JHYXJ7897，但本次查询过程留下了一个 opencli browser gas-zzz-pxb7-0528 后台进程。"
+}

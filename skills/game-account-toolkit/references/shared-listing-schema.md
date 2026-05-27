@@ -51,6 +51,8 @@ platform_attempt:
   platform: string
   query: string
   url: string | null
+  query_session_id: string | null
+  browser_targets: string[]
   started_at: string | null
   duration_ms: number | null
   wait_budget_ms: number | null
@@ -58,6 +60,12 @@ platform_attempt:
   result_count: number
   error_text: string | null
   fallback_used: string | null
+  cleanup:
+    attempted: boolean
+    command: string | null
+    closed_sessions: string[]
+    closed_targets: string[]
+    residual_processes: string[]
 
 community_attempt:
   source: string
@@ -90,5 +98,6 @@ score:
 - 详情页能读到角色卡片角标时，必须保留 `game_assets.agent_statuses`。绝区零在螃蟹/盼之详情中使用 `{"代理人":"x"}` 或 `{"代理人":"x+y"}`，其中 `x` 是影画/命座数，`+y` 是对应专属音擎数量；只有 `x` 时不能直接推断有专武，但也不能直接判定无专武，必须同步保留 `game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name` 供游戏 skill 用本地专武表交叉确认。
 - 主推荐、价格浮动备选、风险备选和排除项都必须保留 `url`；价格浮动备选应写入 `recommendation_tier: flex_budget` 和 `budget_delta`。
 - 社区证据工具超时或正文不可读时，必须记录 `community_attempt` 和 `fallback_used`，不能只在最终文案里笼统说“未覆盖”。
+- 浏览器或 OpenCLI 查询必须记录 `query_session_id` 和 `browser_targets`。筛选结束后必须运行查询清理脚本，并把 `cleanup.closed_sessions`、`cleanup.closed_targets`、`cleanup.residual_processes` 写入 artifact。OpenCLI daemon 是共享后台服务，不应作为残留查询线程杀掉。
 - 不同游戏的 `game_specific` 由对应游戏 skill 定义。
 - 最终推荐必须能解释“为什么入选”和“为什么可能不买”。

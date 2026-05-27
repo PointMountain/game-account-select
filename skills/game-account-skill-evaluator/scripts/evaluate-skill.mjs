@@ -170,6 +170,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const zzzAssetStatusFixture = path.join(fixtureDir, 'zenless-zone-zero-asset-status-run.json');
   const zzzPzdsRouteMismatchFixture = path.join(fixtureDir, 'zenless-zone-zero-pzds-route-mismatch-run.json');
   const zzzLowestStrictCleanFixture = path.join(fixtureDir, 'zenless-zone-zero-lowest-strict-clean-run.json');
+  const browserSessionCleanupFixture = path.join(fixtureDir, 'browser-session-cleanup-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -371,6 +372,22 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing ZZZ lowest-strict clean optimizer fixture');
+  }
+
+  if (fs.existsSync(browserSessionCleanupFixture)) {
+    const cleanupReport = runFixture(browserSessionCleanupFixture);
+    const findings = cleanupReport?.findings ?? [];
+    const findingIds = new Set(findings.map((finding) => finding.id));
+    const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasCleanupFinding = findingIds.has('runtime-browser-session-cleanup-missing');
+    const preservesCleanupEvidence = /query_session_id|cleanup_report|cleanup_reports|opencli browser gas-|run-with-timeout|process/i.test(evidence);
+    if (hasCleanupFinding && preservesCleanupEvidence) addScore(4);
+    else {
+      if (!hasCleanupFinding) issue('Optimizer did not catch missing browser/OpenCLI query cleanup');
+      if (!preservesCleanupEvidence) issue('Optimizer did not preserve browser session cleanup evidence');
+    }
+  } else {
+    issue('Missing browser-session cleanup optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {

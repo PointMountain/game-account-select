@@ -107,6 +107,32 @@ npm run pzds:repair -- --json
 
 同一平台同一意图出现超时、空卡片、登录墙、验证码、`503`、详情页加载失败或无输出命令时，最多再用一种不同工具或自然导航路径复查一次。仍失败则立刻降级并记录，不要继续堆等待。
 
+## 查询会话和清理
+
+平台查询必须使用可追踪的会话名，推荐格式为 `gas-<game>-<platform>-<short-timestamp>`。不要为同一次查询反复创建新的无名 OpenCLI browser session、Chrome 分组或空白窗口。
+
+执行顺序：
+
+1. 列表发现优先走轻量路径。Pxb7 这类公开列表接口若普通 `curl` 触发站点脚本或风控，应只打开一次浏览器列表页，在同一个受控 session 里用页内 `fetch` 拉少量页面并筛出候选；不要逐个打开大量详情页或高频翻页。
+2. 详情确认只对短名单候选运行 verified detail adapter，例如 `opencli pxb7 zzz-detail <url> -f json` 或 `opencli pzds zzz-detail <id> -f json`。
+3. OpenCLI browser 操作必须优先复用同一个 session；如果需要多平台隔离，session 名也必须写入运行记录。
+4. 每次 `opencli browser <session> open/tab new` 或 CDP `/new` 返回 tab/target id 时，把 id 写入 `platform_attempt.browser_targets`。
+5. 查询结束、异常退出前、以及最终答复前，都运行：
+
+```bash
+npm run query:cleanup -- --session-prefix gas- --json
+```
+
+如本轮使用了明确 session 或 target，传入：
+
+```bash
+npm run query:cleanup -- --session gas-zzz-pxb7-<ts> --target <cdp-target-id> --json
+```
+
+6. 清理报告必须写入 run artifact：关闭的 sessions、关闭的 targets、剩余匹配进程。默认只审计进程，不杀进程；只有明确确认是本轮残留查询脚本时才追加 `--kill`。不要杀 OpenCLI daemon、用户 Chrome 主进程或无关标签。
+
+如果清理后仍有 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail` 等残留进程，应在最终答复中说明并继续处理，不能把查询过程留在后台。
+
 推荐降级顺序：
 
 1. 公开详情页不可读但列表卡片可读：保留列表卡片字段，标记 `source_status: partial` 和 `fallback_used: list_card`。

@@ -5,6 +5,7 @@ updated_at: 2026-05-17
 ## Known Run Signals
 
 - Repeated platform timeouts should become a future wait-budget or fallback rule.
+- Browser-backed platform attempts must leave no hidden query state. Runs should record a stable `query_session_id`, close OpenCLI/CDP tabs through `query:cleanup`, and attach a process audit; missing cleanup or leftover `opencli browser gas-*` / `run-with-timeout` / platform detail processes should trigger `runtime-browser-session-cleanup-missing`.
 - Empty result pages with login prompts should become a data-source limitation, not a repeated retry loop.
 - Missing mainstream platforms should become a platform coverage finding even if one platform produced a usable result.
 - Raw machine-readable tags in a final recommendation should become an output-format finding.
