@@ -1,0 +1,11 @@
+{
+  "args": { "minPrice": 800, "maxPrice": 1200, "limit": 3 },
+  "expect": {
+    "rowCount": { "min": 1, "max": 3 },
+    "columns": ["rank", "listingId", "priceCny", "server", "status", "counts", "resources", "operatorNames", "elite2OperatorNames", "collabOperatorNames", "skins", "url"],
+    "types": { "rank": "number", "listingId": "string", "priceCny": "number", "server": "string|null", "status": "object", "counts": "object", "resources": "object", "operatorNames": "array", "elite2OperatorNames": "array", "collabOperatorNames": "array", "skins": "array", "url": "string" },
+    "patterns": { "listingId": "^[0-9]{10,}$", "url": "^https://www\\.pxb7\\.com/product/[0-9]+/1$" },
+    "notEmpty": ["listingId", "status", "counts", "operatorNames", "url"],
+    "mustBeTruthy": ["priceCny"]
+  }
+}

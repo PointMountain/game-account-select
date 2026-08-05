@@ -1,8 +1,25 @@
 # Skill 优化问题分类
 
-updated_at: 2026-05-17
+updated_at: 2026-08-06
 
 ## 分类
+
+### output-dual-platform-shortlists-missing
+
+- 明日方舟主动找号在 `platforms_required` 包含 `pxb7` 和 `pzds` 时，必须输出 `platform_shortlists.pxb7` 与 `platform_shortlists.pzds`。
+- 两段都必须有 `display_candidates`；若没有完全符合项，允许展示明确标注的 near match / list-only 项，但不得删除该平台段或伪造合格项。
+- 跨平台总榜可以通过 `best_value_listing` 选择任一平台的性价比第一。
+
+### selector-unscoped-freeform-exclusion
+
+- 账号新度、活跃度、陈年/仓库号或阵容断代描述出现在 `selection_profile.exclusions` 时触发 `high` finding。
+- 这类描述不能用干员名单证明，应迁移到 run-only `soft_preferences` 并进入人工验号；干员排除保留精确名和稳定别名边界。
+
+### selection-reconciliation-unvalidated
+
+- 从旧画像 artifact 恢复候选、手工改写 `hard_filter_passed`/分数或定向刷新后合并时，必须带 `provenance_reconciliation.validation`。
+- validation 至少包含 `status: passed`、`method: canonical_rescore`、与当前画像一致的 `profile_digest`、`validation_command`、`validated_at`，以及覆盖全部刷新候选的 `rescored_listing_ids`。
+- 任一项缺失都视为质量门禁绕过，触发 `high` finding 并要求 evaluator `redo_required: true`。
 
 ## 自动补丁边界
 
@@ -42,7 +59,8 @@ updated_at: 2026-05-17
 - 失败后进入降级路径，不反复重试。
 - 把失败原因写入数据来源限制。
 - 对社区来源同样适用等待预算；`duration_ms` 较长但缺少 `wait_budget_ms` 时，应补运行记录字段，便于下次判断是否该提前降级。
-- 浏览器/OpenCLI 查询必须有可追踪 `query_session_id`，结束后运行 `npm run query:cleanup -- --json` 并把清理报告写入 artifact。若清理后仍有本轮 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail`、`selectPageList` 或 `goodsList/275` 进程，输出 `runtime-browser-session-cleanup-missing`，先处理残留再结束。
+- PZDS 需要多个逻辑批次时应合并为单次累积扫描，避免每批重新导航和从头 `loadMore`；在 `platform_attempts[].list_attempts` 记录实际扫描策略与耗时。
+- 浏览器/OpenCLI 查询必须有可追踪 `query_session_id`，首个浏览器命令前捕获 target 基线，结束后运行 `npm run query:cleanup -- --json` 并把清理报告写入 artifact。若报告 `ok:false`、`cdp_targets_remaining` 非空，或清理后仍有本轮 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail`、`selectPageList`、`goodsList/275` 进程，输出 `runtime-browser-session-cleanup-missing`，先关闭本轮空白占位符/测试分组并处理残留再结束。
 
 ### empty_result
 
@@ -78,6 +96,7 @@ updated_at: 2026-05-17
 
 - 更新平台访问策略和主筛选状态机。
 - 不要声明已覆盖没有实际读取的平台。
+- 真实主动筛选必须先有 `coverage_plan.source_tasks`。如果运行记录已经包含平台尝试、社区尝试或推荐结果，但没有覆盖计划，输出 `selector-source-coverage-plan-missing`；目标文件包括 `game-account-select` 架构、覆盖手册、状态机、共享 schema 和 evaluator rubric。
 - 若平台经常复用、浏览器可见且当前 `opencli list` 没有对应站点命令，应生成 `platform-opencli-adapter-gap` finding，建议按 OpenCLI adapter 流程建立私有 adapter。
 - Adapter 实现不是默认自动补丁；必须完成站点侦察、endpoint 验证、字段核对和 `opencli browser verify <site>/<command>` 后，才能把该 adapter 当作可靠平台来源。
 - 若已存在并验证通过，应生成 `platform-opencli-adapter-reuse` finding，提醒下次优先复用 adapter 命令，而不是继续临时 DOM 抽取。
@@ -165,13 +184,26 @@ updated_at: 2026-05-17
 - 最终回复包含 `<recommendations>` 且没有自然语言摘要
 - JSON 过长且没有解释
 - 推荐、备选或排除账号缺商品链接，用户无法打开比较。
+- 平台详情已经提供上架时间或验号时间，但标准化推荐没有保留 `published_at` / `platform_verified_at`，或把抓取时间冒充其中之一。
 - 用户允许预算上下浮动，但输出没有单独列出价格浮动备选。
 
 建议：
 
 - 用户可见部分先给推荐结论、理由、风险和人工确认项。
+- 每个推荐、备选和排除项分别展示“上架时间 / 平台验号时间”；缺失写“未披露”，两者不得混用。
 - 机器标签只在调试、日志或用户明确要求结构化输出时展示。
 - Top 推荐、价格浮动备选、风险备选和排除列表都保留 URL；超预算 200-300 元的账号只进“价格浮动备选”，不得混入主推荐。
+- 明日方舟双平台结果必须通过确定性 renderer 生成 Markdown 表格；artifact 已有候选却在最终答复中漏行时，输出 `output-platform-shortlist-render-underfilled`，保留各平台 available/expected/actual 数量证据。
+
+### self_improve_closeout
+
+真实筛选只写一句经验总结或口头声称运行 optimizer/evaluator，但没有结构化收尾状态与报告。
+
+建议：
+
+- 生成 `self_improve`，分别记录经验摘要、覆盖缺口、optimizer、evaluator 和知识候选状态。
+- 区分 `applied` 与 `proposed/deferred`；未通过证据和回归的估值变化不得伪装成已自动应用。
+- 最终表格生成后再运行 optimizer/evaluator；存在非 info finding 时必须 `redo_required`，不得交付为完成态。
 
 ### valuation
 
@@ -202,13 +234,15 @@ updated_at: 2026-05-17
 
 - 用户说“给定金额没有满足条件可以扩大金额/搜索范围”。
 - 用户要求“尽可能找价格最低且满足条件的号”。
+- 用户未声明严格预算且预算附近没有精确满足项，但结果既没有低价/高价扩展精确项，也没有分别记录两个方向逐档扩展的停止原因。
 - 预算内主推缺硬条件，例如缺指定角色、专武、绑定状态、独立三队或低风险交付。
 
 建议：
 
 - 主筛选状态机应先在 `primary_budget` 内找硬条件完整账号。
-- 预算内无合格账号时扩大到 `flex_budget`，输出“最低满足价”备选。
+- 先完整覆盖 `flex_budget`；没有精确项且用户未声明严格预算时，从浮动区间下界和上界向两侧逐档搜索，各自在首个有详情复核合格项的价格档后停止，输出低价/高价精确备选。用户明确要求严格预算时不得扩展。
 - 预算内不合格账号只能进排除或风险备选，不能作为 Top 1。
+- 同时保留预算内最佳 `near_match_listings`，逐维解释差价买到了收藏完整度、实战、养成、资源、皮肤还是风险改善；收藏溢价不能伪装成战力提升。
 
 ### evidence
 
@@ -227,6 +261,7 @@ updated_at: 2026-05-17
 - 调用 `game-account-community-updater` 或按社区调研协议刷新证据。全球同步进度游戏应把 YouTube 作为 B站之外的独立长视频来源。
 - 在刷新前不要把单次观察升级为硬规则。
 - 对 opencli 超时、正文不可读、登录墙或空卡片，改用浏览器 DOM、页面 metadata、Jina/WebFetch/curl、官方公告、Wiki/攻略站或用户截图/文本，并记录 `fallback_used`。
+- 如果运行记录已有 `coverage_gaps`、`user_feedback`、`rule_update_suggestions` 或执行失败，但 `knowledge_update_candidates` 为空，输出 `selector-knowledge-ledger-candidates-missing`。这些观察应先进入知识沉淀候选，再由用户确认、fixture 和 evaluator 决定是否写入规则。
 
 ### risk
 
@@ -256,6 +291,12 @@ updated_at: 2026-05-17
 生成器或优化器产出的 skill 未通过 `game-account-skill-evaluator`。
 
 常见信号：
+
+- `selection_profile.persistence_scope` 或 `profile_isolation.persistence_scope` 不是 `run_only`。
+- `profile_isolation.durable_updates_from_profile` 非空。
+- `knowledge_update_candidates` 由 `selection_profile` / `run_only` 偏好派生，却指向 SKILL/references 或已标记 `applied`。
+
+上述任一情况必须输出阻塞 finding `selector-session-preference-leak`。证据要保留本轮预算、目标、区服/硬条件和拟写入目标；不得自动补丁修复估值规则。
 
 - evaluator 输出 `passed: false`。
 - evaluator 输出 `redo_required: true`。

@@ -41,6 +41,26 @@
 - 把相关角色/命座/专武列入 `missing_fields` 或 `manual_check`；
 - 不得用未经证实的强度判断大幅抬高账号排名。
 
+## 执行前覆盖计划
+
+在真实买号筛选中，社区调研不是“有空再搜一下”。进入调研前先在主 run artifact 的 `coverage_plan.source_tasks` 中写入社区来源任务：
+
+```yaml
+source_tasks:
+  - id: community-bilibili-meta
+    type: community_evidence
+    source: bilibili
+    priority: required
+    start_path: search
+    success_signal: "拿到可复查的视频/专栏 URL，并读取简介、字幕或可见评论中的队伍/专武结论"
+    fallback_order: [chrome_use_dom, browser_dom, page_metadata, guide_site, official_source]
+    wait_budget_ms: 15000
+    required_fields: [url, title, author, updated_or_published_at, evidence_note]
+    confidence_cap_if_missing: medium
+```
+
+任务完成情况必须同步到 `community_attempts`；失败或只读到标题/卡片时同步到 `coverage_gaps`。这样优化器才能判断是证据不足、工具失败，还是来源本身不可用。
+
 ## 平台路由
 
 优先使用当前环境可用工具，低频查询并记录失败原因。
@@ -55,7 +75,7 @@
 2. 读取搜索结果标题、作者、互动分、URL。
 3. 对代表性视频读取 metadata、字幕和少量高赞评论。
 4. 若字幕不可用，只能摘要标题/简介/评论，不得声称已理解完整视频内容。
-5. 若结构化命令超时或无输出，立即改用浏览器 CDP 读取页面 DOM、`meta[name=description]`、合集/相关视频标题和页面可见评论；仍失败时记录 `fallback_used: browser_dom_or_metadata` 或 `failed`，不要继续等待同一命令。
+5. 若结构化命令超时或无输出，先用 `chrome-use` 命名 session 读取页面 DOM、`meta[name=description]`、合集/相关视频标题和页面可见评论；relay 不可用时再用浏览器 CDP。仍失败时记录 `fallback_used: browser_dom_or_metadata` 或 `failed`，不要继续等待同一命令。
 
 ### YouTube
 
@@ -98,12 +118,14 @@
 
 社区取证必须低频、可中断，并记录每次尝试：
 
-- `tool`：opencli、browser_cdp、web_fetch、jina、curl、search_engine、user_provided_text 等。
+- `tool`：opencli、chrome_use、browser_cdp、web_fetch、jina、curl、search_engine、user_provided_text 等。
 - `wait_budget_ms`：搜索/列表通常 10000-15000，字幕/评论/详情通常 15000-20000；除非用户明确要求深入，不要让单条命令超过 30000。
 - `duration_ms`、`status`、`result_count`、`error_text`。
 - `fallback_used`：例如 `browser_dom`、`page_metadata`、`guide_site`、`official_source`、`user_screenshot`。
 
 同一来源同一意图超时一次后，不要换词反复追打；先换工具或换独立来源。只有标题、卡片或元数据时，结论必须标为低到中置信。
+
+如果调研中发现可复用知识，例如稳定配队、过时陷阱、来源不可读模式或工具降级路径，把它写成 `knowledge_update_candidate`，不要直接改估值权重。评分规则更新仍走用户确认、changelog、fixture 和 evaluator。
 
 ## 证据快照字段
 

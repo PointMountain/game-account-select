@@ -1,0 +1,77 @@
+{
+  "run_id": "arknights-dual-2000-collab-orundum-20260802-regression",
+  "schema_version": "1.0",
+  "game": "Arknights",
+  "target_skill": "skills/game-account-arknights",
+  "user_request": "2000左右，联动全齐，练度高，合成玉10万左右，螃蟹和盼之都找",
+  "selection_profile": {
+    "budget": { "target": 2000, "primary_min": 1600, "primary_max": 2400, "flex_min": 1400, "flex_max": 2600 },
+    "objective": "custom",
+    "priorities": { "rarity": 25, "combat": 25, "progression": 20, "resources": 20, "skins": 5, "price_efficiency": 5 },
+    "hard_conditions": ["collab_complete:true", "orundum:80000-120000"],
+    "platforms": ["pxb7", "pzds"],
+    "risk_tolerance": "unknown",
+    "persistence_scope": "run_only"
+  },
+  "profile_isolation": { "persistence_scope": "run_only", "durable_updates_from_profile": [] },
+  "success_criteria": {
+    "minimum_source_coverage": { "platforms": ["pxb7", "pzds"], "community_sources": ["local-arknights-snapshot"] }
+  },
+  "coverage_plan": {
+    "source_tasks": [
+      { "id": "platform-pxb7-list-detail", "source": "pxb7", "type": "platform_listing_and_detail" },
+      { "id": "platform-pzds-list-detail", "source": "pzds", "type": "platform_listing_and_detail" }
+    ],
+    "completeness_gates": {
+      "platforms_required": ["pxb7", "pzds"],
+      "min_display_candidates_per_platform": 5,
+      "table_output_required": true,
+      "self_improve_closeout_required": true
+    }
+  },
+  "platform_attempts": [
+    { "platform": "pxb7", "status": "success", "result_count": 60, "query_session_id": "bad-session", "adapter_available": true, "adapter_verified": true },
+    { "platform": "pzds", "status": "partial", "result_count": 10, "query_session_id": "bad-session", "adapter_available": true, "adapter_verified": true }
+  ],
+  "community_attempts": [
+    { "source": "local-arknights-snapshot", "status": "success", "result_count": 7 }
+  ],
+  "platform_shortlists": {
+    "pxb7": {
+      "status": "qualified",
+      "display_candidates": [
+        { "listing_id": "2271503685960649831", "platform": "pxb7", "url": "https://www.pxb7.com/product/2271503685960649831/1", "price": 2000, "hard_filter_passed": true },
+        { "listing_id": "2305980675523097405", "platform": "pxb7", "url": "https://www.pxb7.com/product/2305980675523097405/1", "price": 1600, "hard_filter_passed": true },
+        { "listing_id": "2284147056312697168", "platform": "pxb7", "url": "https://www.pxb7.com/product/2284147056312697168/1", "price": 1800, "hard_filter_passed": true }
+      ],
+      "qualifying": []
+    },
+    "pzds": {
+      "status": "near_match_only",
+      "display_candidates": [
+        { "listing_id": "MRHXJ5", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/MRHXJ5/6", "price": 2000, "hard_filter_passed": false },
+        { "listing_id": "MR33DC", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/MR33DC/6", "price": 2100, "hard_filter_passed": false },
+        { "listing_id": "MR1D8G", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/MR1D8G/6", "price": 1980, "hard_filter_passed": false },
+        { "listing_id": "MRBJ2K", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/MRBJ2K/6", "price": 2200, "hard_filter_passed": false },
+        { "listing_id": "MR8PV5", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/MR8PV5/6", "price": 2300, "hard_filter_passed": false }
+      ],
+      "qualifying": []
+    }
+  },
+  "recommendations": [
+    { "listing_id": "2271503685960649831", "platform": "pxb7", "url": "https://www.pxb7.com/product/2271503685960649831/1", "price": 2000, "hard_filter_passed": true }
+  ],
+  "backup_listings": [],
+  "near_match_listings": [],
+  "excluded_listings": [],
+  "coverage_gaps": [
+    { "source": "pzds", "reason": "rate_limited", "user_visible_note": "盼之结构化列表遇到 HTTP 429" }
+  ],
+  "experience_summary": "PZDS 低星联动覆盖不足，因此只保留接近项。",
+  "knowledge_update_candidates": [
+    { "id": "pzds-arknights-list-429-fallback", "status": "proposed", "source_scope": "execution_evidence", "preference_scope": "none" }
+  ],
+  "final_response": "螃蟹推荐 2271503685960649831、2305980675523097405、2284147056312697168。盼之仅展示 MRHXJ5、MR33DC。首选2000元官服高练度号。",
+  "quality_gate": { "optimizer": "info_only", "evaluator_passed": true, "redo_required": false },
+  "cleanup_reports": [ { "ok": true, "remaining_matching_processes": [] } ]
+}

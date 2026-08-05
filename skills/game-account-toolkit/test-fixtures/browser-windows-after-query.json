@@ -1,0 +1,35 @@
+{
+  "windows": [
+    {
+      "windowId": "USER-WINDOW",
+      "tabs": [
+        { "tabId": "USER-PXB7", "url": "https://www.pxb7.com/product/kept-by-user", "title": "用户原有标签" }
+      ]
+    },
+    {
+      "windowId": "RUN-BLANK-WINDOW",
+      "tabs": [
+        { "tabId": "RUN-BLANK", "url": "about:blank", "title": "about:blank" }
+      ]
+    },
+    {
+      "windowId": "RUN-PZDS-WINDOW",
+      "tabs": [
+        { "tabId": "RUN-PZDS", "url": "https://www.pzds.com/goodsDetails/QUERY/6", "title": "盼之查询" }
+      ]
+    },
+    {
+      "windowId": "NEW-MIXED-WINDOW",
+      "tabs": [
+        { "tabId": "RUN-PXB7-MIXED", "url": "https://www.pxb7.com/product/query", "title": "查询" },
+        { "tabId": "USER-OTHER-MIXED", "url": "https://example.org/user", "title": "用户并发标签" }
+      ]
+    },
+    {
+      "windowId": "NEW-UNRELATED-WINDOW",
+      "tabs": [
+        { "tabId": "USER-OTHER", "url": "https://example.org/user", "title": "用户并发窗口" }
+      ]
+    }
+  ]
+}

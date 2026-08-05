@@ -1,3 +1,11 @@
+## 2026-08-02 by Codex
+
+- Added game-specific `pxb7/arknights-list` and `pxb7/arknights-detail`; both return platform facts only and contain no valuation profile or budget defaults.
+- Verified the list endpoint response shape as `data.list[]`, with pagination tokens in `data.properties`; response `price` is cents while the price-filter values are CNY.
+- Arknights `showTitle` contains delimited sections for `精二六星`, `精一六星`, `六星干员`, `联动干员`, and `时装`. Missing sections must remain partial instead of being inferred.
+- Arknights detail DOM also exposes public verification-image URLs. The adapter preserves them as `verificationImageUrls` and emits `operatorProgression` plus `progressionEvidence`; the current public report does not expose dedicated mastery/module values, so both remain `not_exposed` until final verification.
+- OpenCLI 1.8.0 `page.fetchJson` redeclares an internal `request` identifier on a second same-page call. Arknights list pagination therefore performs all page-token requests inside one browser IIFE; the 60-row regression returned 60 unique listings with prices bounded by the requested ceiling.
+
 ## 2026-05-23 by Codex
 
 - Pxb7 account detail pages are browser-visible but may be protected by Aliyun WAF. This repo-managed ZZZ adapter uses the user's browser-backed COOKIE session and stores no cookie values.

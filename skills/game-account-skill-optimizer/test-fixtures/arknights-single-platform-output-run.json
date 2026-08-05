@@ -1,0 +1,40 @@
+{
+  "run_id": "gas-arknights-dual-output-gate",
+  "game": "Arknights",
+  "target_skill": "skills/game-account-arknights",
+  "user_request": "限定多，1000元左右，同时从螃蟹和盼之找",
+  "selection_profile": {
+    "budget": { "target": 1000, "primary_min": 800, "primary_max": 1200, "flex_min": 700, "flex_max": 1300 },
+    "objective": "collector",
+    "priorities": { "rarity": 30, "combat": 20, "progression": 15, "resources": 10, "skins": 10, "price_efficiency": 15 },
+    "must_have": [], "exclusions": [], "server_preferences": [], "hard_conditions": [],
+    "risk_tolerance": "unknown", "platforms": ["pxb7", "pzds"], "assumptions": [],
+    "clarification_required": [], "confirmation_required": false, "persistence_scope": "run_only"
+  },
+  "success_criteria": {
+    "minimum_source_coverage": { "platforms": ["pxb7", "pzds"], "community_sources": [] },
+    "completion_conditions": ["show both platform shortlists"]
+  },
+  "coverage_plan": {
+    "source_tasks": [
+      { "id": "platform-pxb7-list", "source": "pxb7", "type": "platform_listing" },
+      { "id": "platform-pzds-list", "source": "pzds", "type": "platform_listing" }
+    ],
+    "completeness_gates": { "platforms_required": ["pxb7", "pzds"], "platform_shortlists_required": true }
+  },
+  "platform_attempts": [
+    { "platform": "pxb7", "status": "success", "result_count": 12, "query_session_id": "gas-arknights-dual-output-gate", "adapter_available": true, "adapter_verified": true },
+    { "platform": "pzds", "status": "success", "result_count": 10, "query_session_id": "gas-arknights-dual-output-gate", "adapter_available": true, "adapter_verified": true }
+  ],
+  "platform_shortlists": {
+    "pxb7": {
+      "status": "qualified",
+      "display_candidates": [{ "listing_id": "PXB1", "platform": "pxb7", "url": "https://www.pxb7.com/product/1/1", "price": 999, "hard_filter_passed": true }],
+      "qualifying": [{ "listing_id": "PXB1", "platform": "pxb7", "url": "https://www.pxb7.com/product/1/1", "price": 999, "hard_filter_passed": true }]
+    }
+  },
+  "recommendations": [{ "listing_id": "PXB1", "platform": "pxb7", "url": "https://www.pxb7.com/product/1/1", "price": 999, "hard_filter_passed": true }],
+  "backup_listings": [], "near_match_listings": [], "excluded_listings": [],
+  "community_attempts": [], "coverage_gaps": [], "knowledge_update_candidates": [],
+  "cleanup_reports": [{ "ok": true, "remaining_matching_processes": [] }]
+}

@@ -1,0 +1,111 @@
+{
+  "run_id": "listing-time-omission-run",
+  "target_skill": "game-account-arknights",
+  "game": "Arknights",
+  "user_request": "明日方舟账号筛选",
+  "success_criteria": {
+    "game": "Arknights",
+    "budget": {
+      "primary_max": 2000,
+      "flex_max": null
+    },
+    "hard_conditions": [],
+    "soft_preferences": [
+      "balanced"
+    ],
+    "risk_tolerance": "unknown",
+    "minimum_source_coverage": {
+      "platforms": [
+        "pxb7",
+        "pzds"
+      ],
+      "community_sources": []
+    },
+    "completion_conditions": [
+      "recommendation keeps source URL and source time facts"
+    ]
+  },
+  "coverage_plan": {
+    "intent_summary": "明日方舟账号筛选",
+    "source_tasks": [
+      {
+        "id": "platform-pxb7-list",
+        "type": "platform_listing",
+        "source": "pxb7",
+        "priority": "required",
+        "start_path": "verified_adapter",
+        "success_signal": "read traceable listing cards",
+        "fallback_order": [
+          "browser_dom",
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "url",
+          "price"
+        ],
+        "confidence_cap_if_missing": "medium"
+      },
+      {
+        "id": "platform-pzds-list",
+        "type": "platform_listing",
+        "source": "pzds",
+        "priority": "required",
+        "start_path": "natural_navigation",
+        "success_signal": "record the platform as unavailable for this fixture",
+        "fallback_order": [
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "status"
+        ],
+        "confidence_cap_if_missing": "medium"
+      }
+    ],
+    "completeness_gates": {
+      "platforms_required": [
+        "pxb7",
+        "pzds"
+      ],
+      "url_required_for_all_tiers": true
+    },
+    "stop_rules": [
+      "stop after required platform attempts"
+    ]
+  },
+  "coverage_gaps": [],
+  "knowledge_update_candidates": [],
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "明日方舟 2000",
+      "status": "success",
+      "duration_ms": 5000,
+      "result_count": 8
+    },
+    {
+      "platform": "pzds",
+      "query": "明日方舟 2000",
+      "status": "success",
+      "duration_ms": 4000,
+      "result_count": 1
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "pxb7-time-sample",
+      "url": "https://www.pxb7.com/product/time-sample/1",
+      "price": 1600,
+      "publishedAt": "2026-08-01 10:30:00",
+      "platform_facts": {
+        "status": {
+          "verifiedAt": "2026年08月02日"
+        }
+      },
+      "confidence": "high"
+    }
+  ],
+  "final_response": "推荐 pxb7-time-sample，来源链接和风险事实可复核。",
+  "missing_fields": []
+}

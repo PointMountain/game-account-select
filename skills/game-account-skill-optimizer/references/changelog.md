@@ -1,5 +1,15 @@
 # Game Account Skill Optimizer Changelog
 
+## 2026-08-02
+
+- 增加真实坏 session 回归：artifact 中盼之有 5 个候选、最终只展示 2 个时，触发 `output-platform-shortlist-render-underfilled`；缺表格与结构化收尾分别触发 presentation/self-improve findings。
+- 明日方舟收尾改为确定性 renderer + optimizer + raw-artifact evaluator，知识候选明确区分已应用与待验证。
+- 增加明日方舟双平台输出门禁：螃蟹与盼之必须各自保留可见候选段；跨平台第一名可以来自任意一边，但不能吞掉另一平台。
+- 增加 `output-listing-time-facts-omitted` 门禁：平台已披露上架/验号时间但推荐行遗漏标准字段时打回，且禁止用抓取或运行时间代替。
+- 增加阻塞门禁 `selector-session-preference-leak`：当本轮预算、收藏/战力权重、区服/风险偏好或硬条件试图写入永久 skill/reference 时直接打回。
+- 增加坏样本与 evaluator 自测，保留泄漏偏好和目标文件证据。
+- 将硬条件预算扩展细分为显式 run-only `budget_expansion`：预算内无精确项时，要求同时保留预算外首个精确满足价、预算内近似项和逐维差价比较。
+
 ## 2026-05-17
 
 - 初始化 `game-account-skill-optimizer`。
@@ -35,3 +45,9 @@
 - 增加浏览器查询清理诊断：执行记录缺少 `query_session_id`、缺少 `cleanup_reports`，或清理后仍有本轮 OpenCLI/CDP/平台详情进程时，输出 `runtime-browser-session-cleanup-missing`。
 - 工具层新增 `query:cleanup`，用于关闭查询 session/target 并审计残留进程；选择器状态机要求最终答复前运行清理。
 - 平台访问策略补充 PXB/PZDS 查询操作：列表预筛复用一个受控 session，详情只对短名单运行 verified adapter，避免多开 Chrome 分组和空窗口。
+
+## 2026-06-19
+
+- 增加选择器覆盖计划诊断：真实筛选 artifact 如果已有平台尝试、社区尝试或推荐结果，但缺少 `coverage_plan.source_tasks`，输出 `selector-source-coverage-plan-missing`。
+- 增加知识沉淀候选诊断：运行中已有覆盖缺口、用户反馈、规则建议或执行失败，但没有 `knowledge_update_candidates` 时，输出 `selector-knowledge-ledger-candidates-missing`。
+- 配合 `game-account-select` 的架构/覆盖/知识账本重构，优化器现在能把“查找不全面”和“反馈只留在聊天里”打回为可验证问题。

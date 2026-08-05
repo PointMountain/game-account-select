@@ -87,6 +87,26 @@ function listReferenceFiles(root) {
     .map((entry) => entry.name);
 }
 
+function durableSelectionPreferenceLeaks(files) {
+  const linePatterns = [
+    /\b(?:default_budget|budget_default|default_server|server_default|default_objective|objective_default)\b/i,
+    /(?:默认|固定|永久)(?:预算|区服|服务器|目标画像|收藏优先|战力优先)\s*[:：=]?\s*(?:\d+|官服|B服|限定|战力|收藏)/,
+    /(?:target|primary_min|primary_max|flex_min|flex_max)\s*:\s*\d+(?:\.\d+)?/i,
+    /(?:hard_filter|hard_conditions?)[^\n]{0,80}(?:官服|B服)/i,
+  ];
+  const blockPatterns = [
+    /(?:hard_filter|hard_conditions?)[\s\S]{0,160}(?:官服|B服)/i,
+    /(?:default_profile|default_selection_profile)[\s\S]{0,240}(?:budget|server|objective|priorities)/i,
+  ];
+  return files.flatMap(({ file, text }) => {
+    const source = String(text ?? '');
+    const lineLeaks = source.split('\n').flatMap((line, index) =>
+      linePatterns.some((pattern) => pattern.test(line)) ? [`${file}:${index + 1}:${line.trim()}`] : []);
+    const blockLeaks = blockPatterns.some((pattern) => pattern.test(source)) ? [`${file}:structured default profile or server hard filter`] : [];
+    return [...lineLeaks, ...blockLeaks];
+  });
+}
+
 function classifySkill(root, skillContent) {
   const skillName = frontmatterName(skillContent) ?? path.basename(root);
   if (skillName === 'game-account-select') return 'selector';
@@ -171,6 +191,11 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const zzzPzdsRouteMismatchFixture = path.join(fixtureDir, 'zenless-zone-zero-pzds-route-mismatch-run.json');
   const zzzLowestStrictCleanFixture = path.join(fixtureDir, 'zenless-zone-zero-lowest-strict-clean-run.json');
   const browserSessionCleanupFixture = path.join(fixtureDir, 'browser-session-cleanup-run.json');
+  const selectorCoverageLedgerFixture = path.join(fixtureDir, 'selector-coverage-ledger-run.json');
+  const selectorSessionPreferenceLeakFixture = path.join(fixtureDir, 'selector-session-preference-leak-run.json');
+  const listingTimeOmissionFixture = path.join(fixtureDir, 'listing-time-omission-run.json');
+  const arknightsSinglePlatformOutputFixture = path.join(fixtureDir, 'arknights-single-platform-output-run.json');
+  const arknightsPostRunPresentationFixture = path.join(fixtureDir, 'arknights-post-run-presentation-regression.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -380,7 +405,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasCleanupFinding = findingIds.has('runtime-browser-session-cleanup-missing');
-    const preservesCleanupEvidence = /query_session_id|cleanup_report|cleanup_reports|opencli browser gas-|run-with-timeout|process/i.test(evidence);
+    const preservesCleanupEvidence = /query_session_id|cleanup_report|cleanup_reports|opencli browser gas-|run-with-timeout|process|browser target remained|cdp_targets_remaining/i.test(evidence);
     if (hasCleanupFinding && preservesCleanupEvidence) addScore(4);
     else {
       if (!hasCleanupFinding) issue('Optimizer did not catch missing browser/OpenCLI query cleanup');
@@ -388,6 +413,87 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing browser-session cleanup optimizer fixture');
+  }
+
+  if (fs.existsSync(selectorCoverageLedgerFixture)) {
+    const selectorCoverageLedgerReport = runFixture(selectorCoverageLedgerFixture);
+    const findings = selectorCoverageLedgerReport?.findings ?? [];
+    const findingIds = new Set(findings.map((finding) => finding.id));
+    const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasCoveragePlanFinding = findingIds.has('selector-source-coverage-plan-missing');
+    const hasKnowledgeLedgerFinding = findingIds.has('selector-knowledge-ledger-candidates-missing');
+    const preservesSelectorEvidence = /coverage_plan\.source_tasks|knowledge_update_candidates|pzds|user_feedback/i.test(evidence);
+    if (hasCoveragePlanFinding && hasKnowledgeLedgerFinding && preservesSelectorEvidence) addScore(4);
+    else {
+      if (!hasCoveragePlanFinding) issue('Optimizer did not catch missing selector source coverage plan');
+      if (!hasKnowledgeLedgerFinding) issue('Optimizer did not catch missing knowledge ledger candidates');
+      if (!preservesSelectorEvidence) issue('Optimizer did not preserve selector coverage/ledger evidence');
+    }
+  } else {
+    issue('Missing selector coverage/ledger optimizer fixture');
+  }
+
+  if (fs.existsSync(selectorSessionPreferenceLeakFixture)) {
+    const leakReport = runFixture(selectorSessionPreferenceLeakFixture);
+    const leakFinding = leakReport?.findings?.find((finding) => finding.id === 'selector-session-preference-leak');
+    const evidence = (leakFinding?.evidence ?? []).join('\n');
+    const preservesSessionEvidence = /1000|限定|官服|run_only|valuation-rules\.md/i.test(evidence);
+    if (leakFinding && preservesSessionEvidence) addScore(4);
+    else {
+      if (!leakFinding) issue('Optimizer did not reject session-profile preference leakage into durable knowledge');
+      if (!preservesSessionEvidence) issue('Optimizer did not preserve leaked budget/objective/server evidence');
+    }
+  } else {
+    issue('Missing selector session-preference leak optimizer fixture');
+  }
+
+  if (fs.existsSync(listingTimeOmissionFixture)) {
+    const timeReport = runFixture(listingTimeOmissionFixture);
+    const timeFinding = timeReport?.findings?.find((finding) => finding.id === 'output-listing-time-facts-omitted');
+    const evidence = (timeFinding?.evidence ?? []).join('\n');
+    const preservesTimeEvidence = /published_at omitted.*2026-08-01|platform_verified_at omitted.*2026年08月02日/i.test(evidence);
+    if (timeFinding && preservesTimeEvidence) addScore(4);
+    else {
+      if (!timeFinding) issue('Optimizer did not catch dropped listing/platform-verification times');
+      if (!preservesTimeEvidence) issue('Optimizer did not preserve listing/platform-verification time evidence');
+    }
+  } else {
+    issue('Missing listing-time omission optimizer fixture');
+  }
+
+  if (fs.existsSync(arknightsSinglePlatformOutputFixture)) {
+    const dualPlatformReport = runFixture(arknightsSinglePlatformOutputFixture);
+    const dualPlatformFinding = dualPlatformReport?.findings?.find((finding) => finding.id === 'output-dual-platform-shortlists-missing');
+    const evidence = (dualPlatformFinding?.evidence ?? []).join('\n');
+    const preservesMissingPlatformEvidence = /pzds|platform_shortlists|display_candidates/i.test(evidence);
+    if (dualPlatformFinding && preservesMissingPlatformEvidence) addScore(4);
+    else {
+      if (!dualPlatformFinding) issue('Optimizer did not reject an Arknights result that only displayed one platform');
+      if (!preservesMissingPlatformEvidence) issue('Optimizer did not preserve the missing PZDS shortlist evidence');
+    }
+  } else {
+    issue('Missing Arknights single-platform output optimizer fixture');
+  }
+
+  if (fs.existsSync(arknightsPostRunPresentationFixture)) {
+    const presentationReport = runFixture(arknightsPostRunPresentationFixture);
+    const findingIds = new Set((presentationReport?.findings ?? []).map((finding) => finding.id));
+    const underfilledEvidence = (presentationReport?.findings ?? [])
+      .find((finding) => finding.id === 'output-platform-shortlist-render-underfilled')?.evidence?.join('\n') ?? '';
+    const requiredFindings = [
+      'output-platform-table-presentation-missing',
+      'output-platform-shortlist-render-underfilled',
+      'self-improve-closeout-missing',
+      'self-improve-knowledge-status-undisclosed',
+    ];
+    const missing = requiredFindings.filter((id) => !findingIds.has(id));
+    if (!missing.length && /pzds available=5 expected_rendered=5 actual_rendered=2/.test(underfilledEvidence)) addScore(4);
+    else {
+      if (missing.length) issue(`Optimizer missed Arknights post-run closeout findings: ${missing.join(', ')}`);
+      if (!/pzds available=5 expected_rendered=5 actual_rendered=2/.test(underfilledEvidence)) issue('Optimizer did not preserve the PZDS 5-available versus 2-rendered evidence');
+    }
+  } else {
+    issue('Missing Arknights post-run presentation/self-improve optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {
@@ -400,7 +506,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   }
 }
 
-function evaluateSkill(skillInput, thresholdValue = threshold) {
+function evaluateSkill(skillInput, thresholdValue = threshold, options = {}) {
   const root = resolveSkillRoot(skillInput);
   const skillFile = resolveSkillFile(root);
   const exists = (relative) => {
@@ -437,6 +543,23 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
   if (exists('references/changelog.md')) addScore(3);
   else if (['game', 'optimizer'].includes(skillType)) addIssue('Missing references/changelog.md', false);
 
+  if (skillType === 'game' && containsAny(skillContent, ['selection_profile', 'run_only'])) {
+    const durableProfileFiles = [
+      { file: 'SKILL.md', text: skillContent },
+      { file: 'references/valuation-rules.md', text: readFileIfExists(path.join(root, 'references', 'valuation-rules.md')) },
+      { file: 'references/operator-knowledge.md', text: readFileIfExists(path.join(root, 'references', 'operator-knowledge.md')) },
+      { file: 'references/operator-value-map.json', text: readFileIfExists(path.join(root, 'references', 'operator-value-map.json')) },
+      { file: 'scripts/score-listings.mjs', text: readFileIfExists(path.join(root, 'scripts', 'score-listings.mjs')) },
+    ];
+    const preferenceLeaks = durableSelectionPreferenceLeaks(durableProfileFiles);
+    if (preferenceLeaks.length === 0) addScore(2);
+    else addIssue(
+      `Session selection preferences leaked into durable dynamic-scoring files: ${preferenceLeaks.join(' | ')}`,
+      true,
+      'Move budget, server hard filters, objective defaults, and user-specific conditions into the confirmed run-only selection_profile.'
+    );
+  }
+
   switch (skillType) {
     case 'game': {
       if (exists('references/valuation-rules.md')) addScore(8);
@@ -449,7 +572,7 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
       else addIssue('Missing domain knowledge reference file', false);
 
       const rules = exists('references/valuation-rules.md') ? read('references/valuation-rules.md') : '';
-      if (containsAny(rules, ['score_weights', '评分框架', '可执行评分'])) addScore(8);
+      if (containsAny(rules, ['score_weights', '评分框架', '可执行评分', 'profile_score', 'base_dimension', '基础维度'])) addScore(8);
       else addIssue('Valuation rules lack executable score weights');
       if (containsAny(rules, ['排序硬规则', '不得排在', '不能进入 Top 1'])) addScore(5);
       else addIssue('Valuation rules lack hard ranking rules against count-only listings');
@@ -501,6 +624,23 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
         if (/琉音[\s\S]{0,80}(?:机制|特殊|高价值)|Liuyin is present as a special-mechanism support/.test(zzzValueText)) addScore(2);
         else addIssue('ZZZ rules must encode Liuyin as a special-mechanism support signal', false);
       }
+      if (path.basename(root) === 'game-account-arknights') {
+        const arknightsText = `${skillContent}\n${rules}\n${readFileIfExists(path.join(root, 'references', 'operator-knowledge.md'))}\n${readFileIfExists(path.join(root, 'scripts', 'score-listings.mjs'))}\n${readFileIfExists(path.join(root, 'scripts', 'validate-sample.mjs'))}\n${readFileIfExists(path.join(root, 'test-fixtures', 'arknights-profile-validation-sample.json'))}`;
+        if (containsAny(arknightsText, ['selection_profile', 'profile_score', 'persistence_scope', 'run_only'])) addScore(2);
+        else addIssue('Arknights must use a confirmed run-only selection profile for dynamic ranking');
+        if (containsAny(arknightsText, ['rarity', 'combat', 'progression', 'resources', 'skins', 'price_efficiency'])) addScore(2);
+        else addIssue('Arknights must keep rarity, combat, progression, resources, skins, and price efficiency independent');
+        if (fs.existsSync(path.join(root, 'references', 'operator-value-map.json')) && fs.existsSync(path.join(root, 'scripts', 'score-listings.mjs'))) addScore(2);
+        else addIssue('Arknights lacks machine-readable operator facts or dynamic scoring implementation');
+        if (containsAny(arknightsText, ['meta_core_score']) && containsAny(arknightsText, ['role_coverage_score', 'role_coverage']) && containsAny(arknightsText, ['push_readiness', 'playability_penalty'])) addScore(2);
+        else addIssue('Arknights must separate community meta cores, push-map role coverage, and cross-profile playability penalties');
+        if (containsAny(arknightsText, ['elite2OperatorNames', 'elite', 'mastery', 'module', '精二', '专精', '模组']) && arknightsText.includes('ready_recommended_operators') && arknightsText.includes('unready_meta_operators')) addScore(2);
+        else addIssue('Arknights must evaluate whether recommended operators are actually trained instead of counting ownership');
+        if (arknightsText.includes('limited-count-untrained') && arknightsText.includes('playable-balanced') && arknightsText.includes('meta-dps-role-gap')) addScore(2);
+        else addIssue('Arknights validation must cover untrained limited-count and meta-DPS role-gap traps');
+        if (arknightsText.includes('未知专精/模组不得获得隐含养成分') && /mastery\s*==\s*null\s*\?\s*0/.test(arknightsText) && /module\s*==\s*null\s*\?\s*0/.test(arknightsText)) addScore(2);
+        else addIssue('Arknights must give unknown mastery/module zero incremental score and lock it with a regression assertion');
+      }
       break;
     }
 
@@ -525,7 +665,16 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
       else addIssue('Selector state machine does not require platform attempt logging');
       if (containsAny(selectorText, ['自然语言', '不要把 <game_account_evaluation>', '原始标签'])) addScore(6);
       else addIssue('Selector state machine lacks user-facing raw-tag suppression guidance');
-      addScore(18);
+      if (exists('references/selector-architecture.md')) addScore(4);
+      else addIssue('Selector lacks architecture/boundary reference');
+      if (exists('references/source-coverage-playbook.md')) addScore(4);
+      else addIssue('Selector lacks source coverage playbook');
+      if (exists('references/knowledge-ledger.md')) addScore(4);
+      else addIssue('Selector lacks knowledge ledger reference');
+      if (containsAny(selectorText, ['success_criteria', 'coverage_plan', 'coverage_gaps', 'knowledge_update_candidates'])) addScore(4);
+      else addIssue('Selector lacks first-class success criteria, coverage, and knowledge-update fields');
+      if (exists('scripts/create-run-artifact.mjs')) addScore(2);
+      else addIssue('Selector lacks a run artifact scaffold script', false);
       break;
     }
 
@@ -591,7 +740,7 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
         else addIssue('Evaluator incomplete fixture should fail the quality gate');
       }
       const rawArtifactFixture = path.resolve(repoRoot, 'skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-community-performance-run.json');
-      if (fs.existsSync(rawArtifactFixture) && exists('scripts/evaluate-skill.mjs')) {
+      if (!options.skipRawArtifactSelfTest && fs.existsSync(rawArtifactFixture) && exists('scripts/evaluate-skill.mjs')) {
         const run = runNode([path.join(root, 'scripts', 'evaluate-skill.mjs'), `--from-report=${rawArtifactFixture}`, '--json']);
         let report = null;
         try {
@@ -612,6 +761,12 @@ function evaluateSkill(skillInput, thresholdValue = threshold) {
         if (run.status !== 0 && report?.mode === 'run_artifact_analysis' && report?.redo_required === true && hasExpectedFindings) addScore(8);
         else addIssue(`Evaluator should fail raw run artifacts with optimizer findings: ${(run.stderr || run.stdout).trim()}`);
       }
+      const leakSelfTest = durableSelectionPreferenceLeaks([
+        { file: 'references/valuation-rules.md', text: 'default_budget: 1000' },
+        { file: 'scripts/score-listings.mjs', text: 'hard_filter: 官服' },
+      ]);
+      if (leakSelfTest.some((item) => item.includes('valuation-rules.md')) && leakSelfTest.some((item) => item.includes('score-listings.mjs'))) addScore(2);
+      else addIssue('Evaluator session-preference leak detector failed its static self-test');
       addScore(12);
       break;
     }
@@ -763,7 +918,9 @@ function evaluateOptimizerReport(reportPath, thresholdValue) {
   }
 
   const skillIds = skillIdsFromOptimizerReport(report);
-  const evaluatedSkills = skillIds.map((skillId) => evaluateSkill(skillId, thresholdValue));
+  const evaluatedSkills = skillIds.map((skillId) => evaluateSkill(skillId, thresholdValue, {
+    skipRawArtifactSelfTest: rawRunArtifact
+  }));
   const failedSkillIssues = evaluatedSkills
     .filter((result) => result.redo_required)
     .map((result) => ({

@@ -9,7 +9,7 @@
 - 用户明确要求查询某个游戏/预算范围时，访问少量列表页。
 - 用户提供商品链接时，读取对应详情页。
 - 用户提供截图或文本时，从用户输入中抽取字段。
-- 使用浏览器 CDP 读取用户可见页面，但不绕过登录、验证码、风控或付费墙。
+- 优先使用 `chrome-use` 扩展 relay 读取用户可见页面；不可用时使用浏览器 CDP。两者都不得绕过登录、验证码、风控或付费墙。
 
 ## 推荐平台顺序
 
@@ -23,6 +23,8 @@
 - 闲鱼。
 
 螃蟹和盼之是账号代售场景的重要来源，应优先纳入覆盖判断。若当前没有可用 adapter 或页面受限，不要绕过限制；记录“未覆盖/不可读”的具体原因，并让用户提供链接或截图。
+
+盼之列表的自然页面已经加载商品、但后续 `loadMore` 遇到 429/频率限制时，只保留当前已加载且可追踪的商品行并标记 `partial`；同一路径不连续重试。结果仍可作为近似/待复核候选展示，但必须公开说明候选覆盖不完整，并由其它排序/详情路径或用户材料补证。
 
 闲鱼常见问题是登录推荐页、空商品卡片、验证码和搜索无输出。遇到这些信号时应快速降级，不要把时间耗在重复等待上。
 
@@ -44,10 +46,18 @@
 1. 运行 `opencli list -f json` 或 `opencli <site> <command> -h` 确认可用命令。
 2. 用 `opencli <site> <command> <input> -f json` 读取结构化字段，并把 `adapter_command` 写入运行记录。
 3. 在关键推荐前或 adapter 改动后运行 `opencli browser <session> verify <site>/<command> --strict-memory`，并把 `verify_command` 写入运行记录。
-4. 只有 adapter 报错、fixture mismatch、字段缺失或网页肉眼值不一致时，才降级到 `browser state/eval`、截图、用户复制文本或其它平台。
+4. 只有 adapter 报错、fixture mismatch、字段缺失或网页肉眼值不一致时，才降级到 `chrome-use snapshot/eval`、CDP `browser state/eval`、截图、用户复制文本或其它平台。
 5. 已验证 adapter 的运行记录应设置 `adapter_available: true`、`adapter_verified: true`；优化器据此生成复用建议，而不是 adapter 缺口建议。
 
-已脱敏、可复用的 Pxb7/PZDS adapter 放在 `skills/game-account-toolkit/opencli-adapters/`，命令按游戏命名，例如绝区零使用 `pxb7/zzz-detail` 和 `pzds/zzz-detail`。通过 `node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --check` 检查、`--install` 同步到 `~/.opencli`。安装脚本不能静默覆盖用户已有不同 adapter；含 cookie、token、账号状态或私有站点记忆的文件只保留在本机。
+已脱敏、可复用的 Pxb7/PZDS adapter 放在 `skills/game-account-toolkit/opencli-adapters/`，命令按游戏命名。明日方舟使用两平台各自的 `arknights-list` / `arknights-detail`；绝区零使用 `pxb7/zzz-detail` 和 `pzds/zzz-detail`。通过 `node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --check` 检查、`--install` 同步到 `~/.opencli`。安装脚本不能静默覆盖用户已有不同 adapter；含 cookie、token、账号状态或私有站点记忆的文件只保留在本机。
+
+### 明日方舟双平台覆盖
+
+- 螃蟹列表：`https://www.pxb7.com/buy/10053/1?...`，使用 `opencli pxb7 arknights-list` / `arknights-detail`。
+- 盼之列表：`https://www.pzds.com/goodsList/84/6/headerSearch?...`，其中 `84` 是明日方舟 game id、`6` 是目录段；使用 `opencli pzds arknights-list` / `arknights-detail`。
+- 主动找号必须两边都尝试列表读取，并对两边各自的短名单做详情复核。最终总榜可以跨平台排序，但用户可见输出必须保留两个平台清单。
+- 某个平台无精确符合项时显示明确标注的近似项和覆盖缺口；不得删除该平台段，也不得把未验详情的列表卡片冒充合格推荐。
+- PZDS 的 `onStandTime` 映射为 `published_at`；`verifyTime` 才映射为 `platform_verified_at`。`verifyTime` 为 null 时显示“未披露”，即使 `shotTypeName` 表示官方验号也不能反推验号时间。
 
 ### Pxb7/PZDS 绝区零详情资产角标
 
@@ -85,7 +95,7 @@ npm run pzds:health -- --json
 
 - `https://www.pzds.com/gameList` 能打开。
 - 页面标题为盼之代售相关标题。
-- 正文包含“欢迎来到盼之代售”“请选择要购买的游戏”，并至少出现一个游戏入口，例如“绝区零”“鸣潮”“明日方舟”。
+- 正文包含当前任一欢迎文案“欢迎来到盼之代售”或“欢迎来到盼之账号”，同时包含“请选择要购买的游戏”，并至少出现一个游戏入口，例如“绝区零”“鸣潮”“明日方舟”。
 - `opencli browser <session> console --level error` 没有近期 error。
 - 页面没有“验证、滑块、访问过于频繁、安全校验、人机”等阻断文本。
 
@@ -109,34 +119,39 @@ npm run pzds:repair -- --json
 
 ## 查询会话和清理
 
-平台查询必须使用可追踪的会话名，推荐格式为 `gas-<game>-<platform>-<short-timestamp>`。不要为同一次查询反复创建新的无名 OpenCLI browser session、Chrome 分组或空白窗口。
+平台查询必须使用可追踪的会话名，推荐格式为 `gas-<game>-<platform>-<short-timestamp>`。优先执行 `chrome-use --session <name> open <url>`，通过扩展 relay 复用真实 Chrome；这条链路不要求开放 remote-debugging-port。不要为同一次查询反复创建新的无名 OpenCLI browser session、Chrome 分组或空白窗口。
 
 执行顺序：
 
 1. 列表发现优先走轻量路径。Pxb7 这类公开列表接口若普通 `curl` 触发站点脚本或风控，应只打开一次浏览器列表页，在同一个受控 session 里用页内 `fetch` 拉少量页面并筛出候选；不要逐个打开大量详情页或高频翻页。
 2. 详情确认只对短名单候选运行 verified detail adapter，例如 `opencli pxb7 zzz-detail <url> -f json` 或 `opencli pzds zzz-detail <id> -f json`。
-3. OpenCLI browser 操作必须优先复用同一个 session；如果需要多平台隔离，session 名也必须写入运行记录。
-4. 每次 `opencli browser <session> open/tab new` 或 CDP `/new` 返回 tab/target id 时，把 id 写入 `platform_attempt.browser_targets`。
-5. 查询结束、异常退出前、以及最终答复前，都运行：
+3. `chrome-use` 或 OpenCLI browser 操作必须优先复用同一个 session；如果需要多平台隔离，session 名也必须写入运行记录。
+4. 第一次浏览器命令前捕获 target 基线。每次 `chrome-use tab list --full`、`opencli browser <session> open/tab new`、adapter 命令前后 target 差集或 CDP `/new` 返回 tab/target id 时，把 id 写入 `platform_attempt.browser_targets`，并写明 `browser_transport: chrome_use_extension|opencli_browser|web_access_cdp`。
+5. OpenCLI 的 `close` / `--keep-tab false` 只释放 lease，最后一个标签会被改成 `about:blank` 以便复用，容器窗口默认仍然存在。查询结束、异常退出、信号中断和最终答复前都必须关闭本轮拥有的 target，而不能只调用 lease close：
 
 ```bash
-npm run query:cleanup -- --session-prefix gas- --json
+node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --capture-baseline /tmp/gas-browser-baseline.json --json
+# 查询完成后
+npm run query:cleanup -- --session-prefix gas- --baseline /tmp/gas-browser-baseline.json --close-new-query-targets --json
 ```
 
 如本轮使用了明确 session 或 target，传入：
 
 ```bash
 npm run query:cleanup -- --session gas-zzz-pxb7-<ts> --target <cdp-target-id> --json
+node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --chrome-use-session gas-zzz-pxb7-<ts> --json
 ```
 
-6. 清理报告必须写入 run artifact：关闭的 sessions、关闭的 targets、剩余匹配进程。默认只审计进程，不杀进程；只有明确确认是本轮残留查询脚本时才追加 `--kill`。不要杀 OpenCLI daemon、用户 Chrome 主进程或无关标签。
+默认不会因为 URL 匹配平台域名就关闭标签。只有明确做一次性人工清理且确认目标均为自动化遗留时，才使用 `--close-matching-urls`；普通筛选必须依赖基线和显式 target 所有权。
+
+6. 清理报告必须写入 run artifact：target/Chrome 窗口基线状态、关闭的 sessions/targets/独立窗口、`cdp_targets_remaining`、`chrome_windows_remaining` 和剩余匹配进程。`ok` 为 false、任一 remaining 非空时视为清理未完成，继续处理后才能结束。窗口清理只能命中“本轮新建且全部标签都是查询页或 about:blank”的窗口；运行前窗口或包含任意无关标签的混合窗口必须保留。默认只审计进程，不杀进程；只有明确确认是本轮残留查询脚本时才追加 `--kill`。不要杀 OpenCLI daemon、用户 Chrome 主进程或无关标签。
 
 如果清理后仍有 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail` 等残留进程，应在最终答复中说明并继续处理，不能把查询过程留在后台。
 
 推荐降级顺序：
 
 1. 公开详情页不可读但列表卡片可读：保留列表卡片字段，标记 `source_status: partial` 和 `fallback_used: list_card`。
-2. 结构化工具超时：改用浏览器 CDP 读取 DOM/可见文本/页面 metadata。
+2. 结构化工具超时：先用 `chrome-use` 读取 DOM/可见文本/页面 metadata；relay 不可用时再用浏览器 CDP。
 3. 浏览器也不可读：请求用户提供链接、截图或复制文本。
 4. 标记平台当前不可用，并把失败文本交给优化器。
 
@@ -182,9 +197,10 @@ npm run query:cleanup -- --session gas-zzz-pxb7-<ts> --target <cdp-target-id> --
 不要反复重试同一路径。按顺序降级：
 
 1. 尝试页面内自然导航。
-2. 尝试用户提供链接。
-3. 请求用户提供截图或复制文本。
-4. 标记该平台当前不可用。
+2. 尝试 `chrome-use` 命名 session；失败再用 CDP 兜底。
+3. 尝试用户提供链接。
+4. 请求用户提供截图或复制文本。
+5. 标记该平台当前不可用。
 
 建议记录每次平台尝试：
 

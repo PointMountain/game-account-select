@@ -1,0 +1,139 @@
+{
+  "run_id": "selector-session-preference-leak",
+  "game": "Arknights",
+  "target_skill": "skills/game-account-select",
+  "user_request": "明日方舟限定多、1000元左右，必须官服",
+  "selection_profile": {
+    "budget": {
+      "target": 1000,
+      "primary_min": 800,
+      "primary_max": 1200,
+      "flex_min": 700,
+      "flex_max": 1300
+    },
+    "objective": "collector",
+    "priorities": {
+      "rarity": 90,
+      "combat": 35,
+      "progression": 35,
+      "resources": 30,
+      "skins": 25,
+      "price_efficiency": 70
+    },
+    "must_have": [],
+    "exclusions": [],
+    "server_preferences": [
+      "官服"
+    ],
+    "risk_tolerance": "unknown",
+    "platforms": [
+      "pxb7"
+    ],
+    "assumptions": [],
+    "persistence_scope": "run_only"
+  },
+  "profile_confirmation": {
+    "status": "confirmed",
+    "confirmed_at": "2026-08-02T09:00:00.000Z",
+    "digest": "fixture-digest"
+  },
+  "profile_isolation": {
+    "persistence_scope": "run_only",
+    "durable_updates_from_profile": [
+      "skills/game-account-arknights/references/valuation-rules.md"
+    ]
+  },
+  "success_criteria": {
+    "game": "Arknights",
+    "budget": {
+      "primary_max": 1200,
+      "flex_max": 1300
+    },
+    "hard_conditions": [
+      "官服"
+    ],
+    "soft_preferences": [
+      "限定优先"
+    ],
+    "risk_tolerance": "unknown",
+    "minimum_source_coverage": {
+      "platforms": [
+        "pxb7"
+      ],
+      "community_sources": []
+    },
+    "completion_conditions": [
+      "pxb7 attempted"
+    ]
+  },
+  "coverage_plan": {
+    "intent_summary": "明日方舟限定多、1000元左右，必须官服",
+    "source_tasks": [
+      {
+        "id": "platform-pxb7-list",
+        "type": "platform_listing",
+        "source": "pxb7",
+        "priority": "required",
+        "start_path": "verified_adapter",
+        "success_signal": "read traceable listing cards",
+        "fallback_order": [
+          "browser_dom",
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "url",
+          "price"
+        ],
+        "confidence_cap_if_missing": "medium"
+      }
+    ],
+    "completeness_gates": {
+      "platforms_required": [
+        "pxb7"
+      ],
+      "url_required_for_all_tiers": true
+    },
+    "stop_rules": [
+      "stop after required platform returns usable listings"
+    ]
+  },
+  "coverage_gaps": [],
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "明日方舟 800 1200",
+      "status": "success",
+      "duration_ms": 1200,
+      "result_count": 10,
+      "browser_used": false
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "pxb7-session-leak-example",
+      "url": "https://www.pxb7.com/product/example/session-leak",
+      "score": 80,
+      "confidence": "medium"
+    }
+  ],
+  "knowledge_update_candidates": [
+    {
+      "id": "persist-current-request-as-default",
+      "type": "valuation_rule",
+      "confidence": "high",
+      "evidence": [
+        "本轮用户要求1000元、限定优先、必须官服"
+      ],
+      "source_scope": "selection_profile",
+      "preference_scope": "run_only",
+      "suggested_targets": [
+        "skills/game-account-arknights/references/valuation-rules.md"
+      ],
+      "requires_user_confirmation": false,
+      "validation_commands": [],
+      "apply_status": "applied"
+    }
+  ],
+  "final_response": "已推荐本轮候选。"
+}
