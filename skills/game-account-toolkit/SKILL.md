@@ -14,7 +14,7 @@ argument-hint: "[check|install-guide|platform|ocr|extract]"
 
 所有入口 skill 应优先调用 `game-account-preflight`。本 toolkit 的 `scripts/check-deps.mjs` 现在委托给 preflight，保留为兼容入口。
 
-本 skill 还携带仓库托管的 Pxb7/PZDS OpenCLI adapter。命令按游戏命名，目前提供绝区零专用的 `pxb7/zzz-detail` 和 `pzds/zzz-detail`；后续其它游戏应在 `opencli-adapters/games/<game>/clis/<site>/` 下新增自己的命令，避免把游戏专属解析伪装成平台通用 `detail`。用户需要平台详情结构化抽取时，先运行：
+本 skill 还携带仓库托管的 Pxb7/PZDS OpenCLI adapter。命令按游戏命名：明日方舟同时提供 `pxb7/arknights-list`、`pxb7/arknights-detail`、`pzds/arknights-list`、`pzds/arknights-detail`；绝区零提供 `pxb7/zzz-detail` 和 `pzds/zzz-detail`。后续其它游戏应在 `opencli-adapters/games/<game>/clis/<site>/` 下新增自己的命令，避免把游戏专属解析伪装成平台通用 `detail`。用户需要平台详情结构化抽取时，先运行：
 
 ```bash
 node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --check
@@ -39,10 +39,12 @@ game-account-toolkit/
 │   └── game-skill/
 ├── opencli-adapters/
 │   ├── games/
+│   │   ├── arknights/
 │   │   └── zenless-zone-zero/
 │   └── sites/
 └── scripts/
     ├── check-deps.mjs
+    ├── cleanup-query-session.mjs
     └── install-opencli-adapters.mjs
 ```
 
@@ -55,7 +57,7 @@ game-account-toolkit/
 3. 若全部存在，继续执行。
 4. 若缺少可本地安装的 npm 依赖，先说明将安装什么、安装到哪里、为什么需要，再请求用户确认。
 5. 若缺少系统级依赖或浏览器设置，给出人工安装步骤，不静默安装。
-6. 若目标站点需要浏览器访问，必须加载并遵循 `web-access` skill。
+6. 若目标站点需要浏览器访问，优先加载并遵循 `chrome-use`，先执行 `chrome-use skills get core --full`；其扩展 relay 不可用时，再加载 `web-access` 走 CDP 兜底。
 
 ## 安全边界
 
@@ -70,10 +72,26 @@ game-account-toolkit/
 
 优先级：
 
-1. 已有 Claude Code 工具：Read、Write、WebFetch、WebSearch、Bash。
-2. 已安装 skill：`web-access` 用于浏览器/CDP。
-3. 本 skill 的 `scripts/check-deps.mjs` 做本地依赖检查。
-4. OCR、截图解析等能力缺失时，先降级为人工截图/文本输入，再建议安装。
+1. 已验证的 OpenCLI adapter 或静态读取能力。
+2. `chrome-use` 扩展 relay，用命名 session 复用真实 Chrome；本机实测不会触发 remote-debugging 授权弹窗。
+3. `web-access` + CDP 作为浏览器兜底。
+4. 本 skill 的 `scripts/check-deps.mjs` 做本地依赖检查。
+5. OCR、截图解析等能力缺失时，先降级为人工截图/文本输入，再建议安装。
+
+## 浏览器生命周期
+
+OpenCLI adapter 的 `--keep-tab false` 只释放 lease；OpenCLI Browser Bridge 会把最后一个自动化标签改成 `about:blank` 作为复用占位符，并保留容器窗口。因此“命令结束”不等于“窗口已清理”。
+
+筛选执行器应在第一次浏览器命令前同时捕获 target 基线和（macOS）Chrome 窗口 ID 基线，登记本轮新 target，并在成功、报错、`SIGINT`、`SIGTERM` 和进程退出路径统一调用 `scripts/cleanup-query-session.mjs`。清理器默认不按平台 URL 批量关用户标签；它关闭显式 `--target`、显式会话，以及配合 `--baseline --close-new-query-targets` 识别出的本轮平台页/空白占位符。若 Chrome 在关闭最后一个 target 后又生成新的空白占位标签，清理器还会关闭“本轮新建且全部标签均为查询页或 about:blank”的独立窗口；运行前窗口、混合用户窗口和无关新窗口始终保留。
+
+明日方舟的 `run-dual-platform-selection.mjs` 已内置这套生命周期。手工浏览器测试需要使用命名 session，并在结束时传入实际 target；不要把 `opencli browser <session> close` 当成完整清理。
+
+```bash
+node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --capture-baseline /tmp/gas-browser-baseline.json --json
+# 运行本轮查询或验证，并记录返回的 target id
+node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --baseline /tmp/gas-browser-baseline.json --close-new-query-targets --target <owned-target-id> --json
+npm run verify:browser-cleanup
+```
 
 ## 社区攻略证据
 

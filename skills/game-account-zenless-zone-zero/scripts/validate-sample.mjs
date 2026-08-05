@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'test-fixtures', 'zenless-zone-zero-validation-sample.json'), 'utf8'));
+const currentListingFixture = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'test-fixtures', 'pxb7-jjbol4373.json'), 'utf8'));
 const signatureEngineDb = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'signature-engines.json'), 'utf8'));
 
 const canonicalAliases = new Map();
@@ -16,6 +17,11 @@ function addAliases(canonical, aliases) {
 addAliases('miyabi', ['Miyabi', '星见雅', '雅']);
 addAliases('yixuan', ['Yixuan', '仪玄']);
 addAliases('ye_shunguang', ['Ye Shunguang', 'Yeshunguang', '叶瞬光', '叶曙光', '小光']);
+addAliases('remielle', ['Remielle', '蕾米埃尔']);
+addAliases('velina', ['Velina', '维琳娜', '維琳娜']);
+addAliases('pyrois', ['Pyrois', '佩洛伊斯']);
+addAliases('norma', ['Norma', '诺姆', '諾姆']);
+addAliases('sigrid', ['Sigrid', '希格莉德']);
 addAliases('yuzuha', ['Fubao Yuzuha', 'Yuzuha', '浮波柚叶', '柚叶', '右叶', '右翼']);
 addAliases('astra_yao', ['Astra Yao', '耀嘉音', '耀佳音', '嘉音', '佳音']);
 addAliases('soukaku', ['Soukaku', '苍角']);
@@ -56,10 +62,13 @@ const highValueLimited = new Set([
   'ellen', 'zhu_yuan', 'qingyi', 'jane', 'caesar', 'burnice', 'yanagi',
   'lighter', 'miyabi', 'astra_yao', 'evelyn', 'trigger', 'vivian',
   'yixuan', 'ye_shunguang', 'yuzuha', 'liuyin', 'ju_fufu', 'lucia',
-  'qianxia', 'zhao', 'nangong_yu', 'xixifu', 'sid', 'airi'
+  'qianxia', 'zhao', 'nangong_yu', 'xixifu', 'sid', 'airi',
+  'remielle', 'velina', 'norma', 'sigrid'
 ]);
+const freeProgressionAgents = new Set(['pyrois']);
 const standardAgents = new Set(['nekomata', 'soldier_11', 'koleda', 'lycaon', 'rina', 'grace']);
-const voidHunterCores = ['miyabi', 'yixuan', 'ye_shunguang'];
+const voidHunterCores = ['miyabi', 'yixuan', 'ye_shunguang', 'remielle'];
+const legacyVoidHunterCores = ['miyabi', 'yixuan', 'ye_shunguang'];
 const directElectricTeam = ['xixifu', 'sid', 'astra_yao'];
 const delusionAngelsTrio = ['qianxia', 'airi', 'nangong_yu'];
 const vivianDisorderPartners = ['jane', 'burnice', 'yanagi', 'alice', 'grace'];
@@ -67,6 +76,11 @@ const agentLabels = new Map([
   ['miyabi', '星见雅'],
   ['yixuan', '仪玄'],
   ['ye_shunguang', '叶瞬光'],
+  ['remielle', '蕾米埃尔'],
+  ['velina', '维琳娜'],
+  ['pyrois', '佩洛伊斯'],
+  ['norma', '诺姆'],
+  ['sigrid', '希格莉德'],
   ['yuzuha', '浮波柚叶'],
   ['soukaku', '苍角'],
   ['yanagi', '月城柳'],
@@ -274,6 +288,9 @@ function pairOptionsForCore(core, roster) {
     ],
     ye_shunguang: [
       { primary: ['zhao'], secondary: ['astra_yao', 'liuyin'], tier: 'preferred' }
+    ],
+    remielle: [
+      { primary: ['velina'], secondary: ['jane', 'burnice', 'vivian', 'yanagi', 'alice', 'grace'], tier: 'preferred' }
     ]
   };
 
@@ -291,12 +308,24 @@ function pairOptionsForCore(core, roster) {
 }
 
 function bestThreeVoidHunterPlan(roster) {
-  const hasAllVoidHunters = voidHunterCores.every((core) => roster.has(core));
-  if (!hasAllVoidHunters) return { hasAllVoidHunters: false, completeTeams: 0, preferredTeams: 0, assignments: [] };
+  const hasAllCurrentVoidHunters = voidHunterCores.every((core) => roster.has(core));
+  const hasLegacyVoidHunterCore = legacyVoidHunterCores.every((core) => roster.has(core));
+  const activeCores = hasAllCurrentVoidHunters ? voidHunterCores : hasLegacyVoidHunterCore ? legacyVoidHunterCores : [];
+  if (!activeCores.length) {
+    return {
+      hasAllVoidHunters: false,
+      hasAllCurrentVoidHunters: false,
+      legacyMode: false,
+      requiredTeamCount: 0,
+      completeTeams: 0,
+      preferredTeams: 0,
+      assignments: []
+    };
+  }
 
   let best = { completeTeams: -1, preferredTeams: -1, assignments: [] };
   function visit(index, used, assignments, preferredTeams) {
-    if (index === voidHunterCores.length) {
+    if (index === activeCores.length) {
       const completeTeams = assignments.filter((assignment) => assignment.members.length === 2).length;
       if (
         completeTeams > best.completeTeams
@@ -307,7 +336,7 @@ function bestThreeVoidHunterPlan(roster) {
       return;
     }
 
-    const core = voidHunterCores[index];
+    const core = activeCores[index];
     const options = pairOptionsForCore(core, roster).filter((option) => option.members.every((member) => !used.has(member)));
     for (const option of options) {
       const nextUsed = new Set(used);
@@ -317,8 +346,14 @@ function bestThreeVoidHunterPlan(roster) {
     visit(index + 1, used, [...assignments, { core, members: [], tier: 'missing' }], preferredTeams);
   }
 
-  visit(0, new Set(voidHunterCores), [], 0);
-  return { hasAllVoidHunters: true, ...best };
+  visit(0, new Set(activeCores), [], 0);
+  return {
+    hasAllVoidHunters: true,
+    hasAllCurrentVoidHunters,
+    legacyMode: !hasAllCurrentVoidHunters,
+    requiredTeamCount: activeCores.length,
+    ...best
+  };
 }
 
 function describeThreeTeamPlan(plan) {
@@ -332,7 +367,7 @@ function describeThreeTeamPlan(plan) {
     .join('; ');
 }
 
-function scoreListing(listing) {
+export function scoreListing(listing) {
   const assets = listing.game_assets ?? {};
   const agents = assets.agents ?? [];
   const engines = assets.w_engines ?? [];
@@ -350,7 +385,11 @@ function scoreListing(listing) {
   let agentScore = 0;
   let standardScore = 0;
   for (const agent of agents) {
-    if (isHighValueLimited(agent)) {
+    const agentId = canonicalAgentName(agent.name);
+    if (freeProgressionAgents.has(agentId)) {
+      agentScore += 2 + Math.min(Number(agent.mindscape ?? 0), 1);
+      concerns.push(`${agent.name} is story/free-progression supply, so mindscapes do not receive limited-banner resale premium`);
+    } else if (isHighValueLimited(agent)) {
       agentScore += 8 + Math.min(Number(agent.mindscape ?? 0), 1);
       highlights.push(`${agent.name} is a limited S-rank core`);
     } else if (standardAgents.has(canonicalAgentName(agent.name)) || agent.category === 'standard') {
@@ -411,21 +450,31 @@ function scoreListing(listing) {
   const threeTeamPlan = bestThreeVoidHunterPlan(roster);
   let teamScore = 0;
   if (threeTeamPlan.hasAllVoidHunters) {
-    if (threeTeamPlan.completeTeams === 3) {
-      teamScore = 20;
-      highlights.push(`All three Void Hunters can form independent teams: ${describeThreeTeamPlan(threeTeamPlan)}`);
-    } else if (threeTeamPlan.completeTeams === 2) {
-      teamScore = 13;
-      concerns.push(`All three Void Hunters are present, but only two independent teams are visible: ${describeThreeTeamPlan(threeTeamPlan)}`);
-      missingFields.push('independent three-team support roster');
-    } else if (threeTeamPlan.completeTeams === 1) {
+    const teamLabel = threeTeamPlan.hasAllCurrentVoidHunters ? 'All current Void Hunters' : 'All three legacy Void Hunters';
+    const missingTeamField = threeTeamPlan.hasAllCurrentVoidHunters
+      ? 'independent current Void Hunter support roster'
+      : 'independent three-team support roster';
+    if (threeTeamPlan.completeTeams === threeTeamPlan.requiredTeamCount) {
+      teamScore = threeTeamPlan.hasAllCurrentVoidHunters ? 20 : 13;
+      highlights.push(threeTeamPlan.hasAllCurrentVoidHunters
+        ? `${teamLabel} can form independent teams: ${describeThreeTeamPlan(threeTeamPlan)}`
+        : `All three Void Hunters can form independent teams: ${describeThreeTeamPlan(threeTeamPlan)}`);
+      if (threeTeamPlan.legacyMode) {
+        concerns.push('The current 3.1 Void Hunter roster also includes 蕾米埃尔; legacy three-core completeness is no longer all-current completeness');
+        missingFields.push('current Void Hunter: 蕾米埃尔');
+      }
+    } else if (threeTeamPlan.completeTeams >= threeTeamPlan.requiredTeamCount - 1) {
+      teamScore = threeTeamPlan.hasAllCurrentVoidHunters ? 15 : 11;
+      concerns.push(`${teamLabel} are present, but only ${threeTeamPlan.completeTeams} independent teams are visible: ${describeThreeTeamPlan(threeTeamPlan)}`);
+      missingFields.push(missingTeamField);
+    } else if (threeTeamPlan.completeTeams >= 1) {
       teamScore = 8;
-      concerns.push(`Three Void Hunters share too few compatible teammates: ${describeThreeTeamPlan(threeTeamPlan)}`);
-      missingFields.push('independent three-team support roster');
+      concerns.push(`${teamLabel} share too few compatible teammates: ${describeThreeTeamPlan(threeTeamPlan)}`);
+      missingFields.push(missingTeamField);
     } else {
       teamScore = 4;
-      concerns.push('Three Void Hunters are present, but no independent full team can be verified from named teammates');
-      missingFields.push('independent three-team support roster');
+      concerns.push(`${teamLabel} are present, but no independent full team can be verified from named teammates`);
+      missingFields.push(missingTeamField);
     }
   } else if (limitedCount >= 4 && roles.has('support') && (roles.has('stun') || roles.has('defense'))) {
     teamScore = 18;
@@ -504,14 +553,28 @@ function scoreListing(listing) {
   }
   comfortScore = clamp(comfortScore, 0, 10);
 
+  const missingCurrentCoreSignatures = voidHunterCores.filter((agentId) => (
+    roster.has(agentId) && !hasSignature(agentId, agents, engines, statusMap, matchedSignatureEngines)
+  ));
+  for (const agentId of missingCurrentCoreSignatures) {
+    const label = labelAgent(agentId);
+    missingFields.push(`signature W-Engine: ${label}`);
+    concerns.push(`${label} signature W-Engine is not confirmed; this reduces whale-account completeness but does not by itself make the agent unusable`);
+  }
+  if (roster.has('velina') && !hasSignature('velina', agents, engines, statusMap, matchedSignatureEngines)) {
+    missingFields.push('signature W-Engine: 维琳娜');
+    concerns.push('维琳娜 signature W-Engine 琳琅鎏心 is not confirmed for the current 蕾米埃尔 anomaly core');
+  }
+
   const polychrome = Number(resources.polychrome ?? 0);
+  const filmTape = Number(resources.film_tape ?? resources.filmTape ?? 0);
   const encrypted = Number(resources.encrypted_master_tape ?? 0);
   const master = Number(resources.master_tape ?? 0);
   const boopon = Number(resources.boopon ?? 0);
   const residual = Number(resources.residual_signal ?? 0);
   let resourceScore = 0;
-  if (polychrome || encrypted || master || boopon || residual) {
-    resourceScore = clamp(Math.floor(polychrome / 3000) + Math.floor((encrypted + master + boopon) / 10) + Math.floor(residual / 120), 1, 15);
+  if (polychrome || filmTape || encrypted || master || boopon || residual) {
+    resourceScore = clamp(Math.floor((polychrome + filmTape) / 3000) + Math.floor((encrypted + master + boopon) / 10) + Math.floor(residual / 120), 1, 15);
     highlights.push('Pull resources are disclosed');
   } else {
     missingFields.push('polychrome / tapes / boopon / residual signal');
@@ -520,7 +583,7 @@ function scoreListing(listing) {
   const progressionScore = clamp(Math.floor(Number(assets.progression?.inter_knot_level ?? 0) / 15), 0, 5);
   const price = Number(listing.price ?? 0);
   let priceFitScore = agentScore >= 30 && engineScore >= 10 ? 8 : agentScore >= 20 ? 5 : 1;
-  if (price > 0 && threeTeamPlan.completeTeams === 3 && agentScore >= 30 && engineScore >= 10) {
+  if (price > 0 && threeTeamPlan.requiredTeamCount > 0 && threeTeamPlan.completeTeams === threeTeamPlan.requiredTeamCount && agentScore >= 30 && engineScore >= 10) {
     if (price <= 1500 && voidHunterTwoPlusOne.length === voidHunterCores.length) priceFitScore = 10;
     else if (price <= 2000) priceFitScore = Math.max(priceFitScore, 9);
   }
@@ -580,9 +643,12 @@ function scoreListing(listing) {
     riskPenalty += 8;
     missingFields.push('official verification');
   }
-  if (listing.server && listing.server !== '官服') {
+  if (listing.server && /B服|渠道服/.test(listing.server)) {
     riskPenalty += 10;
     concerns.push(`${listing.server} may not match official-server preference`);
+  } else if (listing.server && /国际服|國際服/.test(listing.server)) {
+    concerns.push('International account region is fixed; confirm region, payment compatibility, and transfer chain before purchase');
+    if (!listing.region && !assets.region) missingFields.push('international server region');
   }
 
   let missingPenalty = 0;
@@ -592,6 +658,10 @@ function scoreListing(listing) {
   if (missingFields.includes('PSN binding') || missingFields.includes('TAP binding')) missingPenalty += 5;
   if (missingFields.includes('email transfer / real-name status')) missingPenalty += 5;
   if (missingFields.includes('independent three-team support roster')) missingPenalty += 10;
+  if (missingFields.includes('independent current Void Hunter support roster')) missingPenalty += 10;
+  if (missingFields.includes('current Void Hunter: 蕾米埃尔')) missingPenalty += 5;
+  if (missingFields.includes('international server region')) missingPenalty += 4;
+  missingPenalty += Math.min(9, missingFields.filter((field) => field.startsWith('signature W-Engine:')).length * 3);
   if (missingFields.includes('direct electric team: 希希芙 + 席德 + 耀嘉音')) missingPenalty += 4;
   if (missingFields.includes('Delusion Angels trio: 千夏 + 爱芮 + 南宫羽')) missingPenalty += 4;
   if (missingFields.includes('Nangong Yu signature W-Engine for Delusion Angels')) missingPenalty += 15;
@@ -602,10 +672,10 @@ function scoreListing(listing) {
   const finalScore = clamp(rawScore - riskPenalty - missingPenalty, 0, 100);
   const hasKeyAngelsSignatureGap = missingFields.includes('Nangong Yu signature W-Engine for Delusion Angels')
     || missingFields.includes('Delusion Angels trio signature W-Engines');
-  const communityComparison = threeTeamPlan.hasAllVoidHunters && threeTeamPlan.completeTeams === 3 && riskPenalty < 8 && !hasKeyAngelsSignatureGap
+  const communityComparison = threeTeamPlan.hasAllCurrentVoidHunters && threeTeamPlan.completeTeams === threeTeamPlan.requiredTeamCount && riskPenalty < 8 && !hasKeyAngelsSignatureGap
     ? 'strong alignment'
-    : threeTeamPlan.hasAllVoidHunters && threeTeamPlan.completeTeams < 3
-      ? 'partial alignment; three-team support incomplete'
+    : threeTeamPlan.hasAllVoidHunters && threeTeamPlan.completeTeams < threeTeamPlan.requiredTeamCount
+      ? 'partial alignment; current Void Hunter team support incomplete'
       : limitedCount >= 4 && engineScore >= 10 && riskPenalty < 8
     ? 'strong alignment'
     : limitedCount === 0
@@ -629,6 +699,7 @@ function scoreListing(listing) {
   };
 }
 
+export function runValidation() {
 const results = fixture.listings.map(scoreListing).sort((a, b) => b.final_score - a.final_score);
 for (const [index, result] of results.entries()) {
   console.log(`${index + 1}. ${result.id} (${result.final_score}) - ${result.community_comparison}`);
@@ -705,4 +776,25 @@ if (!userBestValue.highlights.some((item) => /signature access usually beats 1\+
   throw new Error('Expected non-Void-Hunter 0+1 priority over 1+0 to be explained');
 }
 
+const currentListingResult = scoreListing(currentListingFixture);
+if (currentListingResult.components.teamScore !== 20) {
+  throw new Error('Expected JJBOL4373 fixture to form four independent current Void Hunter teams');
+}
+for (const missingSignature of ['signature W-Engine: 叶瞬光', 'signature W-Engine: 蕾米埃尔', 'signature W-Engine: 维琳娜']) {
+  if (!currentListingResult.missing_fields.includes(missingSignature)) {
+    throw new Error(`Expected JJBOL4373 fixture to retain missing current signature: ${missingSignature}`);
+  }
+}
+if (!currentListingResult.concerns.some((item) => /佩洛伊斯.*story\/free-progression supply/.test(item))) {
+  throw new Error('Expected free-progression Pyrois mindscapes to avoid limited-banner resale premium');
+}
+if (!currentListingResult.highlights.some((item) => /All current Void Hunters can form independent teams/.test(item))) {
+  throw new Error('Expected current four-Void-Hunter team explanation for JJBOL4373 fixture');
+}
+
 console.log(`\nValidation passed: ${fixture.expected_top_id} outranks standard S-rank-count accounts.`);
+console.log(`Current 3.1 fixture passed: ${currentListingFixture.id} retains four-team value and missing-signature penalties.`);
+return results;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) runValidation();

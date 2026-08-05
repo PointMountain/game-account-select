@@ -1,9 +1,49 @@
 {
   "schema_version": 1,
   "name": "game-account-select-opencli-adapters",
-  "updated_at": "2026-05-23",
+  "updated_at": "2026-08-02",
   "description": "Repo-managed OpenCLI adapters used by Game Account Select skills. Files are grouped by game, public, browser-backed, and contain no cookies, tokens, or user private data.",
   "adapters": [
+    {
+      "game": "arknights",
+      "site": "pxb7",
+      "command": "arknights-list",
+      "source": "games/arknights/clis/pxb7/arknights-list.js",
+      "target": "clis/pxb7/arknights-list.js",
+      "strategy": "COOKIE",
+      "verify_command": "opencli browser gas-arknights-pxb7-verify verify pxb7/arknights-list --strict-memory",
+      "sample_args": ["--minPrice", "800", "--maxPrice", "1200", "--limit", "3"]
+    },
+    {
+      "game": "arknights",
+      "site": "pxb7",
+      "command": "arknights-detail",
+      "source": "games/arknights/clis/pxb7/arknights-detail.js",
+      "target": "clis/pxb7/arknights-detail.js",
+      "strategy": "COOKIE",
+      "verify_command": "opencli browser gas-arknights-pxb7-verify verify pxb7/arknights-detail --strict-memory",
+      "sample_args": ["https://www.pxb7.com/product/2280754884445079984/1"]
+    },
+    {
+      "game": "arknights",
+      "site": "pzds",
+      "command": "arknights-list",
+      "source": "games/arknights/clis/pzds/arknights-list.js",
+      "target": "clis/pzds/arknights-list.js",
+      "strategy": "COOKIE",
+      "verify_command": "opencli browser gas-arknights-pzds-verify verify pzds/arknights-list --strict-memory",
+      "sample_args": ["--minPrice", "800", "--maxPrice", "1300", "--limit", "3"]
+    },
+    {
+      "game": "arknights",
+      "site": "pzds",
+      "command": "arknights-detail",
+      "source": "games/arknights/clis/pzds/arknights-detail.js",
+      "target": "clis/pzds/arknights-detail.js",
+      "strategy": "COOKIE",
+      "verify_command": "opencli browser gas-arknights-pzds-verify verify pzds/arknights-detail --strict-memory",
+      "sample_args": ["MRHP2E"]
+    },
     {
       "game": "zenless-zone-zero",
       "site": "pxb7",
@@ -31,9 +71,34 @@
   ],
   "files": [
     {
+      "source": "games/arknights/clis/pxb7/arknights-list.js",
+      "target": "clis/pxb7/arknights-list.js",
+      "kind": "adapter"
+    },
+    {
+      "source": "games/arknights/clis/pxb7/arknights-detail.js",
+      "target": "clis/pxb7/arknights-detail.js",
+      "kind": "adapter"
+    },
+    {
+      "source": "games/arknights/clis/pzds/arknights-list.js",
+      "target": "clis/pzds/arknights-list.js",
+      "kind": "adapter"
+    },
+    {
+      "source": "games/arknights/clis/pzds/arknights-detail.js",
+      "target": "clis/pzds/arknights-detail.js",
+      "kind": "adapter"
+    },
+    {
       "source": "games/zenless-zone-zero/clis/pxb7/zzz-detail.js",
       "target": "clis/pxb7/zzz-detail.js",
       "kind": "adapter"
+    },
+    {
+      "source": "games/zenless-zone-zero/clis/pxb7/zzz-detail-title-parser.js",
+      "target": "clis/pxb7/zzz-detail-title-parser.js",
+      "kind": "adapter-support"
     },
     {
       "source": "games/zenless-zone-zero/clis/pzds/zzz-detail.js",
@@ -56,6 +121,16 @@
       "kind": "verify"
     },
     {
+      "source": "sites/pxb7/verify/arknights-list.json",
+      "target": "sites/pxb7/verify/arknights-list.json",
+      "kind": "verify"
+    },
+    {
+      "source": "sites/pxb7/verify/arknights-detail.json",
+      "target": "sites/pxb7/verify/arknights-detail.json",
+      "kind": "verify"
+    },
+    {
       "source": "sites/pzds/endpoints.json",
       "target": "sites/pzds/endpoints.json",
       "kind": "site-memory"
@@ -68,6 +143,16 @@
     {
       "source": "sites/pzds/verify/zzz-detail.json",
       "target": "sites/pzds/verify/zzz-detail.json",
+      "kind": "verify"
+    },
+    {
+      "source": "sites/pzds/verify/arknights-list.json",
+      "target": "sites/pzds/verify/arknights-list.json",
+      "kind": "verify"
+    },
+    {
+      "source": "sites/pzds/verify/arknights-detail.json",
+      "target": "sites/pzds/verify/arknights-detail.json",
       "kind": "verify"
     }
   ]

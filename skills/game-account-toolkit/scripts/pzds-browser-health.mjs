@@ -92,13 +92,12 @@ const healthJs = `(() => {
   const cookieNames = document.cookie.split(';').map((item) => item.trim().split('=')[0]).filter(Boolean);
   const localStorageKeys = Object.keys(localStorage);
   const sessionStorageKeys = Object.keys(sessionStorage);
-  const expected = [
-    '欢迎来到盼之代售',
-    '请选择要购买的游戏'
-  ];
+  const welcomeSignals = ['欢迎来到盼之代售', '欢迎来到盼之账号'];
+  const requiredSignal = '请选择要购买的游戏';
   const gameSignals = ['绝区零', '鸣潮', '明日方舟', '异环', '英雄联盟'];
   const blockerPattern = /(验证|滑块|访问过于频繁|安全校验|人机|captcha|forbidden|403|页面不存在|无法访问)/i;
-  const expectedPresent = expected.every((item) => text.includes(item));
+  const welcomeSignal = welcomeSignals.find((item) => text.includes(item)) || null;
+  const expectedPresent = Boolean(welcomeSignal) && text.includes(requiredSignal);
   const gameSignalPresent = gameSignals.some((item) => text.includes(item));
   const loadingOnly = text.includes('数据加载中') && !expectedPresent;
   return {
@@ -106,6 +105,7 @@ const healthJs = `(() => {
     title: document.title || '',
     readyState: document.readyState,
     expectedPresent,
+    welcomeSignal,
     gameSignalPresent,
     blockerDetected: blockerPattern.test(text),
     loadingOnly,

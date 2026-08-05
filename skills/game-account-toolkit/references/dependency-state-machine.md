@@ -32,12 +32,13 @@ node --version
 
 ## CHECK_BROWSER_ACCESS
 
-若任务需要平台页面访问，先加载 `web-access` skill，并执行它的依赖检查。
+若任务需要平台页面访问，先加载 `chrome-use` 并执行 `chrome-use skills get core --full`，检查扩展 relay；不可用时再加载 `web-access` 并检查 CDP。
 
 判定：
 
-- Chrome remote debugging 可用：继续。
-- Chrome remote debugging 未开启：提示用户按 `web-access` 指南开启。
+- `chrome-use browsers --json` 返回至少一个连接浏览器：优先继续，不要求 remote-debugging-port。
+- `chrome-use` 不可用但 Chrome remote debugging 可用：用 `web-access` 继续。
+- 两条通道都不可用：提示用户连接 `chrome-use` 扩展，或按 `web-access` 指南开启 CDP。
 - 站点内容通过 WebFetch 足够获取：可不启用 CDP。
 
 ## CHECK_OPTIONAL_TOOLS
@@ -60,7 +61,9 @@ node --version
 
 ```yaml
 capabilities:
+  chrome_use_relay: true|false
   browser_cdp: true|false
+  browser_access: true|false
   web_fetch: true|false
   ocr: true|false
   sample_store: true|false
@@ -77,7 +80,7 @@ limitations:
 依赖不完整但仍可完成部分任务时，明确降级范围。例如：
 
 - 无 OCR：只分析文本字段。
-- 无 CDP：只使用 WebFetch 或用户粘贴内容。
+- 无 `chrome-use` relay 且无 CDP：只使用 WebFetch 或用户粘贴内容。
 - 无样本库：只做当前会话的一次性比较。
 
 ## 自我安装规则

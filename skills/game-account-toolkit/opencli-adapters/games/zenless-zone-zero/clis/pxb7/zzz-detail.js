@@ -1,29 +1,20 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import { CliError } from '@jackwener/opencli/errors';
+import {
+  cleanText,
+  cleanWEngineName,
+  normalizeAgentName,
+  parseTitleAgent,
+  parseWEngineNamesFromText,
+} from './zzz-detail-title-parser.js';
 
 const HOST = 'www.pxb7.com';
 const VOID_HUNTERS = [
   { key: 'miyabi', names: ['星见雅', '雅'] },
   { key: 'yixuan', names: ['仪玄'] },
   { key: 'yeshunguang', names: ['叶瞬光'] },
+  { key: 'remielle', names: ['蕾米埃尔'] },
 ];
-
-function cleanText(value) {
-  return String(value ?? '').replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ').trim();
-}
-
-function cleanWEngineName(value) {
-  return cleanText(value)
-    .replace(/^(?:精\s*\d+|精炼\s*\d+|精煉\s*\d+|Lv\.?\s*\d+)\s*/i, '')
-    .replace(/^(?:S级音擎|S級音擎|S级武器|S級武器|音擎)\s*[：:]?\s*/i, '')
-    .replace(/[。；;，,、]+$/g, '')
-    .trim();
-}
-
-function normalizeAgentName(value) {
-  const name = cleanText(value);
-  return name === '雅' ? '星见雅' : name;
-}
 
 function normalizeUrl(input) {
   const raw = cleanText(input);
@@ -154,41 +145,23 @@ function parseAgentStatuses(nodes, text, cards = []) {
   ]);
   if (titleAgentBlock) {
     for (const part of titleAgentBlock.split(/[，,、]/)) {
-      const item = cleanText(part);
-      if (!item) continue;
-      const named = item.match(/^(?:(\d+)命)?(.+)$/);
-      if (!named) continue;
-      const name = normalizeAgentName(named[2]);
+      const parsedTitleAgent = parseTitleAgent(part);
+      if (!parsedTitleAgent) continue;
+      const { name, dupes, raw } = parsedTitleAgent;
       if (!name || byName.has(name)) continue;
-      const dupes = named[1] == null ? 0 : Number(named[1]);
       byName.set(name, {
         name,
         status: String(dupes),
         dupes,
         signatureEngine: null,
         hasSignatureEngine: false,
-        raw: item,
+        raw,
         source: 'title_text',
       });
     }
   }
 
   return Array.from(byName.values());
-}
-
-function parseWEngineNamesFromText(text) {
-  const blocks = [];
-  const raw = String(text ?? '');
-  for (const match of raw.matchAll(/(?:(\d+)\s*个)?S级(?:音擎|武器)[：:]\s*([^；;\n]+)/g)) {
-    const names = [];
-    for (const part of String(match[2] ?? '').split(/[，,、；;|/]/)) {
-      const name = cleanWEngineName(part);
-      if (name) names.push(name);
-    }
-    if (names.length) blocks.push({ hasCount: match[1] != null, names });
-  }
-  const countedBlock = blocks.find((block) => block.hasCount);
-  return countedBlock ? countedBlock.names : blocks.flatMap((block) => block.names);
 }
 
 function parseWEngineNames(nodes, text, cards = []) {
@@ -232,7 +205,8 @@ function statusForAgent(agentStatuses, names, text) {
   })).replace(/\s+/g, '');
   if (assetStatus) return assetStatus;
   const titleStatus = firstMatch(text, names.map((name) => new RegExp(`(\\d+)命${escapeRegExp(name)}`)));
-  return titleStatus ? `${titleStatus}命` : '';
+  if (titleStatus) return `${titleStatus}命`;
+  return names.some((name) => new RegExp(`满命${escapeRegExp(name)}`).test(text)) ? '6命' : '';
 }
 
 function parseVoidHunters(agentStatuses, text) {
@@ -248,50 +222,58 @@ function formatAgentStatuses(agentStatuses) {
 }
 
 function parseDetail(raw) {
-  const text = cleanText(raw.text).replace(/\n+/g, '\n');
+  const primaryText = cleanText(raw.primaryText || raw.primaryTitleText || raw.text).replace(/\n+/g, '\n');
   const nodes = Array.isArray(raw.titleNodes) ? raw.titleNodes : [];
   const cards = Array.isArray(raw.agentCards) ? raw.agentCards : [];
-  const agentStatusRows = parseAgentStatuses(nodes, text, cards);
-  const sWEngineNames = parseWEngineNames(nodes, text, raw.wEngineCards ?? []);
-  const title = firstMatch(text, [/(【JHYXJ[^】]+】[^\n]+)/, /(JHYXJ[A-Z0-9]+[^\n]+)/]) || cleanText(raw.title);
-  const listingId = firstMatch(`${raw.title}\n${text}`, [/【([^】]+)】/, /\b(JHYXJ[A-Z0-9]+)\b/i]);
-  const polychromeText = text.replace(/菲林底片[:：]?\s*\d+/g, '');
+  const title = cleanText(raw.primaryTitleText)
+    || firstMatch(primaryText, [/(【[A-Z0-9]+】[^\n]+)/i, /\b([A-Z]{2,}[A-Z0-9]+[^\n]+)/i])
+    || cleanText(raw.title);
+  const agentStatusRows = parseAgentStatuses(nodes, title, cards);
+  const sWEngineNames = parseWEngineNames(nodes, title, raw.wEngineCards ?? []);
+  const listingId = firstMatch(`${title}\n${raw.title}`, [/【([^】]+)】/, /\b([A-Z]{2,}[A-Z0-9]+)\b/i]);
+  const polychromeText = primaryText.replace(/菲林底片[:：]?\s*\d+/g, '');
   const detailPhotoTags = Array.from(title.matchAll(/【([^】]+)】/g)).map((match) => match[0]).join(' ');
   const primaryDetailText = [title, detailPhotoTags, raw.title].filter(Boolean).join('\n');
+  const international = scopedTokenMatch([primaryDetailText, primaryText], [/国际服/, /國際服/]);
+  const region = scopedTokenMatch([primaryDetailText, primaryText], [/亚服/, /亞服/, /美服/, /欧服/, /歐服/, /台港澳服/]);
 
   return {
     listingId,
-    priceCny: numberMatch(text, [/￥\s*([0-9][0-9,]*(?:\.\d+)?)/]),
+    priceCny: numberMatch(primaryText, [/￥\s*([0-9][0-9,]*(?:\.\d+)?)/]),
     title,
     binding: {
-      server: scopedTokenMatch([primaryDetailText, text], [/米哈游官服/, /B服/, /渠道服/]),
-      email: scopedTokenMatch([primaryDetailText, text], [/邮箱未实名出售/, /邮箱实名出售/, /邮箱未绑定/, /邮箱不出售/, /邮箱绑定/, /网易邮箱/, /QQ邮箱/]),
-      tap: scopedTokenMatch([primaryDetailText, text], [/未绑定TAP/, /已绑定TAP/, /TAP绑定情况\s*未绑定TAP?/, /TAP绑定情况\s*已绑定TAP?/]),
-      psn: scopedTokenMatch([primaryDetailText, text], [/未绑定PSN/, /已绑定PSN/, /PSN绑定情况\s*未绑定PSN?/, /PSN绑定情况\s*已绑定PSN?/]),
-      changeCode: scopedTokenMatch([primaryDetailText, text], [/提供换绑码/, /不提供换绑码/]),
+      server: international || scopedTokenMatch([primaryDetailText, primaryText], [/米哈游官服/, /B服/, /渠道服/]),
+      region,
+      email: scopedTokenMatch([primaryText, primaryDetailText], [/邮箱未实名出售/, /邮箱实名出售/, /邮箱未绑定/, /邮箱不出售/, /邮箱绑定/, /网易邮箱/, /QQ邮箱/, /字母Q邮箱/]),
+      tap: scopedTokenMatch([primaryDetailText, primaryText], [/未绑定TAP/, /已绑定TAP/, /TAP绑定情况\s*未绑定TAP?/, /TAP绑定情况\s*已绑定TAP?/]),
+      psn: scopedTokenMatch([primaryDetailText, primaryText], [/未绑定PSN/, /已绑定PSN/, /PSN绑定情况\s*未绑定PSN?/, /PSN绑定情况\s*已绑定PSN?/]),
+      changeCode: scopedTokenMatch([primaryDetailText, primaryText], [/提供换绑码/, /不提供换绑码/]),
     },
     resources: {
-      level: numberMatch(text, [/(\d+)\s*级/]),
-      yellowCount: numberMatch(text, [/黄数\s*(\d+)/, /(\d+)\s*黄/]),
+      level: numberMatch(primaryText, [/(\d+)\s*级/]),
+      yellowCount: numberMatch(primaryText, [/黄数\s*(\d+)/, /(\d+)\s*黄/]),
       polychrome: numberMatch(polychromeText, [/菲林[:：]?\s*(\d+)/]),
-      filmTape: numberMatch(text, [/菲林底片[:：]?\s*(\d+)/]),
-      encryptedMasterTape: numberMatch(text, [/加密母带[:：]?\s*(\d+)/]),
+      filmTape: numberMatch(primaryText, [/菲林底片[:：]?\s*(\d+)/]),
+      encryptedMasterTape: numberMatch(primaryText, [/加密母带[:：]?\s*(\d+)/]),
     },
     counts: {
-      sAgents: numberMatch(text, [/(\d+)个S级代理人/, /S级角色\s*\n?\s*(\d+)\s*\/\s*\d+/, /S级代理人\s*[：:]?\s*(\d+)/]),
-      sWEngines: numberMatch(text, [/S级音擎\s*[：:]?\s*(\d+)/, /(\d+)个S级音擎/]),
-      sBangboo: numberMatch(text, [/S级邦布\s*[：:]?\s*(\d+)/, /(\d+)个S级邦布/]),
-      skins: firstMatch(text, [/时装[：:]([^；\n]+)/]),
+      sAgents: numberMatch(primaryText, [/(\d+)个S级代理人/, /S级角色\s*\n?\s*(\d+)\s*\/\s*\d+/, /S级代理人\s*[：:]?\s*(\d+)/]) ?? agentStatusRows.length,
+      sWEngines: numberMatch(primaryText, [/S级音擎\s*[：:]?\s*(\d+)/, /(\d+)个S级音擎/]) ?? sWEngineNames.length,
+      sBangboo: numberMatch(primaryText, [/S级邦布\s*[：:]?\s*(\d+)/, /(\d+)个S级邦布/]),
+      skins: firstMatch(primaryText, [/时装[：:]([^；\n]+)/]),
     },
     sWEngineNames,
     agentStatuses: formatAgentStatuses(agentStatusRows),
-    voidHunters: parseVoidHunters(agentStatusRows, text),
-    highlights: firstMatch(text, [/商品亮点\s*x\d+\s*([^\n]+(?:\n[^\n]+){0,4})/]).replace(/\n/g, '; '),
-    sellerNote: firstMatch(text, [/卖家说\s*\*?卖家自主行为[^\n]*\n([^\n]+)/, /卖家说\s*([^\n]+)/]),
-    verifiedAt: firstMatch(text, [/该账号于(\d{4}年\d{2}月\d{2}日)完成验号/]),
+    voidHunters: parseVoidHunters(agentStatusRows, title),
+    highlights: firstMatch(primaryText, [/商品亮点\s*x\d+\s*([^\n]+(?:\n[^\n]+){0,4})/]).replace(/\n/g, '; '),
+    sellerNote: firstMatch(primaryText, [/卖家说\s*\*?卖家自主行为[^\n]*\n([^\n]+)/, /卖家说\s*([^\n]+)/]),
+    listedAtRaw: firstMatch(primaryText, [/(\d+小时内发布)/, /(\d+天内发布)/, /(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}(?:日)?)/]),
+    verifiedAt: firstMatch(primaryText, [/该账号于(\d{4}年\d{2}月\d{2}日)完成验号/]),
     url: raw.url,
   };
 }
+
+export { parseDetail };
 
 cli({
   site: 'pxb7',
@@ -309,7 +291,7 @@ cli({
   ],
   columns: [
     'listingId', 'priceCny', 'title', 'binding', 'resources', 'counts',
-    'sWEngineNames', 'agentStatuses', 'voidHunters', 'highlights', 'sellerNote', 'verifiedAt', 'url',
+    'sWEngineNames', 'agentStatuses', 'voidHunters', 'highlights', 'sellerNote', 'listedAtRaw', 'verifiedAt', 'url',
   ],
   func: async (page, kwargs) => {
     if (!page) throw new CliError('INTERNAL_ERROR', 'Browser page is required for pxb7 zzz-detail');
@@ -332,6 +314,14 @@ cli({
       url: location.href,
       title: document.title || '',
       text: document.body ? document.body.innerText || '' : '',
+      primaryText: document.body ? (document.body.innerText || '').split(/商品推荐/)[0] : '',
+      primaryTitleText: (() => {
+        const candidates = Array.from(document.querySelectorAll('body *'))
+          .filter((el) => el.children.length === 0)
+          .map((el) => (el.innerText || '').trim())
+          .filter((value) => /【[A-Z0-9]+】/i.test(value) && /S级(?:角色|代理人)[：:]/.test(value));
+        return candidates.sort((left, right) => right.length - left.length)[0] || '';
+      })(),
       titleNodes: Array.from(document.querySelectorAll('[title]')).map((el) => ({
         title: el.getAttribute('title') || '',
         text: el.innerText || '',
@@ -354,7 +344,7 @@ cli({
       }),
     }))()`);
 
-    if (/验证|滑块|访问过于频繁|安全校验/.test(raw.text || '') && !/JHYXJ|账号详情|商品亮点/.test(raw.text || '')) {
+    if (/验证|滑块|访问过于频繁|安全校验/.test(raw.text || '') && !/【[A-Z0-9]+】|账号详情|商品亮点/i.test(raw.text || '')) {
       throw new CliError('ANTI_BOT', 'pxb7 returned an anti-bot or verification page in the connected browser');
     }
 

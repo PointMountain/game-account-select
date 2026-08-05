@@ -1,0 +1,11 @@
+{
+  "args": ["https://www.pxb7.com/product/2280754884445079984/1"],
+  "expect": {
+    "rowCount": { "min": 1, "max": 1 },
+    "columns": ["listingId", "priceCny", "server", "riskFacts", "status", "counts", "resources", "operatorNames", "elite2OperatorNames", "elite1OperatorNames", "operatorProgression", "collabOperatorNames", "skins", "verificationImageUrls", "progressionEvidence", "url"],
+    "types": { "listingId": "string", "priceCny": "number", "server": "string|null", "riskFacts": "array", "status": "object", "counts": "object", "resources": "object", "operatorNames": "array", "elite2OperatorNames": "array", "elite1OperatorNames": "array", "operatorProgression": "array", "collabOperatorNames": "array", "skins": "array", "verificationImageUrls": "array", "progressionEvidence": "object", "url": "string" },
+    "patterns": { "listingId": "^[0-9]{10,}$", "url": "^https://www\\.pxb7\\.com/product/[0-9]+/1$" },
+    "notEmpty": ["listingId", "riskFacts", "status", "counts", "operatorNames", "operatorProgression", "verificationImageUrls", "progressionEvidence", "url"],
+    "mustBeTruthy": ["priceCny"]
+  }
+}

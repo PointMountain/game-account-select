@@ -1,0 +1,136 @@
+{
+  "requests": {
+    "collector": "明日方舟，限定和联动越多越好，收藏优先，1000 元左右",
+    "combat": "明日方舟，战力优先，要能打高难，3000 元左右"
+  },
+  "expected": {
+    "collector_top": "collector-vault",
+    "combat_top": "combat-core"
+  },
+  "listings": [
+    {
+      "id": "collector-vault",
+      "price": 1000,
+      "server": "官服",
+      "game_assets": {
+        "operators": [
+          { "name": "W", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "迷迭香", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "浊心斯卡蒂", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "维什戴尔", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "麒麟R夜刀", "elite": 2, "mastery": 1, "module": 0 },
+          { "name": "灰烬", "elite": 1, "mastery": 0, "module": 0 },
+          { "name": "霜华", "elite": 1, "mastery": 0, "module": 0 }
+        ],
+        "resources": { "orundum": 12000, "originite_prime": 30, "ten_pull_tickets": 1 },
+        "skins": ["dynamic", "collab", "rare"],
+        "risk": { "real_name_status": "changeable", "guarantee": "retrieval_compensation", "official_verification": true }
+      }
+    },
+    {
+      "id": "combat-core",
+      "price": 1000,
+      "server": "官服",
+      "game_assets": {
+        "operators": [
+          { "name": "斥罪", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "玛恩纳", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "史尔特尔", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "伊内丝", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "逻各斯", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "锏", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "提丰", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "维什戴尔", "elite": 2, "mastery": 3, "module": 3 }
+        ],
+        "resources": { "orundum": 18000, "originite_prime": 40, "ten_pull_tickets": 2 },
+        "skins": [],
+        "risk": { "real_name_status": "changeable", "guarantee": "retrieval_compensation", "official_verification": true }
+      }
+    },
+    {
+      "id": "skin-only",
+      "price": 900,
+      "server": "官服",
+      "game_assets": {
+        "operators": [
+          { "name": "斥罪", "elite": 1, "mastery": 0, "module": 0 },
+          { "name": "银灰", "elite": 1, "mastery": 0, "module": 0 }
+        ],
+        "resources": {},
+        "skins": ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12"],
+        "risk": { "real_name_status": "changeable", "guarantee": "retrieval_compensation", "official_verification": true }
+      }
+    },
+    {
+      "id": "risky-rich",
+      "price": 1000,
+      "server": "B服",
+      "game_assets": {
+        "operators": [
+          { "name": "W", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "维什戴尔", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "麒麟R夜刀", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "玛恩纳", "elite": 2, "mastery": 3, "module": 3 }
+        ],
+        "resources": { "orundum": 30000, "originite_prime": 80, "ten_pull_tickets": 3 },
+        "skins": ["dynamic", "collab"],
+        "risk": { "real_name_status": "unknown", "guarantee": "unknown", "official_verification": false }
+      }
+    },
+    {
+      "id": "limited-count-untrained",
+      "price": 1000,
+      "server": "官服",
+      "game_assets": {
+        "operators": [
+          { "name": "W", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "迷迭香", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "浊心斯卡蒂", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "耀骑士临光", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "归溟幽灵鲨", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "缄默德克萨斯", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "百炼嘉维尔", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "假日威龙陈", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "令", "elite": 0, "mastery": 0, "module": 0 },
+          { "name": "灰烬", "elite": 0, "mastery": 0, "module": 0 }
+        ],
+        "resources": {},
+        "skins": ["dynamic", "collab", "rare", "s4", "s5"],
+        "risk": { "real_name_status": "changeable", "guarantee": "retrieval_compensation", "official_verification": true }
+      }
+    },
+    {
+      "id": "playable-balanced",
+      "price": 1000,
+      "server": "官服",
+      "game_assets": {
+        "operators": [
+          { "name": "可露希尔", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "斩业星熊", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "维什戴尔", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "逻各斯", "elite": 2, "mastery": 3, "module": 3 }
+        ],
+        "resources": { "orundum": 6000, "originite_prime": 10, "ten_pull_tickets": 1 },
+        "skins": [],
+        "risk": { "real_name_status": "changeable", "guarantee": "retrieval_compensation", "official_verification": true }
+      }
+    },
+    {
+      "id": "meta-dps-role-gap",
+      "price": 1000,
+      "server": "官服",
+      "game_assets": {
+        "operators": [
+          { "name": "望", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "维什戴尔", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "赤刃明霄陈", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "蕾缪安", "elite": 2, "mastery": 3, "module": 3 },
+          { "name": "圣聆初雪", "elite": 2, "mastery": 3, "module": 3 }
+        ],
+        "resources": { "orundum": 6000, "originite_prime": 10, "ten_pull_tickets": 1 },
+        "skins": [],
+        "risk": { "real_name_status": "changeable", "guarantee": "retrieval_compensation", "official_verification": true }
+      }
+    }
+  ]
+}

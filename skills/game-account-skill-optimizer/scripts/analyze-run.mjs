@@ -159,8 +159,18 @@ const attempts = Array.isArray(artifact.platform_attempts) ? artifact.platform_a
 const communityAttempts = Array.isArray(artifact.community_attempts) ? artifact.community_attempts : [];
 const recommendations = Array.isArray(artifact.recommendations) ? artifact.recommendations : [];
 const backupListings = Array.isArray(artifact.backup_listings) ? artifact.backup_listings : [];
+const nearMatchListings = Array.isArray(artifact.near_match_listings) ? artifact.near_match_listings : [];
+const budgetBreakthroughListings = Array.isArray(artifact.budget_breakthrough_listings) ? artifact.budget_breakthrough_listings : [];
 const excludedListings = Array.isArray(artifact.excluded_listings) ? artifact.excluded_listings : [];
-const finalResponse = String(artifact.final_response ?? '');
+const finalResponse = String(artifact.final_response ?? artifact.final_response_draft ?? '');
+const coverageGaps = Array.isArray(artifact.coverage_gaps) ? artifact.coverage_gaps : [];
+const knowledgeCandidates = Array.isArray(artifact.knowledge_update_candidates) ? artifact.knowledge_update_candidates : [];
+const selectionProfile = artifact.selection_profile && typeof artifact.selection_profile === 'object'
+  ? artifact.selection_profile
+  : null;
+const profileIsolation = artifact.profile_isolation && typeof artifact.profile_isolation === 'object'
+  ? artifact.profile_isolation
+  : null;
 const executionIssues = [
   ...(Array.isArray(artifact.errors) ? artifact.errors : []),
   ...(Array.isArray(artifact.exceptions) ? artifact.exceptions : []),
@@ -181,6 +191,189 @@ if (executionIssues.length) {
     ],
     autopatchSafe: false
   });
+}
+
+const looksLikeSelectionRun = attempts.length > 0
+  || communityAttempts.length > 0
+  || recommendations.length > 0
+  || backupListings.length > 0
+  || excludedListings.length > 0;
+const hasCoveragePlan = artifact.coverage_plan
+  && Array.isArray(artifact.coverage_plan.source_tasks)
+  && artifact.coverage_plan.source_tasks.length > 0;
+if (looksLikeSelectionRun && !hasCoveragePlan) {
+  addFinding({
+    id: 'selector-source-coverage-plan-missing',
+    severity: 'high',
+    category: 'platform_coverage',
+    summary: 'Selection runs should define source coverage before querying platforms or community sources',
+    evidence: [
+      `platform_attempts=${attempts.length}`,
+      `community_attempts=${communityAttempts.length}`,
+      `recommendations=${recommendations.length}`,
+      'coverage_plan.source_tasks is missing or empty'
+    ],
+    suggestedTargets: [
+      'skills/game-account-select/SKILL.md',
+      'skills/game-account-select/references/selector-architecture.md',
+      'skills/game-account-select/references/source-coverage-playbook.md',
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-skill-evaluator/references/evaluation-rubric.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+const hasKnowledgeSignals = coverageGaps.length > 0
+  || (Array.isArray(artifact.user_feedback) && artifact.user_feedback.length > 0)
+  || (Array.isArray(artifact.rule_update_suggestions) && artifact.rule_update_suggestions.length > 0)
+  || executionIssues.length > 0;
+if (looksLikeSelectionRun && hasKnowledgeSignals && knowledgeCandidates.length === 0) {
+  addFinding({
+    id: 'selector-knowledge-ledger-candidates-missing',
+    severity: 'medium',
+    category: 'evidence',
+    summary: 'Runs with feedback, coverage gaps, or rule suggestions should emit knowledge update candidates',
+    evidence: [
+      coverageGaps.length ? `coverage_gaps=${coverageGaps.length}` : null,
+      Array.isArray(artifact.user_feedback) && artifact.user_feedback.length ? `user_feedback=${artifact.user_feedback.length}` : null,
+      Array.isArray(artifact.rule_update_suggestions) && artifact.rule_update_suggestions.length ? `rule_update_suggestions=${artifact.rule_update_suggestions.length}` : null,
+      executionIssues.length ? `execution_issues=${executionIssues.length}` : null,
+      'knowledge_update_candidates is empty'
+    ].filter(Boolean),
+    suggestedTargets: [
+      'skills/game-account-select/references/knowledge-ledger.md',
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+const leakedDurableTargets = Array.isArray(profileIsolation?.durable_updates_from_profile)
+  ? profileIsolation.durable_updates_from_profile.filter(Boolean)
+  : [];
+const leakedProfileCandidates = knowledgeCandidates.filter((candidate) => {
+  const sourceScope = String(candidate.source_scope ?? '').toLowerCase();
+  const preferenceScope = String(candidate.preference_scope ?? '').toLowerCase();
+  const applyStatus = String(candidate.apply_status ?? 'proposed').toLowerCase();
+  const durableTargets = Array.isArray(candidate.suggested_targets)
+    ? candidate.suggested_targets.filter((target) => /(?:^|\/)skills\/|references\/|SKILL\.md$/i.test(String(target)))
+    : [];
+  const derivedFromProfile = sourceScope === 'selection_profile' || preferenceScope === 'run_only';
+  return derivedFromProfile && (durableTargets.length > 0 || applyStatus === 'applied');
+});
+const profileScopeIsDurable = selectionProfile
+  && String(selectionProfile.persistence_scope ?? '').toLowerCase() !== 'run_only';
+const isolationMissing = selectionProfile && !profileIsolation;
+const isolationScopeIsDurable = profileIsolation
+  && String(profileIsolation.persistence_scope ?? '').toLowerCase() !== 'run_only';
+const isolationUpdatesMissing = profileIsolation && !Array.isArray(profileIsolation.durable_updates_from_profile);
+if (selectionProfile && (profileScopeIsDurable || isolationMissing || isolationScopeIsDurable || isolationUpdatesMissing || leakedDurableTargets.length || leakedProfileCandidates.length)) {
+  const preferenceEvidence = {
+    budget: selectionProfile.budget ?? null,
+    objective: selectionProfile.objective ?? null,
+    server_preferences: selectionProfile.server_preferences ?? [],
+    must_have: selectionProfile.must_have ?? [],
+    persistence_scope: selectionProfile.persistence_scope ?? null
+  };
+  addFinding({
+    id: 'selector-session-preference-leak',
+    severity: 'blocking',
+    category: 'quality_gate',
+    summary: 'Run-only selection preferences must not be written into durable scoring rules or knowledge files',
+    evidence: [
+      `selection_profile=${JSON.stringify(preferenceEvidence)}`,
+      profileScopeIsDurable ? `selection_profile.persistence_scope=${selectionProfile.persistence_scope ?? 'missing'} (expected run_only)` : null,
+      isolationMissing ? 'profile_isolation=missing' : null,
+      isolationScopeIsDurable ? `profile_isolation.persistence_scope=${profileIsolation.persistence_scope ?? 'missing'} (expected run_only)` : null,
+      isolationUpdatesMissing ? 'profile_isolation.durable_updates_from_profile=missing (expected empty array)' : null,
+      leakedDurableTargets.length ? `profile_isolation.durable_updates_from_profile=${JSON.stringify(leakedDurableTargets)}` : null,
+      ...leakedProfileCandidates.map((candidate) => `knowledge_update_candidate=${candidate.id ?? 'unknown'} source_scope=${candidate.source_scope ?? 'unknown'} preference_scope=${candidate.preference_scope ?? 'unknown'} apply_status=${candidate.apply_status ?? 'unknown'} targets=${JSON.stringify(candidate.suggested_targets ?? [])}`)
+    ].filter(Boolean),
+    suggestedTargets: [
+      'skills/game-account-select/references/knowledge-ledger.md',
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+      'skills/game-account-skill-evaluator/references/evaluation-rubric.md'
+    ],
+    autopatchSafe: false
+  });
+}
+
+const unscopedFreeformExclusions = Array.isArray(selectionProfile?.exclusions)
+  ? selectionProfile.exclusions.filter((item) => /(?:账号|新号|老号|陈年|仓库号|仓库|阵容断代|早期收藏|近期活跃)/.test(String(item)))
+  : [];
+if (unscopedFreeformExclusions.length) {
+  addFinding({
+    id: 'selector-unscoped-freeform-exclusion',
+    severity: 'high',
+    category: 'quality_gate',
+    summary: 'Account-level recency language must not be evaluated as an operator exclusion',
+    evidence: unscopedFreeformExclusions.map((item) => `selection_profile.exclusions=${JSON.stringify(item)}`),
+    suggestedTargets: [
+      'skills/game-account-select/scripts/parse-selection-profile.mjs',
+      'skills/game-account-select/scripts/validate-selection-profile.mjs',
+      ...targetSkillTargets({ includeValidation: true }),
+      'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+    ],
+    autopatchSafe: true,
+  });
+}
+
+const reconciliation = artifact.provenance_reconciliation && typeof artifact.provenance_reconciliation === 'object'
+  ? artifact.provenance_reconciliation
+  : null;
+if (reconciliation) {
+  const validation = reconciliation.validation && typeof reconciliation.validation === 'object'
+    ? reconciliation.validation
+    : null;
+  const targetIds = (Array.isArray(reconciliation.targeted_detail_refreshes) ? reconciliation.targeted_detail_refreshes : [])
+    .map((item) => String(item?.listing_id ?? item?.listing_key ?? ''))
+    .filter(Boolean);
+  const rescoredIds = new Set((Array.isArray(validation?.rescored_listing_ids) ? validation.rescored_listing_ids : [])
+    .map((item) => String(item)));
+  const expectedProfileDigest = String(artifact.profile_confirmation?.profile_digest ?? reconciliation.profile_digest ?? '');
+  const reconciliationIsValidated = validation?.status === 'passed'
+    && validation?.method === 'canonical_rescore'
+    && Boolean(validation?.validation_command)
+    && Boolean(validation?.validated_at)
+    && Boolean(expectedProfileDigest)
+    && String(reconciliation.profile_digest ?? '') === expectedProfileDigest
+    && String(validation.profile_digest ?? '') === expectedProfileDigest
+    && targetIds.length > 0
+    && targetIds.every((id) => rescoredIds.has(id));
+
+  if (!reconciliationIsValidated) {
+    addFinding({
+      id: 'selection-reconciliation-unvalidated',
+      severity: 'high',
+      category: 'quality_gate',
+      summary: 'Candidates restored from another profile must be canonically rescored before the run can pass self-improve',
+      evidence: [
+        `reason=${reconciliation.reason ?? 'missing'}`,
+        `source_artifact=${reconciliation.source_artifact ?? 'missing'}`,
+        `targeted_listing_ids=${targetIds.join(',') || 'missing'}`,
+        `expected_profile_digest=${expectedProfileDigest || 'missing'}`,
+        `validation_status=${validation?.status ?? 'missing'}`,
+        `validation_method=${validation?.method ?? 'missing'}`,
+        `rescored_listing_ids=${[...rescoredIds].join(',') || 'missing'}`,
+      ],
+      suggestedTargets: [
+        'skills/game-account-arknights/scripts/score-listings.mjs',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-arknights/scripts/validate-selection-output.mjs',
+        'skills/game-account-skill-optimizer/references/issue-taxonomy.md',
+        'skills/game-account-skill-evaluator/references/evaluation-rubric.md',
+      ],
+      autopatchSafe: false,
+    });
+  }
 }
 
 const evaluationReports = [
@@ -247,10 +440,14 @@ const residualProcessReports = cleanupReports.filter((report) => {
   ];
   return residuals.some((line) => /opencli\s+browser\s+gas-|run-with-timeout|pxb7|pzds|zzz-detail|selectPageList|goodsList\/275/i.test(String(line)));
 });
-if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessReports.length) {
+const incompleteBrowserTargetReports = cleanupReports.filter((report) => (
+  report?.ok === false
+  || (Array.isArray(report?.cdp_targets_remaining) && report.cdp_targets_remaining.length > 0)
+));
+if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessReports.length || incompleteBrowserTargetReports.length) {
   addFinding({
     id: 'runtime-browser-session-cleanup-missing',
-    severity: residualProcessReports.length ? 'high' : 'medium',
+    severity: residualProcessReports.length || incompleteBrowserTargetReports.length ? 'high' : 'medium',
     category: 'runtime',
     summary: 'Browser/OpenCLI query sessions must be named, cleaned up, and audited before final output',
     evidence: [
@@ -263,7 +460,13 @@ if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessRepor
           ...(Array.isArray(report.leftover_processes) ? report.leftover_processes : [])
         ];
         return residuals.map((line) => `residual process after cleanup: ${line}`);
-      })
+      }),
+      ...incompleteBrowserTargetReports.flatMap((report) => [
+        report?.ok === false ? `cleanup_report ok=false${report.error ? `: ${report.error}` : ''}` : null,
+        ...(Array.isArray(report?.cdp_targets_remaining)
+          ? report.cdp_targets_remaining.map((targetId) => `browser target remained after cleanup: ${targetId}`)
+          : []),
+      ]),
     ].filter(Boolean),
     suggestedTargets: [
       'skills/game-account-select/references/selection-state-machine.md',
@@ -668,7 +871,11 @@ if (pzdsWrongListRouteAttempts.length) {
 
 const attemptedPlatforms = new Set(attempts.map(platformName));
 const explicitMissing = new Set(Array.isArray(artifact.missing_platforms) ? artifact.missing_platforms.map((platform) => platformAliasMap.get(String(platform).toLowerCase()) ?? String(platform)) : []);
-const missingRequiredPlatforms = DEFAULT_REQUIRED_PLATFORMS.filter((platform) => {
+const declaredRequiredPlatforms = artifact.success_criteria?.minimum_source_coverage?.platforms;
+const requiredPlatforms = Array.isArray(declaredRequiredPlatforms) && declaredRequiredPlatforms.length
+  ? declaredRequiredPlatforms.map((platform) => platformAliasMap.get(String(platform).toLowerCase()) ?? String(platform))
+  : DEFAULT_REQUIRED_PLATFORMS;
+const missingRequiredPlatforms = requiredPlatforms.filter((platform) => {
   return explicitMissing.has(platform) || !attemptedPlatforms.has(platform);
 });
 if (missingRequiredPlatforms.length) {
@@ -676,7 +883,7 @@ if (missingRequiredPlatforms.length) {
     id: 'platform-coverage-mainstream-sources',
     severity: 'high',
     category: 'platform_coverage',
-    summary: `Mainstream account platforms were not covered: ${missingRequiredPlatforms.join(', ')}`,
+    summary: `Required account platforms were not covered: ${missingRequiredPlatforms.join(', ')}`,
     evidence: missingRequiredPlatforms.map((platform) => `${platform} was missing from the run artifact`),
     suggestedTargets: [
       'skills/game-account-select/SKILL.md',
@@ -686,6 +893,158 @@ if (missingRequiredPlatforms.length) {
     ],
     autopatchSafe: true
   });
+}
+
+const isArknightsRun = /arknights|明日方舟/i.test(`${artifact.game ?? ''} ${targetSkill}`);
+const requiresDualPlatformOutput = isArknightsRun && ['pxb7', 'pzds'].every((platform) => requiredPlatforms.includes(platform));
+if (requiresDualPlatformOutput) {
+  const shortlists = artifact.platform_shortlists;
+  const missingSections = ['pxb7', 'pzds'].filter((platform) => !shortlists?.[platform] || typeof shortlists[platform] !== 'object');
+  const emptySections = ['pxb7', 'pzds'].filter((platform) => {
+    const section = shortlists?.[platform];
+    if (!section) return false;
+    const visible = Array.isArray(section.display_candidates) ? section.display_candidates : [];
+    return visible.length === 0;
+  });
+  if (missingSections.length || emptySections.length) {
+    addFinding({
+      id: 'output-dual-platform-shortlists-missing',
+      severity: 'high',
+      category: 'output_format',
+      summary: 'Arknights proactive discovery must show separate PXB7 and PZDS candidate sections',
+      evidence: [
+        ...missingSections.map((platform) => `${platform} platform_shortlists section is missing`),
+        ...emptySections.map((platform) => `${platform} platform_shortlists.display_candidates is empty`),
+      ],
+      suggestedTargets: [
+        'skills/game-account-arknights/SKILL.md',
+        'skills/game-account-select/references/source-coverage-playbook.md',
+        'skills/game-account-toolkit/references/shared-listing-schema.md',
+        'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const allQualifying = ['pxb7', 'pzds'].flatMap((platform) => Array.isArray(shortlists?.[platform]?.qualifying) ? shortlists[platform].qualifying : []);
+  if (allQualifying.length && !artifact.best_value_listing) {
+    addFinding({
+      id: 'output-cross-platform-best-value-missing',
+      severity: 'medium',
+      category: 'output_format',
+      summary: 'Dual-platform Arknights output should identify the highest-ranked qualifying account across both platforms',
+      evidence: [`qualifying shortlist rows=${allQualifying.length}`, 'best_value_listing is missing'],
+      suggestedTargets: [
+        'skills/game-account-arknights/SKILL.md',
+        'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const presentation = artifact.presentation && typeof artifact.presentation === 'object' ? artifact.presentation : null;
+  const tablePattern = /\|\s*(?:层级|推荐层级)\s*\|[\s\S]*\|\s*(?:价格|价格\/区服)/;
+  if (presentation?.format !== 'markdown_tables' || !tablePattern.test(finalResponse)) {
+    addFinding({
+      id: 'output-platform-table-presentation-missing',
+      severity: 'high',
+      category: 'output_format',
+      summary: 'Arknights dual-platform results must be finalized as user-visible Markdown tables',
+      evidence: [
+        `presentation.format=${presentation?.format ?? 'missing'}`,
+        `final_response_has_markdown_table=${tablePattern.test(finalResponse)}`,
+        `final_response_chars=${finalResponse.length}`,
+      ],
+      suggestedTargets: [
+        'skills/game-account-arknights/SKILL.md',
+        'skills/game-account-arknights/scripts/render-selection-report.mjs',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const requestedVisible = Math.max(1, Number(
+    artifact.coverage_plan?.completeness_gates?.min_display_candidates_per_platform
+      ?? presentation?.per_platform_requested
+      ?? 5
+  ) || 5);
+  const renderCoverageEvidence = [];
+  for (const platform of ['pxb7', 'pzds']) {
+    const section = shortlists?.[platform];
+    if (!section) continue;
+    const candidates = [...new Map([
+      ...(Array.isArray(section.display_candidates) ? section.display_candidates : []),
+      ...(Array.isArray(section.qualifying) ? section.qualifying : []),
+      ...(Array.isArray(section.near_matches) ? section.near_matches : []),
+      ...(Array.isArray(section.list_only_candidates) ? section.list_only_candidates : []),
+    ].map((listing) => [`${listing?.platform ?? platform}:${listing?.listing_id ?? listing?.url ?? ''}`, listing])).values()];
+    const expected = Math.min(requestedVisible, candidates.length);
+    const countedFromResponse = candidates.filter((listing) => {
+      const id = String(listing?.listing_id ?? '');
+      const url = String(listing?.url ?? '');
+      return Boolean(id && finalResponse.includes(id) || url && finalResponse.includes(url));
+    }).length;
+    const declaredRendered = Number(presentation?.per_platform_rendered?.[platform]);
+    const rendered = Number.isFinite(declaredRendered) ? Math.min(declaredRendered, countedFromResponse) : countedFromResponse;
+    if (rendered < expected) renderCoverageEvidence.push(`${platform} available=${candidates.length} expected_rendered=${expected} actual_rendered=${rendered}`);
+  }
+  if (renderCoverageEvidence.length) {
+    addFinding({
+      id: 'output-platform-shortlist-render-underfilled',
+      severity: 'high',
+      category: 'output_format',
+      summary: 'The final response dropped candidates that were already available in platform shortlists',
+      evidence: renderCoverageEvidence,
+      suggestedTargets: [
+        'skills/game-account-arknights/scripts/render-selection-report.mjs',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
+        'skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const selfImprove = artifact.self_improve && typeof artifact.self_improve === 'object' ? artifact.self_improve : null;
+  if (selfImprove?.closeout_required !== true || selfImprove?.summary_generated !== true || !selfImprove?.optimizer || !selfImprove?.evaluator) {
+    addFinding({
+      id: 'self-improve-closeout-missing',
+      severity: 'high',
+      category: 'quality_gate',
+      summary: 'A real selection run must finish with a structured experience, optimizer, and evaluator closeout',
+      evidence: [
+        `self_improve=${selfImprove ? 'present' : 'missing'}`,
+        `summary_generated=${selfImprove?.summary_generated ?? false}`,
+        `optimizer_state=${selfImprove?.optimizer?.status ?? 'missing'}`,
+        `evaluator_state=${selfImprove?.evaluator?.status ?? 'missing'}`,
+        `knowledge_update_candidates=${knowledgeCandidates.length}`,
+      ],
+      suggestedTargets: [
+        'skills/game-account-arknights/SKILL.md',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-skill-optimizer/references/optimization-workflow.md',
+        'skills/game-account-skill-evaluator/references/evaluation-rubric.md',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  if (knowledgeCandidates.length && !/知识沉淀|knowledge update|knowledge_update/i.test(finalResponse)) {
+    addFinding({
+      id: 'self-improve-knowledge-status-undisclosed',
+      severity: 'medium',
+      category: 'output_format',
+      summary: 'The user-facing closeout must distinguish applied knowledge updates from proposed candidates',
+      evidence: [`knowledge_update_candidates=${knowledgeCandidates.length}`, 'final response does not disclose applied versus pending knowledge status'],
+      suggestedTargets: [
+        'skills/game-account-arknights/scripts/render-selection-report.mjs',
+        'skills/game-account-select/references/knowledge-ledger.md',
+      ],
+      autopatchSafe: true,
+    });
+  }
 }
 
 if (/<(?:game_account_evaluation|recommendations|skill_quality_report|community_refresh_report)\b/.test(finalResponse)) {
@@ -711,7 +1070,7 @@ const feedback = [
 const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色|2\s*\+\s*1|1\s*\+\s*1|0\s*\+\s*1|1\s*\+\s*0|0\s*\+\s*0|舒适度|加分项|性价比|直伤电|异放|紊乱|妄想天使|薇薇安|Vivian|希希芙|希德|席德|耀佳音|耀嘉音|琉音|南宫羽/i;
 const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|南宫|狼|苍角|照|耀佳音|耀嘉音|琉音|卢西娅|橘福福|希希芙|希德|席德|妄想天使|异放|紊乱|薇薇安|Vivian|直伤电|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
 const independentTeamConcernPattern = /不(?:能|足|完整|算|应)|缺|少|共享|抢|重复|无法|没法|没有证明|未证明|未验证|下位|旧口径|陷阱|误判|补齐|确认|风险/i;
-const hardConditionBudgetPattern = /给定金额.*(?:没有|无|不足).*满足|预算.*(?:没有|无|不足).*满足|没有满足条件|无满足条件|扩大(?:金额|预算|价格|范围)|价格最低.*满足|最低.*满足|最低满足价|硬性标准.*预算/i;
+const hardConditionBudgetPattern = /给定金额.*(?:没有|无|不足).*满足|预算.*(?:没有|无|不足).*满足|没有满足条件|无满足条件|扩大(?:金额|预算|价格|范围)|突破.{0,6}(?:预算|价位|价格)|超预算|提高.{0,4}(?:预算|额度)|价格最低.*满足|最低.*满足|最低满足价|硬性标准.*预算/i;
 const uncertaintyText = [
   finalResponse,
   feedback,
@@ -753,13 +1112,81 @@ if (independentTeamEvidence.length) {
   });
 }
 
-if (hardConditionBudgetPattern.test(uncertaintyText)) {
+const expansionAuthorized = selectionProfile?.budget_expansion?.enabled === true
+  || artifact.budget_expansion?.enabled === true
+  || hardConditionBudgetPattern.test(String(artifact.user_request ?? ''));
+const primaryBudgetMax = Number(selectionProfile?.budget?.primary_max ?? artifact.budget?.primary_max ?? artifact.budget?.max ?? Number.NaN);
+const flexibleBudgetMax = Number(selectionProfile?.budget?.flex_max ?? artifact.budget?.flex_max ?? primaryBudgetMax);
+const listingHardPasses = (listing) => listing?.hard_filter_passed !== false
+  && listing?.score?.hard_filter_passed !== false
+  && !(listing?.hard_filter && Object.values(listing.hard_filter).some((value) => value === false));
+const listingExplicitlyPassesHardConditions = (listing) => listing?.hard_filter_passed === true
+  || listing?.score?.hard_filter_passed === true
+  || (listing?.hard_filter && Object.keys(listing.hard_filter).length > 0 && Object.values(listing.hard_filter).every((value) => value === true));
+const inBudgetListings = [...recommendations, ...backupListings];
+const hasInBudgetExactMatch = inBudgetListings.some((listing) => {
+  if (!listingHardPasses(listing) || expansionAuthorized && !listingExplicitlyPassesHardConditions(listing)) return false;
+  const price = Number(listing.price);
+  return !Number.isFinite(flexibleBudgetMax) || !Number.isFinite(price) || price <= flexibleBudgetMax;
+});
+const legacyStrictBackups = backupListings.filter((listing) => /lowest_strict|strict_match|budget_breakthrough|higher_investment_strict/i.test(String(listing.recommendation_tier ?? listing.tier ?? '')) && listingHardPasses(listing));
+const exactBeyondBudget = [...budgetBreakthroughListings, ...legacyStrictBackups];
+const budgetExpansionAttempts = attempts.flatMap((attempt) => {
+  const direct = String(attempt.phase ?? attempt.type ?? '').toLowerCase() === 'budget_expansion' ? [attempt] : [];
+  const nested = attempt.budget_expansion && typeof attempt.budget_expansion === 'object'
+    ? [{ ...attempt.budget_expansion, platform: attempt.platform }]
+    : [];
+  return [...direct, ...nested];
+});
+const auditedExpansionDirections = new Set(budgetExpansionAttempts.flatMap((attempt) => {
+  const directions = [attempt.direction, ...(Array.isArray(attempt.directions) ? attempt.directions : [])];
+  const stopReasons = attempt.stop_reasons_by_direction && typeof attempt.stop_reasons_by_direction === 'object'
+    ? Object.keys(attempt.stop_reasons_by_direction)
+    : [];
+  return [...directions, ...stopReasons].filter(Boolean).map((value) => String(value).toLowerCase());
+}));
+const hasBidirectionalExpansionAudit = auditedExpansionDirections.has('lower') && auditedExpansionDirections.has('higher');
+if (expansionAuthorized && !hasInBudgetExactMatch && exactBeyondBudget.length === 0 && !hasBidirectionalExpansionAudit) {
   addFinding({
     id: 'output-hard-condition-budget-expansion',
     severity: 'high',
     category: 'output_format',
-    summary: 'When no in-budget listing satisfies hard conditions, expand to a flexible budget and show the cheapest satisfying account separately',
-    evidence: uncertaintyText.split('\n').filter((line) => hardConditionBudgetPattern.test(line)),
+    summary: 'When no nearby-budget listing satisfies hard conditions, audit both lower and higher price bands and show any satisfying comparison separately',
+    evidence: [
+      `primary_budget_max=${Number.isFinite(primaryBudgetMax) ? primaryBudgetMax : 'unknown'}`,
+      `flex_budget_max=${Number.isFinite(flexibleBudgetMax) ? flexibleBudgetMax : 'unknown'}`,
+      `audited_expansion_directions=${[...auditedExpansionDirections].join(',') || 'none'}`
+    ],
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      ...targetSkillTargets()
+    ],
+    autopatchSafe: true
+  });
+}
+if (selectionProfile?.budget_expansion?.enabled === true && !hasInBudgetExactMatch && exactBeyondBudget.length > 0 && nearMatchListings.length === 0) {
+  addFinding({
+    id: 'output-budget-breakthrough-near-match-comparison-missing',
+    severity: 'medium',
+    category: 'output_format',
+    summary: 'An out-of-budget exact match should be compared with the best in-budget near matches',
+    evidence: [`budget_breakthrough_listings=${budgetBreakthroughListings.length}`, 'near_match_listings=0'],
+    suggestedTargets: [
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      ...targetSkillTargets()
+    ],
+    autopatchSafe: true
+  });
+}
+if (selectionProfile?.budget_expansion?.enabled === true && exactBeyondBudget.length > 0 && !artifact.budget_comparison) {
+  addFinding({
+    id: 'output-budget-breakthrough-value-comparison-missing',
+    severity: 'medium',
+    category: 'output_format',
+    summary: 'Budget breakthrough results should quantify what the extra money buys across hard conditions and independent value dimensions',
+    evidence: [`budget_breakthrough_listings=${budgetBreakthroughListings.length}`, 'budget_comparison is missing'],
     suggestedTargets: [
       'skills/game-account-select/references/selection-state-machine.md',
       'skills/game-account-toolkit/references/shared-listing-schema.md',
@@ -847,6 +1274,8 @@ if (/邮箱未实名出售|未实名邮箱|unverified_email/i.test(accountRiskTe
 const listingGroups = [
   ['recommendations', recommendations],
   ['backup_listings', backupListings],
+  ['near_match_listings', nearMatchListings],
+  ['budget_breakthrough_listings', budgetBreakthroughListings],
   ['excluded_listings', excludedListings]
 ];
 const listingsMissingUrl = listingGroups.flatMap(([group, listings]) => listings
@@ -863,6 +1292,51 @@ if (listingsMissingUrl.length) {
       'skills/game-account-select/SKILL.md',
       'skills/game-account-select/references/selection-state-machine.md',
       'skills/game-account-toolkit/references/shared-listing-schema.md'
+    ],
+    autopatchSafe: true
+  });
+}
+
+const listingTimeOmissions = listingGroups.flatMap(([group, listings]) => listings.flatMap((listing) => {
+  const listingId = listing.listing_id ?? listing.id ?? listing.title ?? 'unknown';
+  const sourcePublishedAt = listing.publishedAt
+    ?? listing.listedAt
+    ?? listing.platform_facts?.publishedAt
+    ?? listing.platform_facts?.listedAt
+    ?? listing.game_assets?.platform_facts?.publishedAt
+    ?? listing.game_assets?.platform_facts?.listedAt
+    ?? null;
+  const sourceVerifiedAt = listing.platformVerifiedAt
+    ?? listing.verifiedAt
+    ?? listing.status?.verifiedAt
+    ?? listing.status?.verified_at
+    ?? listing.platform_facts?.status?.verifiedAt
+    ?? listing.platform_facts?.status?.verified_at
+    ?? listing.game_assets?.platform_facts?.status?.verifiedAt
+    ?? listing.game_assets?.platform_facts?.status?.verified_at
+    ?? null;
+  const omissions = [];
+  if (sourcePublishedAt && !listing.published_at) {
+    omissions.push(`${group}:${listingId} published_at omitted; source=${sourcePublishedAt}`);
+  }
+  if (sourceVerifiedAt && !listing.platform_verified_at) {
+    omissions.push(`${group}:${listingId} platform_verified_at omitted; source=${sourceVerifiedAt}`);
+  }
+  return omissions;
+}));
+if (listingTimeOmissions.length) {
+  addFinding({
+    id: 'output-listing-time-facts-omitted',
+    severity: 'medium',
+    category: 'output_format',
+    summary: 'Available listing or platform-verification times were dropped from normalized recommendation rows',
+    evidence: listingTimeOmissions,
+    suggestedTargets: [
+      'skills/game-account-select/SKILL.md',
+      'skills/game-account-select/references/selection-state-machine.md',
+      'skills/game-account-toolkit/references/shared-listing-schema.md',
+      'skills/game-account-toolkit/references/skill-io-contract.md',
+      ...targetSkillTargets({ includeValidation: true })
     ],
     autopatchSafe: true
   });

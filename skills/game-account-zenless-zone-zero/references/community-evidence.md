@@ -1,22 +1,46 @@
 # 绝区零（ZZZ）社区证据快照
 
-updated_at: 2026-05-23
+updated_at: 2026-08-03
 
 ## 覆盖状态
 
 ```yaml
 source_coverage:
-  bilibili: limited_search_results
-  youtube: not_checked
+  bilibili: current_search_and_long_video_metadata
+  youtube: current_long_video_transcript_reviewed
   xiaohongshu: searched_results_only
   douyin: searched_results_only
   wiki_or_planner: available
   english_guide_sites: available
+  official_sources: current_3_1_and_3_0
   community_confidence: medium
   max_age_for_live_purchase_days: 7
 ```
 
 本快照是 ZZZ 账号购买的初始基线，不是实时强度榜。执行真实筛选前，若快照已满 7 天、跨版本、或候选账号出现新代理人/音擎，应按 `game-account-toolkit/references/community-research-protocol.md` 刷新当前版本代理人、音擎、影画和式舆/危局环境评价。
+
+## 2026-08-03 3.1 当前版本刷新
+
+### 官方事实
+
+- [HoYoLAB 3.1 预下载/更新通知](https://www.hoyolab.com/article/46015487)确认 3.1「漫长的告别」于 2026-07-29 更新；旧 2026-05 快照已跨版本，不能继续作为当前硬口径。
+- [官网蕾米埃尔档案](https://zzz.mihoyo.com/news/164906)与 3.1 官方频段信息确认蕾米埃尔为当前新代理人；本轮版本化虚狩名单加入蕾米埃尔。
+- [官网 3.0 更新公告](https://zzz.mihoyo.com/news/164823)确认维琳娜与专属音擎 `琳琅鎏心`，并确认佩洛伊斯、影画和专属音擎 `日冕遗蜕` 可通过主线/布连邦获取。因此佩洛伊斯高影画属于进度供给，不能等价为限定抽卡成本。
+- [官网 3.0 频段](https://zzz.mihoyo.com/news/164747)交叉确认维琳娜与 `琳琅鎏心`、叶瞬光与 `云霓孤光` 的专属音擎归属。
+
+### 当前社区与实战信号
+
+- YouTube 长视频 [Remielle Guide – Kit, Teams, W-Engines, Drive Discs, Stats, Mindscapes](https://www.youtube.com/watch?v=Q7tMRu_rcsc)已人工读取字幕：蕾米埃尔主要是异常队支援/副输出，偏好两名异常队友；维琳娜是高价值搭档；专属音擎最好但免费 A 级替代可用；M1/M2 是前段高价值断点，M6 增加站场玩法。用于修正“无专武即不可玩”和“满命必然等于满配”的双重误判。
+- B站 [蕾米埃尔是否需要维琳娜](https://www.bilibili.com/video/BV1duTD69ESd/)与 [维琳娜养成攻略](https://www.bilibili.com/video/BV1ZEL969E1o)作为中文社区交叉信号；本轮只把“蕾米埃尔+维琳娜是高优先搭配”提升为 `medium` 估值规则，不把单一视频当绝对唯一配队。
+- [Prydwen 维琳娜页](https://www.prydwen.gg/zenless/characters/velina)用于交叉确认维琳娜的异常支援定位与专属音擎价值。该站当前 tier 页面版本落后于 3.1，因此不用于给完整 3.1 排名或人民币价格。
+
+### 买号估值结论
+
+- 当前“全部虚狩”必须含星见雅、仪玄、叶瞬光、蕾米埃尔。历史三虚狩账号仍有战斗价值，但不能再获得全虚狩收藏标签。
+- 蕾米埃尔 M6 是高稀缺/收藏资产；没有 `空羽复归之诗` 时仍可用，但“满命无专武”的完整度和转售价值低于同影画带专武。
+- 蕾米埃尔 + 维琳娜 + 明确异常位可按当前高价值队核验；缺维琳娜时不直接否决，但需用当前版本证据说明替代，不得随意凑队。
+- 国际服服务器区域是独立事实，不等同于 B 服/渠道服。估值需记录具体区域、登录/充值兼容与转移链路；区域流动性只用于本轮市场解释，不写成固定扣分。
+- PXB7 自主截图标题号若无平台验号日期和资源披露，资产分可按标题低一档确认，但置信度最高为 `medium`。
 
 ## 2026-05-23 三虚狩补充证据
 

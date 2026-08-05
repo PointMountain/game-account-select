@@ -1,13 +1,13 @@
 # Game Account Skill 评估标准
 
-updated_at: 2026-05-17
+updated_at: 2026-08-06
 
 ## 评估范围
 
 评估器覆盖当前仓库全部 `game-account-*` skill：
 
 - 游戏估值 skill：文件结构、估值规则、社区证据、风险规则、验证样例。
-- 主筛选 skill：状态机、平台覆盖、运行记录、用户文案和优化器接入。
+- 主筛选 skill：状态机、成功标准、覆盖计划、知识沉淀账本、平台覆盖、运行记录、用户文案和优化器接入。
 - 工具/预检查 skill：依赖状态、平台安全边界、共享 schema 和输入输出契约。
 - 生成器/社区更新 skill：产物结构、证据边界和质量门禁。
 - 优化器：Troubleshooting、仓库级目标定位、回归样例、质量门禁打回。
@@ -32,10 +32,24 @@ validation: 15
 - 缺 `SKILL.md`。
 - 游戏估值 skill 缺 `references/valuation-rules.md`、`references/community-evidence.md` 或本地验证脚本。
 - 主筛选 skill 缺核心状态机或平台尝试记录。
+- 主筛选 skill 缺 `success_criteria`、`coverage_plan`、`coverage_gaps` 或 `knowledge_update_candidates`，导致主动筛选完整性和知识沉淀不可复查。
+- 主筛选缺少可确认/冻结的 run-only `selection_profile`，或把本轮预算、权重、区服/风险偏好和硬条件写进永久知识。
+- 用户未声明严格预算且预算附近无精确项时，运行 artifact 没有分开保存低价/高价扩展精确项、预算附近近似项和逐维差价比较；或把某次扩展价写成永久默认值。
+- optimizer/evaluator 不能把 `selector-session-preference-leak` 作为阻塞 finding 打回。
+- 对声明 `selection_profile` / `run_only` 的动态游戏 skill，evaluator 未静态扫描 `SKILL.md`、估值/角色知识表和评分脚本；出现 `default_budget`、数值化永久预算、默认区服或官服/B服硬过滤时必须直接 `redo_required: true`。用户请求示例、changelog 和社区证据快照不视为默认规则。
 - 优化器缺 Troubleshooting、仓库级回归样例或质量门禁打回。
 - 评估器不能覆盖非游戏 skill，或不能评估优化器报告。
 - 评估器把原始运行记录当成已处理的优化器报告，导致 runtime、社区证据、链接或预算浮动问题未被打回。
+- 平台或 adapter 已提供上架/验号时间，但推荐、备选或排除项没有保留标准字段 `published_at` / `platform_verified_at`；或用抓取/运行时间代替来源时间。
+- 明日方舟主动找号声明螃蟹与盼之为必需覆盖时，缺任一 `platform_shortlists` 可见段，或用一个平台的结果冒充双平台完成态。允许一个 `best_value_listing` 跨平台胜出，但不得隐藏另一平台。
+- 明日方舟双平台 artifact 已有候选，但最终答复没有 Markdown 表格、漏掉可展示候选，或 `presentation.per_platform_rendered` 与最终文案实际商品编号不一致。
+- 真实筛选只留一句 `experience_summary`，没有结构化 `self_improve`、optimizer/evaluator raw-artifact 报告和知识候选 applied/pending 计数；这种口头 self-improve 必须打回。
+- 账号级“陈年老号/仓库号/阵容断代”描述进入资产名 `exclusions`，或单字资产名可反向命中整句自由文本，必须打回。
+- 从旧画像恢复候选但缺少 canonical rescore、匹配的 profile digest、验证命令/时间或完整 `rescored_listing_ids`，必须以 `selection-reconciliation-unvalidated` 打回；手工改 JSON 后重跑 finalizer 不算 self-improve。
+- `verified_existing` 只能计为已有机制复核，不能计入本轮 `applied`；观察到运行前已有 adapter/fallback 不得冒充本轮代码优化。
 - 没有风险扣分、缺失字段规则或防止“只堆数量/泛称高稀有度”的硬规则。
+- 明日方舟评分器没有把社区推荐核心、实际精二/专精/模组状态、关键推图职能覆盖拆开计算，或缺少“限定数量多但未养成”“高强度输出多但缺关键职能”的回归样例。
+- 明日方舟把未公开的专精/模组当作已养成加分，或没有保留平台精二/精一与公开验号图的字段级证据状态。
 - 优化器产出的目标 skill 评分低于门槛。
 
 ## 通过标准

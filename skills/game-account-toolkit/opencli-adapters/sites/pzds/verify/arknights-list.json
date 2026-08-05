@@ -1,0 +1,11 @@
+{
+  "args": { "minPrice": 800, "maxPrice": 1300, "limit": 3 },
+  "expect": {
+    "rowCount": { "min": 1, "max": 3 },
+    "columns": ["rank", "listingId", "priceCny", "server", "status", "counts", "resources", "skins", "publishedAt", "title", "sellingPointLabels", "url"],
+    "types": { "rank": "number", "listingId": "string", "priceCny": "number", "server": "string|null", "status": "object", "counts": "object", "resources": "object", "skins": "array", "publishedAt": "string|null", "title": "string", "sellingPointLabels": "array", "url": "string" },
+    "patterns": { "listingId": "^[A-Za-z0-9]+$", "url": "^https://www\\.pzds\\.com/goodsDetails/[A-Za-z0-9]+/6$" },
+    "notEmpty": ["listingId", "status", "counts", "title", "url"],
+    "mustBeTruthy": ["priceCny"]
+  }
+}

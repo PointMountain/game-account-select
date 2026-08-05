@@ -21,6 +21,120 @@
       "detail_adapter_available": true
     }
   },
+  "success_criteria": {
+    "game": "Zenless Zone Zero",
+    "budget": {
+      "primary_max": 2000,
+      "flex_max": 1600
+    },
+    "hard_conditions": [
+      "三虚狩",
+      "独立成队",
+      "妄想天使三小只专武",
+      "直伤电队",
+      "低绑定风险"
+    ],
+    "soft_preferences": [
+      "最低满足价",
+      "备战3.0抽数"
+    ],
+    "risk_tolerance": "low",
+    "minimum_source_coverage": {
+      "platforms": [
+        "pxb7",
+        "pzds"
+      ],
+      "community_sources": [
+        "local_skill_evidence",
+        "user_manual_review"
+      ]
+    },
+    "completion_conditions": [
+      "lowest strict hard-condition match found",
+      "pxb7 and pzds attempted with verified route or explicit zero-result evidence",
+      "detail adapter preserves agentStatuses and sWEngineNames",
+      "all recommendation tiers retain URLs"
+    ]
+  },
+  "coverage_plan": {
+    "intent_summary": "Find the lowest strict ZZZ account satisfying all Void Hunter, team, signature, resource, and risk hard conditions.",
+    "source_tasks": [
+      {
+        "id": "platform-pxb7-list",
+        "type": "platform_listing",
+        "source": "pxb7",
+        "priority": "required",
+        "start_path": "natural_navigation",
+        "success_signal": "shortlist low-price candidates and verify details through pxb7/zzz-detail",
+        "fallback_order": [
+          "verified_adapter",
+          "browser_dom",
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "url",
+          "price",
+          "agentStatuses",
+          "sWEngineNames"
+        ],
+        "confidence_cap_if_missing": "medium"
+      },
+      {
+        "id": "platform-pzds-list",
+        "type": "platform_listing",
+        "source": "pzds",
+        "priority": "required",
+        "start_path": "natural_navigation",
+        "success_signal": "confirm goodsList/275 route and check whether strict candidates exist",
+        "fallback_order": [
+          "pzds_health",
+          "browser_dom",
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "url",
+          "price",
+          "source_status"
+        ],
+        "confidence_cap_if_missing": "medium"
+      },
+      {
+        "id": "community-local-user-review",
+        "type": "community_evidence",
+        "source": "local_skill_evidence",
+        "priority": "required",
+        "start_path": "user_material",
+        "success_signal": "preserve user-reviewed value rules and local evidence references",
+        "fallback_order": [
+          "community_updater"
+        ],
+        "wait_budget_ms": 0,
+        "required_fields": [
+          "evidence"
+        ],
+        "confidence_cap_if_missing": "medium"
+      }
+    ],
+    "completeness_gates": {
+      "platforms_required": [
+        "pxb7",
+        "pzds"
+      ],
+      "detail_required_for_top_n": 1,
+      "community_sources_required": [
+        "local_skill_evidence",
+        "user_manual_review"
+      ],
+      "url_required_for_all_tiers": true
+    },
+    "stop_rules": [
+      "stop when the lowest strict hard-condition match is verified and required platforms have success or zero-result evidence"
+    ]
+  },
+  "coverage_gaps": [],
+  "knowledge_update_candidates": [],
   "platform_attempts": [
     {
       "platform": "pxb7",

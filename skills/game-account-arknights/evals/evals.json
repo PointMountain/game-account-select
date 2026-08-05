@@ -1,0 +1,72 @@
+{
+  "skill_name": "game-account-arknights",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "读取 test-fixtures/arknights-profile-validation-sample.json。按『限定/联动越多越好，收藏优先，1000 元左右』解析本轮画像并给这批账号排序。不要把本轮预算或权重写入永久知识。",
+      "expected_output": "画像为 collector、目标价 1000、主区间 800-1200，collector-vault 排第一，skin-only 不能靠皮肤压过稀缺干员，并显示 run_only 隔离。",
+      "files": [
+        "test-fixtures/arknights-profile-validation-sample.json"
+      ],
+      "expectations": [
+        "selection_profile.objective is collector and persistence_scope is run_only",
+        "The budget target is 1000 and primary range is 800-1200",
+        "collector-vault ranks first while skin-only ranks lower",
+        "No current-run budget, weights, or server preference is proposed as a durable update"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "使用与上一条完全相同的账号样本，改按『战力优先，要能打高难，3000 元左右』排序，并解释为什么成熟主力阵容应压过未充分养成的限定收藏。",
+      "expected_output": "画像为 combat、目标价 3000、主区间 2400-3600，combat-core 排第一；排序与收藏画像不同，两个画像互不污染。",
+      "files": [
+        "test-fixtures/arknights-profile-validation-sample.json"
+      ],
+      "expectations": [
+        "selection_profile.objective is combat and persistence_scope is run_only",
+        "Combat and progression weights exceed their collector-profile counterparts",
+        "combat-core ranks first on the same candidate set",
+        "Collector and combat profile budgets, weights, and rankings remain independent"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "用户只说『帮我找明日方舟账号』；另一个输入是『限定多、战力也高，约 3000 元』。分别说明下一步，不能擅自补全购买画像。",
+      "expected_output": "第一个输入要求补问预算与主要目标；第二个输入要求澄清收藏/战力主次。未说明区服和风险时使用中性 assumption，不硬编码官服或低风险。",
+      "files": [],
+      "expectations": [
+        "Missing budget and objective are both returned as clarification requirements",
+        "Ambiguous collector-versus-combat intent returns objective_conflict",
+        "Unspecified server and risk fields use neutral assumptions rather than hard filters",
+        "No platform query starts before the profile is frozen; complete profiles freeze automatically, while missing or conflicting profiles require clarification"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "仍按『限定/联动越多越好，收藏优先，1000 元左右』筛选，但购买后必须能正常推主线。比较 limited-count-untrained、playable-balanced 和 meta-dps-role-gap，不能只按限定或超大杯数量排序。",
+      "expected_output": "playable-balanced 的六类推图职能完整且为 ready；它应压过完全未养成的限定数量陷阱。meta-dps-role-gap 虽然有更多超大杯输出，也应因缺先锋、阻挡和治疗而降级。",
+      "files": [
+        "test-fixtures/arknights-profile-validation-sample.json",
+        "references/operator-value-map.json"
+      ],
+      "expectations": [
+        "limited-count-untrained is marked not_ready and receives a cross-profile playability penalty",
+        "playable-balanced covers all six story-map role groups and is marked ready",
+        "playable-balanced outranks limited-count-untrained under the collector request",
+        "playable-balanced outranks meta-dps-role-gap under the combat request because role coverage is not replaceable by raw meta count"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "帮我找 2000 元左右、联动全齐、合成玉至少 6 万的明日方舟账号；账号要比较新，不要只有早期收藏且阵容断代的陈年仓库号。",
+      "expected_output": "联动全齐和 6 万合成玉保持硬条件；陈年仓库号被记录为账号新度软偏好和人工验号项，不得变成干员排除词，也不得因单字干员名误杀候选。",
+      "files": [],
+      "expectations": [
+        "Collab completion and 60000 orundum remain hard conditions",
+        "The stale-account phrase is absent from operator exclusions",
+        "The request emits an account_recency soft preference with manual verification guidance",
+        "The account-recency preference remains run_only and is not proposed as a durable rule update"
+      ]
+    }
+  ]
+}

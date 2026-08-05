@@ -1,4 +1,23 @@
 {
+  "arknights_list": {
+    "url": "https://api-pc.pxb7.com/api/search/product/v2/selectSearchPageList",
+    "method": "POST",
+    "params": {
+      "required": ["query", "gameId", "pageIndex", "pageSize", "filterDTOList"],
+      "optional": ["pageToken", "bizProd", "type", "posType"]
+    },
+    "response": "data.list[] plus data.properties.pageToken",
+    "verified_at": "2026-08-02",
+    "notes": "Arknights gameId is 10053. price is returned in cents; price filter attrValList is expressed in CNY. Call from the rendered Pxb7 list-page origin at low frequency."
+  },
+  "arknights_detail_dom": {
+    "url": "https://www.pxb7.com/product/<productId>/1",
+    "method": "BROWSER_DOM",
+    "params": { "required": ["input"], "optional": ["wait"] },
+    "response": "one normalized Arknights account-detail row from rendered DOM",
+    "verified_at": "2026-08-02",
+    "notes": "Rendered text includes price, account/server tags, verification date, operator sections, resources, skins, and binding requirements."
+  },
   "detail_dom": {
     "url": "https://www.pxb7.com/product/<productId>/1",
     "method": "BROWSER_DOM",

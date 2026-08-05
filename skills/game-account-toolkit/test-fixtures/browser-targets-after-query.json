@@ -1,0 +1,38 @@
+[
+  {
+    "targetId": "USER-PXB7",
+    "type": "page",
+    "url": "https://www.pxb7.com/product/kept-by-user",
+    "title": "用户原有的螃蟹标签"
+  },
+  {
+    "targetId": "USER-BLANK",
+    "type": "page",
+    "url": "about:blank",
+    "title": "about:blank"
+  },
+  {
+    "targetId": "USER-OTHER",
+    "type": "page",
+    "url": "https://example.com/kept-by-user",
+    "title": "User tab"
+  },
+  {
+    "targetId": "RUN-PXB7",
+    "type": "page",
+    "url": "https://www.pxb7.com/product/query-owned",
+    "title": "本轮查询标签"
+  },
+  {
+    "targetId": "RUN-BLANK",
+    "type": "page",
+    "url": "about:blank",
+    "title": "about:blank"
+  },
+  {
+    "targetId": "NEW-UNRELATED",
+    "type": "page",
+    "url": "https://example.org/opened-concurrently",
+    "title": "Concurrent user tab"
+  }
+]

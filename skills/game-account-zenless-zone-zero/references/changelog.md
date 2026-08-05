@@ -1,5 +1,14 @@
 # 绝区零（ZZZ）skill changelog
 
+## 2026-08-03
+
+- 迁移明日方舟式 self-improve 闭环：真实 run artifact、`knowledge_update_candidates`、确定性报告、optimizer/evaluator sidecar、applied/pending 知识状态与 redo gate。
+- 增加可复用 `evaluate-listing.mjs` 和 `finalize-evaluation-run.mjs`；`validate-sample.mjs` 改为可导入评分器兼回归入口。
+- 刷新到 3.1：当前虚狩名单加入蕾米埃尔，新增蕾米埃尔+维琳娜异常队、M1/M2/M6 与专武非硬门槛规则；旧三虚狩仅作历史兼容。
+- 新增蕾米埃尔、维琳娜、佩洛伊斯、希格莉德及其专属音擎映射；佩洛伊斯按免费/永久玩法供给折价。
+- 修复 PXB7 主体区解析：隔离“商品推荐”，通用识别 JJBOL 等商品编号，将“满命”解析为 6，并记录国际服区域与相对挂牌时间。
+- 新增真实商品 `JJBOL4373` 脱敏 fixture 和标题解析回归。
+
 ## 2026-05-24
 
 - 明确绝区零资源折算口径：`菲林` 和 `菲林底片` 都按 160:1 折算，`加密母带` / `原装母带` / `邦布券` 按 1:1 折算，避免把 `菲林底片` 误算成单抽券。

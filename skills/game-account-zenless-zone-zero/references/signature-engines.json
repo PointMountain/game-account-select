@@ -1,12 +1,32 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-23",
+  "updated_at": "2026-08-03",
   "notes": [
     "Used to cross-check ZZZ account pages where agent asset badges show only x instead of x+y.",
     "A matching S-rank W-Engine name on the page can confirm a signature engine even when the agent badge omits +y.",
     "Keep aliases conservative; uncertain future or beta names should be added only after a listing/page shows the exact W-Engine name."
   ],
   "entries": [
+    {
+      "agent": "remielle",
+      "agent_names": ["蕾米埃尔", "Remielle"],
+      "signature_engines": ["空羽复归之诗", "Ode of Resurrected Wings"]
+    },
+    {
+      "agent": "velina",
+      "agent_names": ["维琳娜", "維琳娜", "Velina"],
+      "signature_engines": ["琳琅鎏心"]
+    },
+    {
+      "agent": "pyrois",
+      "agent_names": ["佩洛伊斯", "Pyrois"],
+      "signature_engines": ["日冕遗蜕"]
+    },
+    {
+      "agent": "sigrid",
+      "agent_names": ["希格莉德", "Sigrid"],
+      "signature_engines": ["骁骑礼赞"]
+    },
     {
       "agent": "miyabi",
       "agent_names": ["星见雅", "雅", "Miyabi", "Hoshimi Miyabi"],

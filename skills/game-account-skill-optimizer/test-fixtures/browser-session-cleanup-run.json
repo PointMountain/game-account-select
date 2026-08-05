@@ -34,12 +34,17 @@
   "cleanup_reports": [
     {
       "command": "npm run query:cleanup -- --session-prefix gas- --json",
+      "ok": false,
+      "baseline_loaded": true,
       "closed_sessions": [
         "gas-zzz-pzds-0528"
       ],
       "closed_targets": [],
+      "cdp_targets_remaining": [
+        "BB185328017FF50F9D6E3E00B6BB3C8F"
+      ],
       "process_audit_after": [
-        "60219 35427 00:32 node /Users/dragon/Documents/AI/mo-skills/agent-session-guard/scripts/run-with-timeout.mjs --timeout-ms 30000 -- opencli browser gas-zzz-pxb7-0528 eval fetch selectPageList"
+        "60219 35427 00:32 node /opt/agent-tools/agent-session-guard/scripts/run-with-timeout.mjs --timeout-ms 30000 -- opencli browser gas-zzz-pxb7-0528 eval fetch selectPageList"
       ]
     }
   ],

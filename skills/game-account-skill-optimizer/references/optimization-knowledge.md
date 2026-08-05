@@ -1,6 +1,6 @@
 # Optimizer Knowledge
 
-updated_at: 2026-05-17
+updated_at: 2026-08-02
 
 ## Known Run Signals
 
@@ -8,6 +8,9 @@ updated_at: 2026-05-17
 - Browser-backed platform attempts must leave no hidden query state. Runs should record a stable `query_session_id`, close OpenCLI/CDP tabs through `query:cleanup`, and attach a process audit; missing cleanup or leftover `opencli browser gas-*` / `run-with-timeout` / platform detail processes should trigger `runtime-browser-session-cleanup-missing`.
 - Empty result pages with login prompts should become a data-source limitation, not a repeated retry loop.
 - Missing mainstream platforms should become a platform coverage finding even if one platform produced a usable result.
+- An Arknights run with both PXB7 and PZDS attempts but only one visible platform result should trigger `output-dual-platform-shortlists-missing`; a passing run contains both platform shortlists and may still select one cross-platform best-value listing.
+- A dual-platform artifact can contain five PZDS candidates while a hand-written answer shows only two. Require deterministic Markdown-table rendering, compare candidate ids in the final response with each platform shortlist, and emit `output-platform-shortlist-render-underfilled` when available rows are dropped.
+- A plain `experience_summary` string is not a completed self-improve cycle. Real selection runs need structured `self_improve` state with optimizer/evaluator reports and applied-versus-pending knowledge counts; otherwise emit `self-improve-closeout-missing`.
 - Raw machine-readable tags in a final recommendation should become an output-format finding.
 - User feedback about game meta should become evidence for a rule update suggestion, not an immediate high-confidence rule.
 - Failed evaluator reports should become `quality_gate` findings, not warnings that can be ignored.
@@ -17,6 +20,7 @@ updated_at: 2026-05-17
 - If the run is uncertain about meta, team archetypes, pairings, dupes, signature equipment, or account-trading risk, the optimizer should require community attempts before high-confidence ranking.
 - Community-source failures should not end at "unreadable"; flag missing tool fallbacks when Bilibili subtitles, Xiaohongshu bodies, comments, or similar sources time out without browser DOM, metadata, guide-site, official-source, or user-screenshot fallback.
 - Main recommendations, flexible-budget backups, risk backups, and excluded listings should retain source URLs so users can compare candidates directly.
+- Listing publication time and platform verification time are separate provenance facts. If an adapter exposes either one, normalized recommendation rows must retain it as `published_at` or `platform_verified_at`; missing values stay null and user-facing output says `未披露`. Never substitute extraction or run timestamps.
 - User-approved budget flexibility belongs in a separate backup tier; near-budget accounts should not displace primary in-budget recommendations.
 - Hard conditions outrank budget fit. If no listing inside the stated budget satisfies a hard condition, recommend expanding to the flexible budget and identify the cheapest satisfying listing instead of promoting an in-budget miss.
 - Multi-team hard requirements must check independent team completeness. Do not count the same support or equipment slot for multiple cores; add regression samples with both shared-support traps and complete-team positives.
@@ -28,12 +32,17 @@ updated_at: 2026-05-17
 - Detail-page adapters and list-page adapters are separate capabilities. A run with `detail_adapter_available: true` and `list_adapter_available: false` should reuse the detail adapter while reporting only the missing list adapter capability.
 - ZZZ Pxb7/PZDS detail adapters should preserve the asset-card status badges as `agentStatuses` and the S-rank W-Engine name list as `sWEngineNames`; for `x+y`, `x` is dupes/影画 and `y` is the matching signature W-engine count. If the badge only shows `x`, the target ZZZ skill must cross-check S W-Engine names against `references/signature-engines.json`. If a verified detail adapter run recommends accounts without `agentStatuses` or cannot provide S W-Engine names for single-number badges, emit an asset-status extraction finding instead of relying on title text.
 - PZDS ZZZ detail URLs can end in `/6`, but that segment is not the ZZZ list game id. If a run visits `goodsList/6` for ZZZ or records wrong-game evidence, emit `platform-pzds-zzz-list-route-mismatch`; use `gameList` natural navigation or the browser-confirmed `goodsList/275` entry instead, and do not count the wrong route as PZDS coverage.
+- A selector run with platform attempts, community attempts, or recommendations but no `coverage_plan.source_tasks` should emit `selector-source-coverage-plan-missing`. This catches the "found something, but did not define completeness first" failure mode.
+- A run with coverage gaps, user feedback, rule update suggestions, or execution failures but no `knowledge_update_candidates` should emit `selector-knowledge-ledger-candidates-missing`. This prevents durable learning from living only in chat.
+- Selection profiles are run-only. If a run persists its budget, normalized weights, server/risk preference, platform choice, or hard conditions into SKILL/references, emit blocking `selector-session-preference-leak`; only stable facts and evidence-gated valuation candidates may enter durable knowledge.
 
 ## Harness Philosophy
 
 The repository should behave like a self-evolving harness:
 
 - Every real run leaves an artifact with input, attempts, output, failures and feedback.
+- The artifact starts with success criteria and a source coverage plan, not only post-hoc attempts.
+- Actionable observations become knowledge update candidates before they become rule changes.
 - The optimizer turns artifacts into precise findings and target files.
 - The evaluator decides whether generated or optimized skill output is usable.
 - Low score, blocking issues or `redo_required: true` means the work loops back into diagnosis and patching.
@@ -80,4 +89,6 @@ Regression coverage should include:
 - A ZZZ run where PZDS was "covered" through `goodsList/6` or other wrong-game evidence, proving the optimizer catches route mismatch instead of treating PZDS as a valid covered source.
 - A ZZZ run where a user-confirmed best-value account has three Void Hunters at `2+1`, Astra/Yaojiayin at `0+0`, and Delusion Angels signatures, proving the target game validation ranks it above an Astra `1+1` account with weaker Void Hunter or Angels investment.
 - A community evidence run where YouTube is omitted for a global-synchronized game, proving the optimizer/evaluator keeps YouTube in the expected evidence-source set.
+- A run where nested adapter facts expose a listing or platform-verification time but the normalized recommendation drops it, proving the optimizer emits `output-listing-time-facts-omitted`.
 - A failed evaluator run to prove redo behavior.
+- A run that tries to turn a 1000-CNY collector/server preference into a permanent game-skill default, proving the optimizer rejects session preference leakage.

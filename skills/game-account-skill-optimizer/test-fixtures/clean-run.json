@@ -1,6 +1,90 @@
 {
+  "run_id": "clean-run",
   "target_skill": "game-account-wuthering-waves",
   "game": "Wuthering Waves",
+  "user_request": "鸣潮 1000 元官服低风险账号",
+  "success_criteria": {
+    "game": "Wuthering Waves",
+    "budget": {
+      "primary_max": 1000,
+      "flex_max": null
+    },
+    "hard_conditions": [
+      "官服",
+      "低风险"
+    ],
+    "soft_preferences": [
+      "性价比"
+    ],
+    "risk_tolerance": "low",
+    "minimum_source_coverage": {
+      "platforms": [
+        "pxb7",
+        "pzds"
+      ],
+      "community_sources": []
+    },
+    "completion_conditions": [
+      "pxb7 and pzds attempted or downgraded",
+      "recommendation keeps source URL",
+      "risk fields complete enough for medium-high confidence"
+    ]
+  },
+  "coverage_plan": {
+    "intent_summary": "鸣潮 1000 元官服低风险账号",
+    "source_tasks": [
+      {
+        "id": "platform-pxb7-list",
+        "type": "platform_listing",
+        "source": "pxb7",
+        "priority": "required",
+        "start_path": "natural_navigation",
+        "success_signal": "read traceable listing cards",
+        "fallback_order": [
+          "browser_dom",
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "url",
+          "title",
+          "price"
+        ],
+        "confidence_cap_if_missing": "medium"
+      },
+      {
+        "id": "platform-pzds-list",
+        "type": "platform_listing",
+        "source": "pzds",
+        "priority": "required",
+        "start_path": "natural_navigation",
+        "success_signal": "read traceable listing cards",
+        "fallback_order": [
+          "browser_dom",
+          "user_material"
+        ],
+        "wait_budget_ms": 15000,
+        "required_fields": [
+          "url",
+          "title",
+          "price"
+        ],
+        "confidence_cap_if_missing": "medium"
+      }
+    ],
+    "completeness_gates": {
+      "platforms_required": [
+        "pxb7",
+        "pzds"
+      ],
+      "url_required_for_all_tiers": true
+    },
+    "stop_rules": [
+      "stop after required platforms return usable listings"
+    ]
+  },
+  "coverage_gaps": [],
+  "knowledge_update_candidates": [],
   "platform_attempts": [
     {
       "platform": "pxb7",

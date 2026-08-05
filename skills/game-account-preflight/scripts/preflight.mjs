@@ -47,6 +47,24 @@ function checkChromePort() {
   return { ok: result.status === 0, found: result.status === 0 ? 'localhost:9222' : null };
 }
 
+function checkChromeUse() {
+  const cli = commandExists('chrome-use', ['--version']);
+  if (!cli.ok) return { ok: false, found: null, detail: null };
+  const relay = spawnSync('chrome-use', ['browsers', '--json'], { encoding: 'utf8', timeout: 5000 });
+  let detail = null;
+  try {
+    detail = JSON.parse(relay.stdout || '{}');
+  } catch {
+    detail = { parse_error: (relay.stderr || relay.stdout || '').trim() };
+  }
+  const browsers = detail?.data?.browsers ?? detail?.browsers ?? [];
+  return {
+    ok: relay.status === 0 && Array.isArray(browsers) && browsers.length > 0,
+    found: cli.found,
+    detail: { connected_browsers: Array.isArray(browsers) ? browsers.length : 0 },
+  };
+}
+
 function checkOpencliAdapters() {
   const script = path.join(repoSkillsRoot, 'game-account-toolkit', 'scripts', 'install-opencli-adapters.mjs');
   if (!fs.existsSync(script)) {
@@ -140,28 +158,52 @@ checks.push({
   action: communityUpdaterSkill.ok ? 'none' : 'Install game-account-community-updater for evidence refresh support.'
 });
 
+const chromeUse = checkChromeUse();
+checks.push({
+  name: 'chrome-use extension relay',
+  required: false,
+  strict_relevant: false,
+  ok: chromeUse.ok,
+  found: chromeUse.found,
+  detail: chromeUse.detail,
+  required_for: 'preferred permission-light access to the user-visible, logged-in Chrome session',
+  action: chromeUse.ok ? 'none' : 'Install/enable chrome-use and its Chrome extension, or use the web-access CDP fallback.'
+});
+
 const webAccess = checkWebAccessSkill();
 checks.push({
   name: 'web-access skill',
-  required: needsBrowser,
+  required: false,
+  strict_relevant: false,
   ok: webAccess.ok,
   found: webAccess.found,
-  required_for: 'Chrome/CDP access to dynamic or logged-in pages',
+  required_for: 'fallback Chrome/CDP access to dynamic or logged-in pages',
   action: webAccess.ok ? 'none' : 'Install or enable the web-access skill before browser-based community refresh.'
 });
 
 const chrome = checkChromePort();
 checks.push({
   name: 'chrome remote debugging',
-  required: needsBrowser,
+  required: false,
+  strict_relevant: false,
   ok: chrome.ok,
   found: chrome.found,
-  required_for: 'web-access browser mode',
+  required_for: 'web-access browser fallback when chrome-use relay is unavailable',
   action: chrome.ok ? 'none' : 'Enable Chrome remote debugging and authorize CDP access.'
 });
 
+const browserAccessOk = chromeUse.ok || (webAccess.ok && chrome.ok);
+checks.push({
+  name: 'browser automation access',
+  required: needsBrowser,
+  ok: browserAccessOk,
+  found: chromeUse.ok ? 'chrome-use extension relay' : webAccess.ok && chrome.ok ? 'web-access + localhost:9222' : null,
+  required_for: 'dynamic or logged-in platform/community pages',
+  action: browserAccessOk ? 'none' : 'Connect chrome-use through its Chrome extension, or enable the web-access CDP fallback.'
+});
+
 const requiredFailures = checks.filter((check) => check.required && !check.ok);
-const optionalFailures = checks.filter((check) => !check.required && !check.ok);
+const optionalFailures = checks.filter((check) => !check.required && !check.ok && check.strict_relevant !== false);
 const result = {
   ok: requiredFailures.length === 0 && (!strict || optionalFailures.length === 0),
   strict,
@@ -171,7 +213,7 @@ const result = {
   missing_required: requiredFailures.map((check) => check.name),
   missing_optional: optionalFailures.map((check) => check.name),
   safe_auto_actions: [],
-  manual_actions: checks.filter((check) => !check.ok).map((check) => ({ name: check.name, action: check.action }))
+  manual_actions: checks.filter((check) => !check.ok && check.strict_relevant !== false).map((check) => ({ name: check.name, action: check.action }))
 };
 
 if (wantsJson) {

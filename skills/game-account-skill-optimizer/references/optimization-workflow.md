@@ -40,6 +40,8 @@ updated_at: 2026-05-17
 4. Evaluate：用目标验证脚本和 `game-account-skill-evaluator` 评分。
 5. Redo：评分低于门槛、存在阻塞问题或 `redo_required: true` 时，回到 Diagnose/Patch，不允许把产物用于真实推荐。
 
+真实账号筛选的 `experience_summary` 不是闭环终点。调用方应先生成用户可见最终表格，再写入结构化 `self_improve`，运行 optimizer 与 raw-artifact evaluator，并把报告路径、非 info findings、applied/pending 知识候选计数回写 artifact。若最终文案与 `platform_shortlists` 行数或商品编号不一致，按输出缺失打回。
+
 ## Troubleshooting 清单
 
 - 慢：检查 `duration_ms`、重复查询、等待预算和降级路径。

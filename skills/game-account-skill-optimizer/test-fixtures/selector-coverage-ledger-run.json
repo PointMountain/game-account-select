@@ -1,0 +1,46 @@
+{
+  "run_id": "selector-coverage-ledger-missing",
+  "game": "Zenless Zone Zero",
+  "target_skill": "skills/game-account-select",
+  "user_request": "1000元内帮我找绝区零三虚狩账号，最好低风险",
+  "budget_max": 1000,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 三虚狩 1000",
+      "status": "success",
+      "duration_ms": 9000,
+      "wait_budget_ms": 15000,
+      "result_count": 6,
+      "evidence": "Only pxb7 was searched before recommending a listing"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "pxb7-partial-001",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/example/1",
+      "price": 988,
+      "recommendation_tier": "primary",
+      "reason": "标题显示三虚狩，但未记录 PZDS 或社区覆盖"
+    }
+  ],
+  "coverage_gaps": [
+    {
+      "source": "pzds",
+      "task_id": "platform-pzds-list",
+      "reason": "not_checked",
+      "evidence": "No PZDS attempt was recorded",
+      "fallback_used": null,
+      "confidence_effect": "cannot claim broad platform coverage",
+      "user_visible_note": "盼之未覆盖"
+    }
+  ],
+  "rule_update_suggestions": [
+    "不要在没有覆盖计划时声明已完成主动筛选"
+  ],
+  "user_feedback": [
+    "这次还是只看了一个平台，信息不够全面"
+  ],
+  "final_response": "推荐 pxb7-partial-001。"
+}
