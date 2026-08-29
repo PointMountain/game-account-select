@@ -11,7 +11,7 @@
 
 ## PARSE_SELECTION_PROFILE
 
-输入用户需求后先运行 `scripts/parse-selection-profile.mjs`。如果缺少游戏，或 `clarification_required` 包含预算/主要目标，询问最少必要信息：
+输入用户需求后先运行 `scripts/parse-selection-profile.mjs`。如果缺少游戏，或 `clarification_required` 包含预算/主要目标，询问最少必要信息。多个目标同时出现时默认组成 `custom` 复合画像；只有用户明确表示“没想好/纠结哪个优先”才记为 `objective_conflict`，不得把“且、同时、还要”解析成冲突：
 
 - 游戏
 - 预算范围
@@ -59,7 +59,9 @@ selection_profile:
     authorization: default_fallback|user_explicit|disabled_by_user|not_applicable
 ```
 
-预算、主要目标和冲突检查全部通过时，展示画像后自动生成 `profile_confirmation.profile_digest` 并冻结画像，`confirmation_mode` 记为 `automatic_complete_profile`，无需让用户先选择预算策略。只有关键项缺失或目标冲突时状态才是 `needs_clarification`；任何后续排序只读冻结画像，不根据某条候选临时改权重。
+预算、主要目标和冲突检查全部通过时，展示画像后自动生成 `profile_confirmation.profile_digest` 并冻结画像，`confirmation_mode` 记为 `automatic_complete_profile`，无需让用户先选择预算策略。只有关键项缺失或用户明确未决定主目标时状态才是 `needs_clarification`；任何后续排序只读冻结画像，不根据某条候选临时改权重。
+
+Artifact 必须同时保存 `user_request` 原话和 `request_provenance`。若执行器把“能抽下一池”结合当前时间/卡池证据推导为本轮资源阈值，可通过 `--profile-request` 写入标准化画像，但 `request_provenance.profile_input_origin` 必须标为 `derived_runtime_profile`，并对原话与画像输入分别保存 SHA-256；禁止用合成 prompt 覆盖 `user_request`。
 
 输出 `success_criteria` 初稿：
 
@@ -171,6 +173,7 @@ limitations: string[]
 - 从浮动区间下界向低价、从浮动区间上界向高价分别逐档低频扩展；每个方向找到第一个存在详情复核合格项的价格档后停止，不继续追逐更便宜或更豪华账号。
 - 将两侧精确满足项单列为 `budget_breakthrough_listings`，写入 `expansion_direction`，不得混入预算内主推荐。
 - 继续保留预算内最接近的 `near_match_listings`，并生成 `budget_comparison`：价格增量、补齐的硬条件、实战/养成/资源/皮肤增量及风险变化。
+- 用户可见报告必须固定分三层：先明确预算内完整满足数量（没有时写 0），再展示最多 5 个预算内接近项，最后展示最多 5 个预算外完整满足项。预算外高分项不得挤掉已经详情复核的预算内对照账号。
 - 结合当前社区证据和用户使用场景解释增预算是否值得。收藏补齐与推图提升必须分开；如果差价主要购买稀缺完整度而非实战，必须直说。
 - 用户明确声明严格预算时设置 `authorization: disabled_by_user` 并禁用扩展；不要再追问一次相同选择。
 
@@ -265,7 +268,7 @@ community_evidence:
 
 - 只要存在强度、配队、命座/影画、专武/音擎、版本环境或账号交易避坑的不确定性，就必须先找社群答案或刷新证据；不能只凭本地旧快照或平台标题直接给高置信结论。
 - 优先用 B站和 YouTube 长视频/字幕/评论、小红书图文/评论、抖音话题或视频信号；全球同步进度游戏必须把 YouTube 作为可用独立社区来源之一。平台不可用时记录失败原因并使用降级来源。
-- 社区读取必须有工具降级链：先用可用的结构化工具读取搜索/详情/字幕/评论；若超时或无输出，改用浏览器 CDP 读取页面 DOM、标题、简介、相关视频/笔记卡片和公开评论；再尝试 Jina/WebFetch/curl/页面元数据、官方公告、Wiki/攻略站。每一步都记录 `community_attempts`、等待预算、失败文本和 `fallback_used`。
+- 社区读取必须有工具降级链：先用可用的结构化工具读取搜索/详情/字幕/评论；若超时或无输出，使用 preflight 已选中的 chrome-use 传输读取页面 DOM、标题、简介、相关视频/笔记卡片和公开评论；仅在交互模式且 relay 不可用时切换 web-access/CDP。无人值守时直接尝试 Jina/WebFetch/curl/页面元数据、官方公告、Wiki/攻略站。每一步都记录 `community_attempts`、等待预算、失败文本和 `fallback_used`。
 - B站/YouTube 字幕、小红书正文、抖音内容等关键正文无法读取时，`community_confidence` 最高为 `medium`；只有标题/卡片不能单独支撑“当前 meta 强规则”。
 - 不得因为单条视频标题、短帖或评论就显著提高账号排名。
 - 如果当前证据过期、冲突或覆盖不足，继续筛选时必须降低置信度并列出人工确认项。
@@ -383,6 +386,8 @@ node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input <run-ar
 ```bash
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=<run-artifact.json> --json
 ```
+
+游戏专属 finalizer 生成 `delivery_contract.mode: verbatim_required` 后，最终答复必须逐字使用 artifact 的 `final_response`；不得在 evaluator 通过后手写另一份更短的推荐。交付哈希、预算分层、双平台表格或 Self-improve 摘要任一缺失都视为未完成。
 
 处理规则：
 

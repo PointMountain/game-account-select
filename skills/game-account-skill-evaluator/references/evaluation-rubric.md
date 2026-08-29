@@ -1,6 +1,6 @@
 # Game Account Skill 评估标准
 
-updated_at: 2026-08-06
+updated_at: 2026-08-12
 
 ## 评估范围
 
@@ -43,6 +43,8 @@ validation: 15
 - 平台或 adapter 已提供上架/验号时间，但推荐、备选或排除项没有保留标准字段 `published_at` / `platform_verified_at`；或用抓取/运行时间代替来源时间。
 - 明日方舟主动找号声明螃蟹与盼之为必需覆盖时，缺任一 `platform_shortlists` 可见段，或用一个平台的结果冒充双平台完成态。允许一个 `best_value_listing` 跨平台胜出，但不得隐藏另一平台。
 - 明日方舟双平台 artifact 已有候选，但最终答复没有 Markdown 表格、漏掉可展示候选，或 `presentation.per_platform_rendered` 与最终文案实际商品编号不一致。
+- 预算内没有完整满足项但最终答复未明确写 0，或 artifact 已有预算内接近项却只展示突破预算账号，必须以 `output-budget-status-undisclosed` / `output-in-budget-near-match-not-rendered` 打回。
+- `user_request` 被派生 prompt 覆盖、缺少 `request_provenance` 双哈希，或 deterministic `final_response` 没有 `delivery_contract`/交付内容与哈希不一致，必须打回；不能让 evaluator 验证一份 artifact 后再向用户发送另一份手写结果。
 - 真实筛选只留一句 `experience_summary`，没有结构化 `self_improve`、optimizer/evaluator raw-artifact 报告和知识候选 applied/pending 计数；这种口头 self-improve 必须打回。
 - 账号级“陈年老号/仓库号/阵容断代”描述进入资产名 `exclusions`，或单字资产名可反向命中整句自由文本，必须打回。
 - 从旧画像恢复候选但缺少 canonical rescore、匹配的 profile digest、验证命令/时间或完整 `rescored_listing_ids`，必须以 `selection-reconciliation-unvalidated` 打回；手工改 JSON 后重跑 finalizer 不算 self-improve。

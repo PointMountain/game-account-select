@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
 const fixturePath = path.join(repoRoot, 'skills', 'game-account-skill-optimizer', 'test-fixtures', 'arknights-post-run-presentation-regression.json');
+const budgetDeliveryFixturePath = path.join(repoRoot, 'skills', 'game-account-skill-optimizer', 'test-fixtures', 'arknights-budget-delivery-self-improve-run.json');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arknights-selection-output-'));
 
 try {
@@ -40,6 +42,46 @@ try {
   }
   assert.match(report, /本轮已应用 0 条；已有机制复核 0 条；待验证\/延期 1 条/);
   assert.doesNotMatch(report, /平台口径 0/);
+
+  const budgetArtifactPath = path.join(tempDir, 'budget-delivery.json');
+  const budgetReportPath = path.join(tempDir, 'budget-delivery.md');
+  const budgetSourceArtifact = JSON.parse(fs.readFileSync(budgetDeliveryFixturePath, 'utf8'));
+  const budgetRawRequest = budgetSourceArtifact.user_request;
+  const budgetProfileInput = budgetSourceArtifact.selection_profile.source_text;
+  budgetSourceArtifact.request_provenance = {
+    raw_user_request: budgetRawRequest,
+    profile_input: budgetProfileInput,
+    profile_input_origin: 'derived_runtime_profile',
+    derived_input_changed: true,
+    raw_user_request_sha256: crypto.createHash('sha256').update(budgetRawRequest).digest('hex'),
+    profile_input_sha256: crypto.createHash('sha256').update(budgetProfileInput).digest('hex'),
+    rule: 'Derived runtime constraints may refine the frozen profile, but must never overwrite the user\'s raw request.',
+  };
+  fs.writeFileSync(budgetArtifactPath, `${JSON.stringify(budgetSourceArtifact, null, 2)}\n`);
+  const budgetRun = spawnSync(process.execPath, [
+    path.join(__dirname, 'finalize-selection-run.mjs'),
+    '--input', budgetArtifactPath,
+    '--report-out', budgetReportPath,
+    '--per-platform', '5',
+  ], { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 1024 * 1024 * 16 });
+  assert.equal(budgetRun.status, 0, budgetRun.stderr || budgetRun.stdout || 'budget-layer finalizer failed');
+  const budgetArtifact = JSON.parse(fs.readFileSync(budgetArtifactPath, 'utf8'));
+  const budgetReport = fs.readFileSync(budgetReportPath, 'utf8');
+  assert.match(budgetReport, /预算内完整满足全部硬条件：0 个/);
+  assert.match(budgetReport, /### 预算内最接近（2 个）/);
+  assert.match(budgetReport, /### 预算范围外完整满足（5 个）/);
+  assert.match(budgetReport, /2300429263421710046/);
+  assert.match(budgetReport, /2293093385667313261/);
+  assert.match(budgetReport, /## 本轮复盘与 Self-improve/);
+  assert.equal(budgetArtifact.request_provenance.raw_user_request, budgetArtifact.user_request);
+  assert.equal(budgetArtifact.request_provenance.profile_input_origin, 'derived_runtime_profile');
+  assert.equal(budgetArtifact.delivery_contract.mode, 'verbatim_required');
+  assert.equal(
+    budgetArtifact.delivery_contract.final_response_sha256,
+    crypto.createHash('sha256').update(budgetArtifact.final_response).digest('hex'),
+  );
+  assert.ok(budgetArtifact.delivery_contract.rendered_listing_ids.includes('2300429263421710046'));
+  assert.equal(budgetArtifact.quality_gate.redo_required, false);
 
   const verifiedExistingPath = path.join(tempDir, 'verified-existing.json');
   const verifiedExistingReportPath = path.join(tempDir, 'verified-existing.md');

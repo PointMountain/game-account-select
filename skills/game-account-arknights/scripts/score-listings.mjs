@@ -275,6 +275,7 @@ function hardFilter(listing, profile, operatorNames) {
     if (condition === 'official_verification:true' && !listing?.game_assets?.risk?.official_verification) reasons.push(condition);
     if (condition === 'guarantee:required' && !['retrieval_compensation', 'guaranteed'].includes(listing?.game_assets?.risk?.guarantee)) reasons.push(condition);
     if (condition === 'collab_complete:true' && listing?.game_assets?.collab_completion?.complete !== true) reasons.push(condition);
+    if (condition === 'limited_complete:true' && listing?.game_assets?.limited_completion?.complete !== true) reasons.push(condition);
     const orundumRange = condition.match(/^orundum:(\d+)-(\d+)$/);
     if (orundumRange) {
       const value = Number(listing?.game_assets?.resources?.orundum);
@@ -304,8 +305,13 @@ export function scoreListing(listing, inputProfile) {
   const push = pushReadiness(combat, progression, operators);
   const namedRarity = rarityScore(operators);
   const collabCompletionRatio = Number(assets?.collab_completion?.ratio);
+  const limitedCompletionRatio = Number(assets?.limited_completion?.ratio);
   const dimensions = {
-    rarity: clamp(Math.max(namedRarity, Number.isFinite(collabCompletionRatio) ? collabCompletionRatio * 100 : 0)),
+    rarity: clamp(Math.max(
+      namedRarity,
+      Number.isFinite(collabCompletionRatio) ? collabCompletionRatio * 100 : 0,
+      Number.isFinite(limitedCompletionRatio) ? limitedCompletionRatio * 100 : 0,
+    )),
     combat: combat.score,
     progression,
     resources: resourceScore(assets.resources ?? {}),

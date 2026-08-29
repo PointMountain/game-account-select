@@ -4,6 +4,15 @@
   "game": "Arknights",
   "target_skill": "skills/game-account-arknights",
   "user_request": "2000左右，联动全齐，练度高，合成玉10万左右，螃蟹和盼之都找",
+  "request_provenance": {
+    "raw_user_request": "2000左右，联动全齐，练度高，合成玉10万左右，螃蟹和盼之都找",
+    "profile_input": "2000左右，联动全齐，练度高，合成玉10万左右，螃蟹和盼之都找",
+    "profile_input_origin": "raw_user_request",
+    "derived_input_changed": false,
+    "raw_user_request_sha256": "963209a06fd23f7438236f180d9525e1351da2ccd82075ae102298c4c8cdae97",
+    "profile_input_sha256": "963209a06fd23f7438236f180d9525e1351da2ccd82075ae102298c4c8cdae97",
+    "rule": "Derived runtime constraints may refine the frozen profile, but must never overwrite the user's raw request."
+  },
   "selection_profile": {
     "budget": { "target": 2000, "primary_min": 1600, "primary_max": 2400, "flex_min": 1400, "flex_max": 2600 },
     "objective": "custom",

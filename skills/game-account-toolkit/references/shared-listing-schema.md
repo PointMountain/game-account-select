@@ -8,9 +8,11 @@ run_artifact:
   game: string
   target_skill: string
   user_request: string
+  request_provenance: request_provenance
   selection_profile: selection_profile
   profile_confirmation: profile_confirmation
   profile_isolation: profile_isolation
+  browser_route: browser_route
   success_criteria: object
   coverage_plan: object
   coverage_gaps: object[]
@@ -24,8 +26,29 @@ run_artifact:
   recommendations: listing[]
   backup_listings: listing[]
   near_match_listings: listing[] # failed an explicit hard condition; never present as qualified recommendations
+  budget_breakthrough_listings: listing[] # exact hard-condition matches outside primary budget, for comparison only
+  budget_comparison: object | null
   excluded_listings: listing[]
   knowledge_update_candidates: knowledge_update_candidate[]
+  final_response: string
+  delivery_contract: delivery_contract
+
+request_provenance:
+  raw_user_request: string
+  profile_input: string
+  profile_input_origin: raw_user_request|derived_runtime_profile
+  derived_input_changed: boolean
+  raw_user_request_sha256: string
+  profile_input_sha256: string
+  rule: string
+
+delivery_contract:
+  mode: verbatim_required
+  generated_by: string
+  final_response_sha256: string
+  rendered_listing_ids: string[]
+  required_sections: string[]
+  instruction: string
 
 platform_shortlist:
   status: qualified|near_match_only|list_only_unverified|empty
@@ -87,6 +110,16 @@ profile_isolation:
   persistence_scope: run_only
   durable_updates_from_profile: []
   rule: string
+
+browser_route:
+  requested: boolean|null
+  mode: interactive|unattended|null
+  status: pending_preflight|not_required|ready|needs_user_action
+  selected_transport: chrome_use_extension|web_access_cdp|null
+  fallback_probe: skipped_browser_not_requested|skipped_primary_ready|skipped_unattended|completed_after_primary_unavailable|null
+  unattended_safe: boolean|null
+  requires_user_presence_now: boolean|null
+  authorization_may_recur: boolean|null
 
 success_criteria:
   game: string
@@ -295,7 +328,10 @@ score:
 - 主推荐、价格浮动备选、风险备选和排除项都必须保留 `url`；价格浮动备选应写入 `recommendation_tier: flex_budget` 和 `budget_delta`。
 - 用户硬条件没有完全命中时，可输出 `near_match_listings` 解释市场上最接近的选择；每项必须保留失败的硬条件和差距，且不得混入 `recommendations`。
 - 预算附近无硬条件完整项且用户未声明严格预算时，把低价/高价各自首个满足价档中经详情复核的账号写入 `budget_breakthrough_listings`，并记录 `expansion_direction`、`budget_delta`、`hard_filter_passed` 和来源 URL。`budget_comparison` 应把它与预算附近最佳近似项逐维比较，至少包含价格差、硬条件差距、实战、养成、资源和皮肤差异；不能只说“更贵所以更好”。
+- 用户可见报告先声明预算内完整满足数量，再展示最多 5 个预算内 `near_match_listings`，最后单列最多 5 个 `budget_breakthrough_listings`。若 artifact 中已有预算内接近项但 `final_response` 没有其 ID/URL，质量门禁必须打回。
+- `user_request` 保存原话，`request_provenance.profile_input` 保存可选的派生画像文本，两者分别哈希。Finalizer 生成 `delivery_contract` 后，调用方必须逐字交付 `final_response`；手写替换、丢失预算分层或 Self-improve 均不得沿用原 evaluator 通过状态。
 - 社区证据工具超时或正文不可读时，必须记录 `community_attempt` 和 `fallback_used`，不能只在最终文案里笼统说“未覆盖”。
+- 第一条浏览器命令前必须把 preflight 的 `browser_route` 从 `pending_preflight` 更新并冻结；可在创建 artifact 时通过 `--browser-route-json` 写入。选中 `chrome_use_extension` 后不得再初始化 web-access/CDP；无人值守时不得把 relay 失败自动切换成 CDP。
 - `chrome-use`、浏览器 CDP 或 OpenCLI 查询必须记录 `query_session_id`、`browser_transport` 和 `browser_targets`。筛选结束后必须运行查询清理脚本，并把 `cleanup.closed_sessions`、`cleanup.closed_targets`、`cleanup.closed_windows`、`cleanup.residual_processes` 写入 artifact。OpenCLI daemon 和 chrome-use relay 是共享服务，不应作为残留查询线程杀掉；只关闭本轮命名 session/target，以及基线之后新建且只含查询页/空白页的独立窗口。
 - 平台或社区来源未完成时必须写入 `coverage_gaps`，并把置信度影响同步到最终推荐限制。
 - 可复用观察先写入 `knowledge_update_candidates`。除非用户确认或本轮目标明确要求应用优化，否则候选不得直接改写游戏估值规则。

@@ -9,7 +9,7 @@
 - 用户明确要求查询某个游戏/预算范围时，访问少量列表页。
 - 用户提供商品链接时，读取对应详情页。
 - 用户提供截图或文本时，从用户输入中抽取字段。
-- 优先使用 `chrome-use` 扩展 relay 读取用户可见页面；不可用时使用浏览器 CDP。两者都不得绕过登录、验证码、风控或付费墙。
+- 优先使用 `chrome-use` 扩展 relay 读取用户可见页面。relay 可用后冻结 `browser_transport: chrome_use_extension`，不得再初始化 web-access/CDP；只有 relay 不可用且用户在场时才允许 CDP 兜底。无人值守任务禁止 CDP 兜底。两者都不得绕过登录、验证码、风控或付费墙。
 
 ## 推荐平台顺序
 
@@ -121,6 +121,8 @@ npm run pzds:repair -- --json
 
 平台查询必须使用可追踪的会话名，推荐格式为 `gas-<game>-<platform>-<short-timestamp>`。优先执行 `chrome-use --session <name> open <url>`，通过扩展 relay 复用真实 Chrome；这条链路不要求开放 remote-debugging-port。不要为同一次查询反复创建新的无名 OpenCLI browser session、Chrome 分组或空白窗口。
 
+进入第一条浏览器命令前，把 preflight 的 `browser_route` 写入 run artifact。`selected_transport` 一旦为 `chrome_use_extension`，本轮不得因“顺手检查兜底”而加载 `web-access` 或运行其 CDP Proxy；只有该传输真实失败后，交互模式才能切换，并必须把失败证据、切换原因和 `browser_transport` 变化写入 `platform_attempts`。无人值守模式不切换，直接降级并记录缺口。
+
 执行顺序：
 
 1. 列表发现优先走轻量路径。Pxb7 这类公开列表接口若普通 `curl` 触发站点脚本或风控，应只打开一次浏览器列表页，在同一个受控 session 里用页内 `fetch` 拉少量页面并筛出候选；不要逐个打开大量详情页或高频翻页。
@@ -151,7 +153,7 @@ node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --chrome-use-
 推荐降级顺序：
 
 1. 公开详情页不可读但列表卡片可读：保留列表卡片字段，标记 `source_status: partial` 和 `fallback_used: list_card`。
-2. 结构化工具超时：先用 `chrome-use` 读取 DOM/可见文本/页面 metadata；relay 不可用时再用浏览器 CDP。
+2. 结构化工具超时：先用 `chrome-use` 读取 DOM/可见文本/页面 metadata；relay 不可用且用户在场时再用浏览器 CDP，无人值守时直接走下一条降级路径。
 3. 浏览器也不可读：请求用户提供链接、截图或复制文本。
 4. 标记平台当前不可用，并把失败文本交给优化器。
 
@@ -197,7 +199,7 @@ node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --chrome-use-
 不要反复重试同一路径。按顺序降级：
 
 1. 尝试页面内自然导航。
-2. 尝试 `chrome-use` 命名 session；失败再用 CDP 兜底。
+2. 尝试 `chrome-use` 命名 session；失败且用户在场时再用 CDP 兜底，无人值守时跳过 CDP。
 3. 尝试用户提供链接。
 4. 请求用户提供截图或复制文本。
 5. 标记该平台当前不可用。

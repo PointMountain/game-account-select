@@ -1,5 +1,12 @@
 # Game Account Skill Optimizer Changelog
 
+## 2026-08-12
+
+- 增加 `019fdd86` 结构化回归样例：预算内已有 ¥1999/¥1800 接近项、最终却只展示 ¥2999–¥3499 突破项时，必须触发 `output-in-budget-near-match-not-rendered` 与预算零满足披露门禁。
+- 增加原始请求溯源门禁：用户原话与派生运行画像分别保留并哈希，禁止用合成 prompt 覆盖 `user_request`。
+- 增加确定性交付契约：finalizer 报告哈希、必需章节与实际交付内容必须一致；artifact 有 self-improve 但用户看不到复盘时不再判完成。
+- 修正单字角色“照”的宽松匹配，避免“扩价对照”误触发绝区零独立队伍规则。
+
 ## 2026-08-02
 
 - 增加真实坏 session 回归：artifact 中盼之有 5 个候选、最终只展示 2 个时，触发 `output-platform-shortlist-render-underfilled`；缺表格与结构化收尾分别触发 presentation/self-improve findings。

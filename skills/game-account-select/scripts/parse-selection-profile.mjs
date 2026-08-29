@@ -225,6 +225,9 @@ export function parseSelectionProfile(input) {
   if (/(?:联动(?:干员|角色)?).{0,4}(?:全齐|齐全|全有|全收集|全图鉴)|(?:全齐|齐全|全有|全收集|全图鉴).{0,4}联动/.test(sourceText)) {
     hardConditions.push('collab_complete:true');
   }
+  if (/(?:限定(?:干员|角色)?).{0,4}(?:全齐|齐全|全有|全收集|全图鉴)|(?:全齐|齐全|全有|全收集|全图鉴).{0,4}限定/.test(sourceText)) {
+    hardConditions.push('limited_complete:true');
+  }
   if (orundumConstraint.hard_condition) hardConditions.push(orundumConstraint.hard_condition);
 
   let riskTolerance = 'unknown';
@@ -243,9 +246,12 @@ export function parseSelectionProfile(input) {
   if (budget.target == null && budget.primary_max == null) clarificationRequired.push('budget');
   if (objective === 'balanced' && !signals.price) clarificationRequired.push('objective');
   const primaryObjectiveCount = ['collector', 'combat', 'resource'].filter((key) => signals[key]).length;
-  const conflictResolvedInText = /兼顾|都要|同等|均衡|平衡|为主|优先|其次|第一|第二|相对|好一点|稍好|然后/.test(sourceText);
-  const structuredCompositeRequest = hardConditions.length >= 2;
-  if (primaryObjectiveCount > 1 && !conflictResolvedInText && !structuredCompositeRequest) clarificationRequired.push('objective_conflict');
+  const explicitlyUndecidedObjective = /(?:没想好|还没想好|不确定|不知道|纠结).{0,18}(?:收藏|限定|联动|战力|强度|资源|抽卡).{0,18}(?:优先|为主|怎么选|选哪个)|(?:收藏|限定|联动|战力|强度|资源|抽卡).{0,10}(?:还是|或是).{0,10}(?:收藏|限定|联动|战力|强度|资源|抽卡).{0,10}(?:优先|为主|怎么选|选哪个)/.test(sourceText);
+  if (primaryObjectiveCount > 1 && explicitlyUndecidedObjective) {
+    clarificationRequired.push('objective_conflict');
+  } else if (primaryObjectiveCount > 1) {
+    assumptions.push('请求中的收藏、战力与资源要求按同一轮 custom 复合画像自动加权，不要求用户先删减目标；只有明确表示尚未决定主目标时才补问');
+  }
 
   if (serverPreferences.length === 0) assumptions.push('未指定区服，区服仅作为风险事实展示，不做硬过滤');
   if (riskTolerance === 'unknown') assumptions.push('未指定风险容忍度，使用中性风险罚分，不做风险硬过滤');

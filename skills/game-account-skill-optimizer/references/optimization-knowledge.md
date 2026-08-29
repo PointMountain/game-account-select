@@ -1,6 +1,6 @@
 # Optimizer Knowledge
 
-updated_at: 2026-08-02
+updated_at: 2026-08-12
 
 ## Known Run Signals
 
@@ -10,6 +10,9 @@ updated_at: 2026-08-02
 - Missing mainstream platforms should become a platform coverage finding even if one platform produced a usable result.
 - An Arknights run with both PXB7 and PZDS attempts but only one visible platform result should trigger `output-dual-platform-shortlists-missing`; a passing run contains both platform shortlists and may still select one cross-platform best-value listing.
 - A dual-platform artifact can contain five PZDS candidates while a hand-written answer shows only two. Require deterministic Markdown-table rendering, compare candidate ids in the final response with each platform shortlist, and emit `output-platform-shortlist-render-underfilled` when available rows are dropped.
+- An artifact may contain valid in-budget near matches while `display_candidates` is saturated by higher-priced exact matches. Array presence is not enough: require a fixed budget-layer report, count zero in-budget exact matches explicitly, and compare the in-budget near-match IDs/URLs against `final_response`; otherwise emit `output-in-budget-near-match-not-rendered`.
+- Preserve the raw user request independently from any derived runtime-profile text. Store both hashes in `request_provenance`; never let a synthesized resource threshold erase what the user actually asked.
+- Evaluating a deterministic artifact does not validate a later handwritten reply. Finalizers must attach a verbatim delivery hash and required sections, and the user-facing response must include the same budget layers, dual-platform tables, and self-improve summary.
 - A plain `experience_summary` string is not a completed self-improve cycle. Real selection runs need structured `self_improve` state with optimizer/evaluator reports and applied-versus-pending knowledge counts; otherwise emit `self-improve-closeout-missing`.
 - Raw machine-readable tags in a final recommendation should become an output-format finding.
 - User feedback about game meta should become evidence for a rule update suggestion, not an immediate high-confidence rule.
@@ -92,3 +95,4 @@ Regression coverage should include:
 - A run where nested adapter facts expose a listing or platform-verification time but the normalized recommendation drops it, proving the optimizer emits `output-listing-time-facts-omitted`.
 - A failed evaluator run to prove redo behavior.
 - A run that tries to turn a 1000-CNY collector/server preference into a permanent game-skill default, proving the optimizer rejects session preference leakage.
+- An Arknights run where five out-of-budget exact matches hide two already-verified in-budget near matches and the handwritten answer omits Self-improve/provenance/delivery contract, proving the entire delivery chain is rejected until deterministic finalization repairs it.

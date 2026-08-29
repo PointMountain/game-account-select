@@ -25,6 +25,7 @@ function usage() {
     '',
     'Options:',
     '  --target-skill <skill>      Target skill path or id',
+    '  --profile-request <text>    Optional derived runtime-profile text; raw --user-request remains unchanged',
     '  --budget-max <amount>      Primary budget max in CNY',
     '  --flex-max <amount>        Flexible budget max in CNY',
     '  --allow-budget-flex        Mark budget flex as allowed',
@@ -34,6 +35,7 @@ function usage() {
     '  --profile-confirmed        Resolve an already displayed objective conflict; complete profiles freeze automatically',
     '  --platforms <a,b,c>        Override minimum platform coverage',
     '  --community-sources <a,b>  Override minimum community coverage',
+    '  --browser-route-json <json> Freeze preflight browser_route into this run',
     '  --out <path>               Write JSON to this path',
     '  --json                     Print JSON to stdout'
   ].join('\n'));
@@ -81,8 +83,64 @@ function nowStamp() {
   return new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, 'Z');
 }
 
+function parseBrowserRoute(value) {
+  if (!value) {
+    return {
+      requested: null,
+      mode: null,
+      status: 'pending_preflight',
+      selected_transport: null,
+      fallback_probe: null,
+      unattended_safe: null,
+      requires_user_presence_now: null,
+      authorization_may_recur: null,
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error('--browser-route-json must be valid JSON');
+  }
+
+  const allowedTransports = new Set(['chrome_use_extension', 'web_access_cdp', null]);
+  const allowedModes = new Set(['interactive', 'unattended']);
+  const allowedStatuses = new Set(['not_required', 'ready', 'needs_user_action']);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('--browser-route-json must contain a browser_route object');
+  }
+  if (!allowedTransports.has(parsed.selected_transport ?? null)) {
+    throw new Error('--browser-route-json has an unsupported selected_transport');
+  }
+  if (!allowedModes.has(parsed.mode)) {
+    throw new Error('--browser-route-json mode must be interactive or unattended');
+  }
+  if (!allowedStatuses.has(parsed.status)) {
+    throw new Error('--browser-route-json has an unsupported status');
+  }
+  if (parsed.status === 'ready' && !parsed.selected_transport) {
+    throw new Error('--browser-route-json ready status requires selected_transport');
+  }
+  if (parsed.mode === 'unattended' && parsed.selected_transport === 'web_access_cdp') {
+    throw new Error('--browser-route-json cannot select web_access_cdp in unattended mode');
+  }
+
+  return {
+    requested: parsed.requested ?? true,
+    mode: parsed.mode,
+    status: parsed.status ?? 'ready',
+    selected_transport: parsed.selected_transport ?? null,
+    fallback_probe: parsed.fallback_probe ?? null,
+    unattended_safe: parsed.unattended_safe ?? false,
+    requires_user_presence_now: parsed.requires_user_presence_now ?? false,
+    authorization_may_recur: parsed.authorization_may_recur ?? false,
+  };
+}
+
 const game = readArg('--game');
 const userRequest = readArg('--user-request') ?? readArg('--request');
+const profileRequest = readArg('--profile-request') ?? userRequest;
 
 if (!game || !userRequest || hasFlag('--help') || hasFlag('-h')) {
   usage();
@@ -92,7 +150,7 @@ if (!game || !userRequest || hasFlag('--help') || hasFlag('-h')) {
 const budgetMax = readArg('--budget-max');
 const flexMax = readArg('--flex-max');
 const expansionMax = readArg('--expansion-max');
-const parsedProfile = parseSelectionProfile(userRequest);
+const parsedProfile = parseSelectionProfile(profileRequest);
 const targetSkill = readArg('--target-skill') ?? knownSkillFor(game);
 const defaultPlatformCoverage = [...new Set([...readPlatformPriority(), ...parsedProfile.platforms])];
 const requiredPlatforms = splitList(
@@ -100,6 +158,13 @@ const requiredPlatforms = splitList(
   defaultPlatformCoverage
 );
 const communitySources = splitList(readArg('--community-sources'), ['bilibili', 'youtube']);
+let browserRoute;
+try {
+  browserRoute = parseBrowserRoute(readArg('--browser-route-json'));
+} catch (error) {
+  console.error(error.message);
+  process.exit(2);
+}
 const runId = `gas-${slugify(game) || 'game'}-${nowStamp()}`;
 const primaryMax = budgetMax == null ? parsedProfile.budget.primary_max : Number(budgetMax);
 if (budgetMax != null && (!Number.isFinite(primaryMax) || primaryMax < 0)) {
@@ -188,6 +253,15 @@ const artifact = {
   game,
   target_skill: targetSkill,
   user_request: userRequest,
+  request_provenance: {
+    raw_user_request: userRequest,
+    profile_input: profileRequest,
+    profile_input_origin: profileRequest === userRequest ? 'raw_user_request' : 'derived_runtime_profile',
+    derived_input_changed: profileRequest !== userRequest,
+    raw_user_request_sha256: crypto.createHash('sha256').update(userRequest).digest('hex'),
+    profile_input_sha256: crypto.createHash('sha256').update(profileRequest).digest('hex'),
+    rule: 'Derived runtime constraints may refine the frozen profile, but must never overwrite the user\'s raw request.',
+  },
   selection_profile: selectionProfile,
   profile_confirmation: {
     status: profileStatus,
@@ -201,6 +275,7 @@ const artifact = {
     durable_updates_from_profile: [],
     rule: 'Budget, objective weights, server preferences, risk tolerance, and user hard conditions stay in this run artifact.',
   },
+  browser_route: browserRoute,
   budget: {
     currency: 'CNY',
     target: selectionProfile.budget.target,

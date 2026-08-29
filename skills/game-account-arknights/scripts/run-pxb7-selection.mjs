@@ -13,6 +13,7 @@ import { rankListings } from './score-listings.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const operatorKnowledge = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'operator-value-map.json'), 'utf8'));
 const collabRoster = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'collab-roster.json'), 'utf8'));
+const limitedRoster = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'limited-roster.json'), 'utf8'));
 const communityEvidenceText = fs.readFileSync(path.join(__dirname, '..', 'references', 'community-evidence.md'), 'utf8');
 const args = process.argv.slice(2);
 const REQUIRED_PLATFORMS = ['pxb7', 'pzds'];
@@ -23,6 +24,16 @@ function readArg(name, fallback = null) {
   if (inline) return inline.slice(name.length + 1);
   const index = args.indexOf(name);
   return index === -1 ? fallback : args[index + 1] ?? fallback;
+}
+
+function readArgs(name) {
+  const values = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg.startsWith(`${name}=`)) values.push(arg.slice(name.length + 1));
+    else if (arg === name && args[index + 1] != null) values.push(args[index + 1]);
+  }
+  return [...new Set(values.filter(Boolean))];
 }
 
 function parseJsonOutput(text) {
@@ -214,6 +225,8 @@ function normalizeRow(row, detail = false, platform = row?.__platform ?? 'pxb7')
   const requiredCollabCount = Number(collabRoster.total_count ?? collabRoster.operators?.length ?? 0);
   const presentCollabNames = (collabRoster.operators ?? []).filter((name) => names.includes(name));
   const observedCollabCount = Math.max(Number.isFinite(declaredCollabCount) ? declaredCollabCount : 0, presentCollabNames.length);
+  const requiredLimitedCount = Number(limitedRoster.total_count ?? limitedRoster.operators?.length ?? 0);
+  const presentLimitedNames = (limitedRoster.operators ?? []).filter((name) => names.includes(name));
   const guarantee = row.status?.guarantee || /包赔/.test(riskText) ? 'retrieval_compensation' : 'unknown';
   const listingId = String(row.listingId ?? '');
   return {
@@ -259,6 +272,19 @@ function normalizeRow(row, detail = false, platform = row?.__platform ?? 'pxb7')
         count_mismatch: Number.isFinite(declaredCollabCount) && declaredCollabCount !== presentCollabNames.length,
         evidence: `${platform}_declared_count_plus_named_roster_vs_prts_collab_category`,
         reference_url: collabRoster.source,
+      },
+      limited_completion: {
+        named_count: presentLimitedNames.length,
+        observed_count: presentLimitedNames.length,
+        required_count: requiredLimitedCount || null,
+        missing_count: requiredLimitedCount ? Math.max(0, requiredLimitedCount - presentLimitedNames.length) : null,
+        ratio: requiredLimitedCount ? Math.min(1, presentLimitedNames.length / requiredLimitedCount) : null,
+        complete: requiredLimitedCount > 0 && presentLimitedNames.length >= requiredLimitedCount,
+        present_names: presentLimitedNames,
+        missing_names: (limitedRoster.operators ?? []).filter((name) => !presentLimitedNames.includes(name)),
+        evidence: `${platform}_named_operator_roster_vs_prts_limited_category`,
+        reference_url: limitedRoster.source,
+        reference_checked_at: limitedRoster.checked_at,
       },
       risk: {
         real_name_status: 'unknown',
@@ -346,7 +372,10 @@ function knownAssetSummary(listing) {
     if (acquisitionType === 'limited') limited.push(canonical);
     if (acquisitionType === 'collab') collab.push(canonical);
   }
-  return { limited: [...new Set(limited)], collab: [...new Set(collab)] };
+  return {
+    limited: listing.game_assets?.limited_completion?.present_names ?? [...new Set(limited)],
+    collab: [...new Set(collab)],
+  };
 }
 
 function compactRecommendation(listing, tier) {
@@ -390,6 +419,7 @@ function compactRecommendation(listing, tier) {
     hard_filter_reasons: listing.hard_filter_reasons,
     confidence: listing.confidence,
     limited_operators: assets.limited,
+    limited_completion: listing.game_assets?.limited_completion ?? null,
     collab_operators: assets.collab,
     collab_completion: listing.game_assets?.collab_completion ?? null,
     skin_count: Number(listing.game_assets?.platform_facts?.counts?.skins ?? listing.game_assets?.skins?.length ?? 0),
@@ -403,6 +433,7 @@ function compactRecommendation(listing, tier) {
 }
 
 const request = readArg('--request');
+const profileRequest = readArg('--profile-request', request);
 const outPath = readArg('--out');
 const limit = Math.max(10, Math.min(Number(readArg('--limit', 20)) || 20, 60));
 const batchCount = Math.max(1, Math.min(Number(readArg('--batches', 1)) || 1, 3));
@@ -414,13 +445,14 @@ const collabImageVerificationCount = Math.max(0, Math.min(Number(readArg('--coll
 const breakthroughCount = Math.max(1, Math.min(Number(readArg('--breakthroughs', 3)) || 3, 5));
 const expansionBandCount = Math.max(1, Math.min(Number(readArg('--expansion-bands', 6)) || 6, 8));
 const expansionDetailCount = Math.max(1, Math.min(Number(readArg('--expansion-details', 6)) || 6, 10));
+const pinnedUrls = readArgs('--pinned-url');
 const reportOut = readArg('--report-out');
 if (!request || !outPath) {
-  console.error('Usage: node run-dual-platform-selection.mjs --request <text> --out <artifact.json> [--profile-confirmed] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 5] [--display-per-platform 5] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
+  console.error('Usage: node run-dual-platform-selection.mjs --request <raw-user-text> --out <artifact.json> [--profile-request <derived-runtime-profile-text>] [--profile-confirmed] [--pinned-url <live-listing-url>] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 5] [--display-per-platform 5] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
   process.exit(2);
 }
 
-const profile = parseSelectionProfile(request);
+const profile = parseSelectionProfile(profileRequest);
 const resolvedClarifications = args.includes('--profile-confirmed')
   ? profile.clarification_required.filter((item) => item === 'objective_conflict')
   : [];
@@ -513,6 +545,39 @@ for (const platform of REQUIRED_PLATFORMS) {
     }
   }
 }
+const pinnedSeedAttempts = [];
+for (const url of pinnedUrls) {
+  const platform = /pzds\.com/i.test(url) ? 'pzds' : /pxb7\.com/i.test(url) ? 'pxb7' : null;
+  if (!platform) {
+    pinnedSeedAttempts.push({ url, platform: null, status: 'unsupported_url', error_text: 'URL does not belong to a required platform' });
+    continue;
+  }
+  const commandResult = runOwnedOpencli([platform, 'arknights-detail', url, '--site-session', 'ephemeral', '--keep-tab', 'false', '-f', 'json']);
+  let row = null;
+  let errorText = null;
+  if (commandResult.ok) {
+    try {
+      row = rowsFrom(parseJsonOutput(commandResult.stdout))[0] ?? null;
+      if (!row) errorText = 'pinned detail returned no row';
+    } catch (error) {
+      errorText = error instanceof Error ? error.message : String(error);
+    }
+  } else {
+    errorText = (commandResult.stderr || commandResult.stdout || 'pinned detail failed').trim().slice(0, 500);
+  }
+  if (row) {
+    const id = String(row.listingId ?? row.url ?? url);
+    listRowsById.set(`${platform}:${id}`, { ...row, url: row.url ?? url, __platform: platform, __pinned_seed: true });
+  }
+  pinnedSeedAttempts.push({
+    platform,
+    url,
+    listing_id: row?.listingId ?? null,
+    status: row ? 'success' : 'error',
+    duration_ms: commandResult.duration_ms,
+    error_text: row ? null : errorText,
+  });
+}
 const listRows = [...listRowsById.values()];
 const pzdsPaginationPartial = listRows
   .filter((row) => row.__platform === 'pzds')
@@ -532,7 +597,14 @@ const preliminary = rankListings(listRows.map((row) => normalizeRow(row, false, 
 const detailAttempts = [];
 const detailsById = new Map();
 const collabCompleteRequired = profile.hard_conditions.includes('collab_complete:true');
+const limitedCompleteRequired = profile.hard_conditions.includes('limited_complete:true');
 const detailSorter = (a, b) => {
+  if (limitedCompleteRequired) {
+    return Number(b.game_assets?.limited_completion?.ratio ?? -1) - Number(a.game_assets?.limited_completion?.ratio ?? -1)
+      || Number(b.game_assets?.platform_facts?.counts?.limitedSixStar ?? -1) - Number(a.game_assets?.platform_facts?.counts?.limitedSixStar ?? -1)
+      || Number(b.push_readiness?.score ?? 0) - Number(a.push_readiness?.score ?? 0)
+      || b.asset_quality_score - a.asset_quality_score;
+  }
   if (!collabCompleteRequired) return b.final_score - a.final_score || b.asset_quality_score - a.asset_quality_score;
   return Number(b.game_assets?.collab_completion?.ratio ?? -1) - Number(a.game_assets?.collab_completion?.ratio ?? -1)
     || Number(b.push_readiness?.score ?? 0) - Number(a.push_readiness?.score ?? 0)
@@ -854,6 +926,17 @@ const artifact = {
   game: 'Arknights',
   target_skill: 'skills/game-account-arknights',
   user_request: request,
+  request_provenance: {
+    raw_user_request: request,
+    profile_input: profileRequest,
+    profile_input_origin: profileRequest === request ? 'raw_user_request' : 'derived_runtime_profile',
+    derived_input_changed: profileRequest !== request,
+    raw_user_request_sha256: crypto.createHash('sha256').update(request).digest('hex'),
+    profile_input_sha256: crypto.createHash('sha256').update(profileRequest).digest('hex'),
+    rule: 'Derived runtime constraints may refine the frozen profile, but must never overwrite the user\'s raw request.',
+    pinned_seed_urls: pinnedUrls,
+    pinned_seed_attempts: pinnedSeedAttempts,
+  },
   selection_profile: profile,
   budget: { currency: 'CNY', ...profile.budget, allow_budget_flex: profile.budget.flex_max !== profile.budget.primary_max },
   budget_expansion: profile.budget_expansion,

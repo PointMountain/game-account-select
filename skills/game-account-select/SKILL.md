@@ -44,7 +44,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 ## 执行流程
 
-第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
+第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。后台或用户不在场时追加 `--unattended`。把报告中的 `browser_route` 写入 raw run artifact（创建时可传 `--browser-route-json`）并冻结；选中 chrome-use 后不得再加载 web-access/CDP。无人值守时 relay 失效则降级并记录覆盖缺口，不触发授权弹窗。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
 
 执行前必须读取：
 
@@ -58,9 +58,9 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 ## 标准输入输出
 
-优先接受 `<game_account_request>`，先解析并展示本轮 `selection_profile`。预算和主要目标缺失或互相冲突时只补问关键项；区服、风险等只有会显著改变结果时补问，非关键缺项写入 `assumptions`。画像完整时展示后自动冻结并开始查询，不要求用户在“严格预算/允许突破”之间先做选择；只有关键项缺失或冲突时才暂停等待确认。
+优先接受 `<game_account_request>`，先解析并展示本轮 `selection_profile`。预算和主要目标缺失或用户明确表示尚未决定主目标时只补问关键项；“限定齐全、练度够且资源能抽下一池”这类并列要求是完整的 `custom` 复合画像，不是冲突，不得要求用户删减目标或先选择固定抽数。区服、风险等只有会显著改变结果时补问，非关键缺项写入 `assumptions`。画像完整时展示后自动冻结并开始查询，不要求用户在“严格预算/允许突破”之间先做选择；只有关键项缺失或真实冲突时才暂停等待确认。
 
-最终输出 `<recommendations>`。如果需要评价单个账号，游戏 skill 必须输出 `<game_account_evaluation>`。内部 run artifact 必须包含 `selection_profile`、`profile_confirmation`、`profile_isolation`、`success_criteria`、`coverage_plan`、`coverage_gaps` 和 `knowledge_update_candidates`，方便优化器与评估器复查。
+最终输出 `<recommendations>`。如果需要评价单个账号，游戏 skill 必须输出 `<game_account_evaluation>`。内部 run artifact 必须包含 `request_provenance`、`selection_profile`、`profile_confirmation`、`profile_isolation`、`success_criteria`、`coverage_plan`、`coverage_gaps` 和 `knowledge_update_candidates`，方便优化器与评估器复查。`user_request` 永远保留用户原话；推导出的资源阈值或标准化画像只能写入 `request_provenance.profile_input` 与冻结画像，不得覆盖原话。
 
 自然语言画像可用：
 
