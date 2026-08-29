@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -60,6 +61,41 @@ function knowledgeState(candidates) {
   };
 }
 
+function sha256(value) {
+  return crypto.createHash('sha256').update(String(value ?? '')).digest('hex');
+}
+
+function allKnownListings(value) {
+  const shortlists = value.platform_shortlists ?? {};
+  const rows = [
+    ...(Array.isArray(value.recommendations) ? value.recommendations : []),
+    ...(Array.isArray(value.backup_listings) ? value.backup_listings : []),
+    ...(Array.isArray(value.near_match_listings) ? value.near_match_listings : []),
+    ...(Array.isArray(value.budget_breakthrough_listings) ? value.budget_breakthrough_listings : []),
+    ...Object.values(shortlists).flatMap((section) => selectPlatformRows(section, 1000)),
+  ];
+  return [...new Map(rows.filter(Boolean).map((row) => [`${row.platform ?? ''}:${row.listing_id ?? row.url ?? ''}`, row])).values()];
+}
+
+function finalizeResponseContract(value, perPlatform) {
+  value.final_response = renderSelectionReport(value, { perPlatform });
+  value.final_response_draft = value.final_response;
+  value.delivery_contract = {
+    mode: 'verbatim_required',
+    generated_by: 'skills/game-account-arknights/scripts/render-selection-report.mjs',
+    final_response_sha256: sha256(value.final_response),
+    rendered_listing_ids: allKnownListings(value)
+      .filter((row) => {
+        const id = String(row.listing_id ?? '');
+        const url = String(row.url ?? '');
+        return Boolean((id && value.final_response.includes(id)) || (url && value.final_response.includes(url)));
+      })
+      .map((row) => String(row.listing_id ?? row.url)),
+    required_sections: ['预算分层', '螃蟹候选', '盼之候选', '本轮复盘与 Self-improve'],
+    instruction: 'Return final_response verbatim. Do not replace it with a handwritten shortlist or omit the self-improve closeout.',
+  };
+}
+
 const input = readArg('--input');
 if (!input) {
   console.error('Usage: finalize-selection-run.mjs --input <artifact.json> [--report-out <report.md>] [--per-platform 5]');
@@ -83,7 +119,7 @@ const availableCounts = Object.fromEntries(platforms.map((platform) => {
 const underfilled = platforms.filter((platform) => renderedCounts[platform] < Math.min(perPlatform, availableCounts[platform]));
 const candidateShortages = platforms.filter((platform) => availableCounts[platform] < perPlatform);
 
-artifact.schema_version = '2.0';
+artifact.schema_version = '2.1';
 artifact.presentation = {
   format: 'markdown_tables',
   table_output_required: true,
@@ -105,8 +141,7 @@ artifact.self_improve = {
   knowledge_candidates: knowledgeState(artifact.knowledge_update_candidates),
   profile_preferences_persisted: false,
 };
-artifact.final_response = renderSelectionReport(artifact, { perPlatform });
-artifact.final_response_draft = artifact.final_response;
+finalizeResponseContract(artifact, perPlatform);
 fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
 fs.writeFileSync(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
 
@@ -150,8 +185,7 @@ artifact.self_improve.evaluator = {
 };
 artifact.self_improve.status = artifact.quality_gate.redo_required ? 'needs_revision' : 'complete';
 artifact.finished_at = new Date().toISOString();
-artifact.final_response = renderSelectionReport(artifact, { perPlatform });
-artifact.final_response_draft = artifact.final_response;
+finalizeResponseContract(artifact, perPlatform);
 fs.writeFileSync(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
 fs.mkdirSync(path.dirname(reportPath), { recursive: true });
 fs.writeFileSync(reportPath, artifact.final_response);

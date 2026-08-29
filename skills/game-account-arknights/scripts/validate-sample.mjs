@@ -15,6 +15,7 @@ const collectorProfile = parseSelectionProfile(fixture.requests.collector);
 const combatProfile = parseSelectionProfile(fixture.requests.combat);
 const incompleteProfile = parseSelectionProfile('帮我看看明日方舟账号');
 const collabCompleteProfile = parseSelectionProfile('明日方舟，2000 元以内，联动全齐为硬要求，队伍相对成熟，皮肤好一点，螃蟹');
+const limitedCompleteProfile = parseSelectionProfile('明日方舟，2000 元以内，限定齐全为硬要求，队伍相对成熟，螃蟹');
 const expandableCollabProfile = parseSelectionProfile('明日方舟，2000 元以内，联动全齐，队伍成熟；找不到可以突破预算上限找最低满足价，同时保留价位内接近的号');
 
 assert.equal(collectorProfile.objective, 'collector');
@@ -35,6 +36,7 @@ assert.notDeepEqual(collectorProfile.priorities, combatProfile.priorities);
 assert.deepEqual(incompleteProfile.clarification_required.sort(), ['budget', 'objective']);
 assert.equal(collectorProfile.persistence_scope, 'run_only');
 assert.ok(collabCompleteProfile.hard_conditions.includes('collab_complete:true'), '“联动全齐”必须解析为本轮硬条件');
+assert.ok(limitedCompleteProfile.hard_conditions.includes('limited_complete:true'), '“限定齐全”必须解析为本轮硬条件');
 assert.ok(collabCompleteProfile.priorities.combat > 0, '“队伍相对成熟”必须提高实战维度，不能只解析成收藏和皮肤');
 assert.equal(collabCompleteProfile.clarification_required.length, 0);
 assert.equal(expandableCollabProfile.budget_expansion.enabled, true);
@@ -127,6 +129,16 @@ collabIncompleteListing.game_assets.collab_completion = { observed_count: 24, re
 const collabHardRanking = rankListings([collabIncompleteListing, collabCompleteListing], collabCompleteProfile);
 assert.equal(collabHardRanking[0].id, 'collab-complete');
 assert.equal(collabHardRanking.find((item) => item.id === 'collab-incomplete').hard_filter_passed, false, '差一个联动也不能冒充“联动全齐”');
+
+const limitedCompleteListing = structuredClone(collabCompleteListing);
+limitedCompleteListing.id = 'limited-complete';
+limitedCompleteListing.game_assets.limited_completion = { observed_count: 26, required_count: 26, ratio: 1, complete: true };
+const limitedIncompleteListing = structuredClone(limitedCompleteListing);
+limitedIncompleteListing.id = 'limited-incomplete';
+limitedIncompleteListing.game_assets.limited_completion = { observed_count: 25, required_count: 26, ratio: 25 / 26, complete: false };
+const limitedHardRanking = rankListings([limitedIncompleteListing, limitedCompleteListing], limitedCompleteProfile);
+assert.equal(limitedHardRanking[0].id, 'limited-complete');
+assert.equal(limitedHardRanking.find((item) => item.id === 'limited-incomplete').hard_filter_passed, false, '差一个限定也不能冒充“限定齐全”');
 
 const resourceHardProfile = parseSelectionProfile('明日方舟2000元左右，联动全齐，队伍成熟为主，合成玉10万左右');
 assert.ok(resourceHardProfile.hard_conditions.includes('orundum:80000-120000'), '明确资源数值必须冻结为本轮硬条件');

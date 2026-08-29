@@ -143,11 +143,13 @@ function listCdpTargets() {
       const fixtureTargets = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.targets) ? parsed.targets : [];
       return {
         result: { ok: true, status: 0, signal: null, stdout: '', stderr: '', command: `fixture:${path.resolve(targetsFixturePath)}` },
+        supported: true,
         targets: fixtureTargets,
       };
     } catch (error) {
       return {
         result: { ok: false, status: 1, signal: null, stdout: '', stderr: error instanceof Error ? error.message : String(error), command: `fixture:${path.resolve(targetsFixturePath)}` },
+        supported: true,
         targets: [],
       };
     }
@@ -161,11 +163,13 @@ function listCdpTargets() {
         ok: false,
         stderr: result.stderr || 'CDP target relay did not return a JSON array',
       },
+      supported: false,
       targets: [],
     };
   }
   return {
     result,
+    supported: true,
     targets: parsed,
   };
 }
@@ -310,9 +314,10 @@ function writeBaseline(file, targetState, windowState) {
 if (captureBaselinePath) {
   const targetState = listCdpTargets();
   const windowState = listChromeWindows();
+  const windowOnlyFallback = targetState.supported === false && windowState.supported && windowState.result.ok;
   let capture = null;
   let captureError = null;
-  if (targetState.result.ok) {
+  if (targetState.result.ok || windowOnlyFallback) {
     try {
       capture = writeBaseline(captureBaselinePath, targetState, windowState);
     } catch (error) {
@@ -328,7 +333,9 @@ if (captureBaselinePath) {
     baseline_path: capture?.absolute ?? path.resolve(captureBaselinePath),
     target_count: capture?.baseline.targets.length ?? 0,
     window_count: capture?.baseline.windows.length ?? 0,
+    cdp_target_audit_supported: targetState.supported !== false,
     window_baseline_supported: windowState.supported,
+    fallback_used: windowOnlyFallback ? 'chrome_window_baseline' : null,
     error: captureError,
   };
   if (wantsJson) {
@@ -460,9 +467,11 @@ if (kill) {
   }
 }
 const processAuditAfter = auditProcesses();
+const cdpAuditPassed = cdpBefore.result.ok
+  || (cdpBefore.supported === false && chromeWindowsBefore.supported && chromeWindowsBefore.result.ok);
 
 const report = {
-  ok: cdpBefore.result.ok
+  ok: cdpAuditPassed
     && baseline.ok
     && opencliSessionClosures.every((item) => item.close_session.ok)
     && chromeUseSessionClosures.every((item) => item.stop.ok)
@@ -481,6 +490,7 @@ const report = {
   close_matching_urls: closeMatchingUrls,
   close_new_query_targets: closeNewQueryTargets,
   new_targets_detected: newTargets.map(compactTarget),
+  cdp_target_audit_supported: cdpBefore.supported !== false,
   cdp_targets_before_count: cdpBefore.targets.length,
   cdp_targets_closed: cdpClosures,
   cdp_targets_after_count: cdpAfter.targets.length,
@@ -502,6 +512,7 @@ const report = {
     'OpenCLI daemon is excluded by default because it is a shared background service.',
     'chrome-use relay is shared; only exact sessions passed with --chrome-use-session are stopped.',
     'URL-wide tab closing is opt-in. Normal runs close explicit target ids and post-baseline query targets only.',
+    ...(cdpBefore.supported === false ? ['The legacy CDP target relay was unavailable; cleanup used exact sessions, process audit, and the macOS Chrome window baseline instead.'] : []),
     'A post-baseline about:blank target is treated as an OpenCLI reusable placeholder only when --close-new-query-targets is set.',
     'On macOS, a post-baseline Chrome window is closed only when every tab is a query URL or about:blank; mixed/user windows are preserved.',
     'Use --kill only for leftover query commands, not for normal browser or daemon processes.',

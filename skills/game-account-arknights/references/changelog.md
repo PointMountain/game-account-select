@@ -1,5 +1,12 @@
 # 明日方舟 skill changelog
 
+## 2026-08-12
+
+- 修复复合画像误补问：收藏、战力、练度与资源并列要求自动冻结为 `custom`；仅当用户明确表示没想好主目标时才产生 `objective_conflict`。
+- 保留 `user_request` 原话并新增 `request_provenance` 双哈希；当前卡池/资源推导可进入 `--profile-request`，但不得覆盖原始需求。
+- 报告新增固定预算分层：明确预算内完整满足数量，优先列预算内接近项，再列预算外完整满足项；扩价高分账号不能隐藏预算内对照项。
+- Finalizer 新增 `delivery_contract`，最终答复必须逐字使用已验证的 `final_response` 并包含 Self-improve；新增坏 session 回归和 optimizer/evaluator 阻塞门禁。
+
 ## 2026-08-06
 
 - 修复“不要陈年仓库号”被当成干员排除词的问题：账号新度进入 run-only `soft_preferences.account_recency` 与人工验号项，干员名匹配增加单字精确边界，避免“陈”等短名反向命中整句。

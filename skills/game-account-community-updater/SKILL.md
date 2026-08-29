@@ -12,7 +12,7 @@ argument-hint: "[skill path] [evidence json]"
 
 ## 执行前准备
 
-先运行 `game-account-preflight`，并在刷新前显示 `<preflight_report>`。如果缺少浏览器或网络相关能力，记录降级范围；如果需要 B站、抖音、小红书等动态页面，必须遵循 `web-access` 和平台访问安全边界。
+先运行 `game-account-preflight`，并在刷新前显示 `<preflight_report>`。如果缺少浏览器或网络相关能力，记录降级范围；如果需要 B站、抖音、小红书等动态页面，必须遵循 toolkit 的单一浏览器路由和平台访问安全边界：chrome-use relay 可用时不加载 web-access，无人值守时禁止 CDP 兜底。
 
 ## 必须读取
 
@@ -32,7 +32,7 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 
 安全刷新模式：
 
-1. 用 `opencli`、网页搜索或 `web-access` 获取少量高信号来源。
+1. 用 `opencli`、网页搜索或已选中的浏览器传输获取少量高信号来源；浏览器默认使用 chrome-use，只有交互模式下 relay 不可用时才使用 web-access/CDP。
 2. 把来源整理为 evidence JSON。
 3. 运行脚本写入快照或输出到临时目录。
 

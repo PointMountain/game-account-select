@@ -1,0 +1,124 @@
+{
+  "run_id": "019fdd86-budget-delivery-regression",
+  "game": "Arknights",
+  "target_skill": "skills/game-account-arknights",
+  "user_request": "帮我仔仔细细找一个2000元以下，联动齐全、练度看得过去且抽卡资源能满足下个池子出货的账号，多挑几个差不多的；找不到可以往上找",
+  "selection_profile": {
+    "source_text": "明日方舟，2000元以下，联动全齐，队伍成熟，合成玉30000以上",
+    "budget": { "target": 2000, "primary_min": 0, "primary_max": 2000, "flex_min": 0, "flex_max": 2000 },
+    "budget_expansion": { "enabled": true, "directions": ["lower", "higher"], "authorization": "default_fallback" },
+    "objective": "custom",
+    "priorities": { "rarity": 24, "combat": 22, "progression": 18, "resources": 26, "skins": 2, "price_efficiency": 8 },
+    "hard_conditions": ["collab_complete:true", "orundum:30000+"],
+    "platforms": ["pxb7", "pzds"],
+    "risk_tolerance": "unknown",
+    "persistence_scope": "run_only"
+  },
+  "profile_isolation": { "persistence_scope": "run_only", "durable_updates_from_profile": [] },
+  "success_criteria": {
+    "minimum_source_coverage": { "platforms": ["pxb7", "pzds"], "community_sources": ["local-arknights-snapshot"] }
+  },
+  "coverage_plan": {
+    "source_tasks": [
+      { "id": "platform-pxb7-list-detail", "source": "pxb7", "type": "platform_listing_and_detail" },
+      { "id": "platform-pzds-list-detail", "source": "pzds", "type": "platform_listing_and_detail" }
+    ],
+    "completeness_gates": {
+      "platforms_required": ["pxb7", "pzds"],
+      "min_display_candidates_per_platform": 5,
+      "table_output_required": true,
+      "self_improve_closeout_required": true
+    }
+  },
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "status": "success",
+      "result_count": 165,
+      "query_session_id": "gas-arknights-regression",
+      "adapter_available": true,
+      "adapter_verified": true,
+      "budget_expansion": { "enabled": true, "directions": ["lower", "higher"], "stop_reasons_by_direction": { "lower": "price_floor", "higher": "first_exact_band" } }
+    },
+    {
+      "platform": "pzds",
+      "status": "partial",
+      "result_count": 20,
+      "query_session_id": "gas-arknights-regression",
+      "adapter_available": true,
+      "adapter_verified": true,
+      "budget_expansion": { "enabled": true, "directions": ["lower", "higher"], "stop_reasons_by_direction": { "lower": "no_exact", "higher": "no_exact" } }
+    }
+  ],
+  "community_attempts": [
+    { "source": "local-arknights-snapshot", "status": "success", "result_count": 7 }
+  ],
+  "platform_shortlists": {
+    "pxb7": {
+      "status": "qualified",
+      "display_candidates": [
+        { "listing_id": "PXB-2999", "listing_key": "pxb7:PXB-2999", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-2999/1", "price": 2999, "hard_filter_passed": true, "recommendation_tier": "budget_breakthrough_higher" },
+        { "listing_id": "PXB-3000", "listing_key": "pxb7:PXB-3000", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3000/1", "price": 3000, "hard_filter_passed": true, "recommendation_tier": "budget_breakthrough_higher" },
+        { "listing_id": "PXB-3199", "listing_key": "pxb7:PXB-3199", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3199/1", "price": 3199, "hard_filter_passed": true, "recommendation_tier": "budget_breakthrough_higher" },
+        { "listing_id": "PXB-3400", "listing_key": "pxb7:PXB-3400", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3400/1", "price": 3400, "hard_filter_passed": true, "recommendation_tier": "budget_breakthrough_higher" },
+        { "listing_id": "PXB-3499", "listing_key": "pxb7:PXB-3499", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3499/1", "price": 3499, "hard_filter_passed": true, "recommendation_tier": "budget_breakthrough_higher" }
+      ],
+      "qualifying": [],
+      "out_of_scope_qualifying": [],
+      "near_matches": [
+        { "listing_id": "2300429263421710046", "listing_key": "pxb7:2300429263421710046", "platform": "pxb7", "url": "https://www.pxb7.com/product/2300429263421710046/1", "price": 1999, "hard_filter_passed": false, "hard_filter_reasons": ["orundum:30000+"], "recommendation_tier": "near_match" },
+        { "listing_id": "2293093385667313261", "listing_key": "pxb7:2293093385667313261", "platform": "pxb7", "url": "https://www.pxb7.com/product/2293093385667313261/1", "price": 1800, "hard_filter_passed": false, "hard_filter_reasons": ["orundum:30000+"], "recommendation_tier": "near_match" }
+      ]
+    },
+    "pzds": {
+      "status": "near_match_only",
+      "display_candidates": [
+        { "listing_id": "PZ-1500", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/PZ-1500/6", "price": 1500, "hard_filter_passed": false },
+        { "listing_id": "PZ-1560", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/PZ-1560/6", "price": 1560, "hard_filter_passed": false },
+        { "listing_id": "PZ-1999", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/PZ-1999/6", "price": 1999, "hard_filter_passed": false },
+        { "listing_id": "PZ-2100", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/PZ-2100/6", "price": 2100, "hard_filter_passed": false },
+        { "listing_id": "PZ-2300", "platform": "pzds", "url": "https://www.pzds.com/goodsDetails/PZ-2300/6", "price": 2300, "hard_filter_passed": false }
+      ],
+      "qualifying": [],
+      "near_matches": []
+    }
+  },
+  "recommendations": [],
+  "backup_listings": [],
+  "near_match_listings": [
+    { "listing_id": "2300429263421710046", "listing_key": "pxb7:2300429263421710046", "platform": "pxb7", "url": "https://www.pxb7.com/product/2300429263421710046/1", "price": 1999, "hard_filter_passed": false, "hard_filter_reasons": ["orundum:30000+"] },
+    { "listing_id": "2293093385667313261", "listing_key": "pxb7:2293093385667313261", "platform": "pxb7", "url": "https://www.pxb7.com/product/2293093385667313261/1", "price": 1800, "hard_filter_passed": false, "hard_filter_reasons": ["orundum:30000+"] }
+  ],
+  "budget_breakthrough_listings": [
+    { "listing_id": "PXB-2999", "listing_key": "pxb7:PXB-2999", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-2999/1", "price": 2999, "hard_filter_passed": true },
+    { "listing_id": "PXB-3000", "listing_key": "pxb7:PXB-3000", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3000/1", "price": 3000, "hard_filter_passed": true },
+    { "listing_id": "PXB-3199", "listing_key": "pxb7:PXB-3199", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3199/1", "price": 3199, "hard_filter_passed": true },
+    { "listing_id": "PXB-3400", "listing_key": "pxb7:PXB-3400", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3400/1", "price": 3400, "hard_filter_passed": true },
+    { "listing_id": "PXB-3499", "listing_key": "pxb7:PXB-3499", "platform": "pxb7", "url": "https://www.pxb7.com/product/PXB-3499/1", "price": 3499, "hard_filter_passed": true }
+  ],
+  "budget_comparison": {
+    "baseline_listing_id": "2300429263421710046",
+    "breakthrough_listing_id": "PXB-2999",
+    "baseline_price": 1999,
+    "breakthrough_price": 2999,
+    "price_delta": 1000,
+    "hard_condition_gap_closed": ["orundum:30000+"],
+    "scenario_guidance": { "push_map_or_combat": "budget increase mainly buys hard-condition completion" }
+  },
+  "experience_summary": { "effective": ["双平台完成列表和详情复核"], "ineffective_or_missing": ["旧报告遗漏预算内接近项"] },
+  "coverage_gaps": [],
+  "knowledge_update_candidates": [
+    { "id": "budget-layer-output-regression", "apply_status": "deferred", "source_scope": "execution_evidence", "preference_scope": "none" }
+  ],
+  "self_improve": {
+    "closeout_required": true,
+    "status": "complete",
+    "summary_generated": true,
+    "optimizer": { "status": "passed" },
+    "evaluator": { "status": "passed", "passed": true },
+    "knowledge_candidates": { "total": 1, "applied": 0, "verified_existing": 0, "pending": 1 },
+    "profile_preferences_persisted": false
+  },
+  "final_response": "| 层级 | 价格/区服 | 联动核验 | 抽卡资源 | 成熟度 | 皮肤 | 上架时间 | 平台验号时间 | 缺口/风险 | 链接 |\n|---|---:|---|---|---|---|---|---|---|---|\n| 符合 | ¥2999 | 全齐 | 3万 | 成熟 | 200 | 未披露 | 未披露 | 超预算 | PXB-2999 |\n\n### 盼之候选\nPZ-1500、PZ-1560、PZ-1999、PZ-2100、PZ-2300",
+  "cleanup_reports": [{ "ok": true, "remaining_matching_processes": [], "cdp_targets_remaining": [] }]
+}

@@ -1,6 +1,6 @@
 # Skill 优化问题分类
 
-updated_at: 2026-08-06
+updated_at: 2026-08-12
 
 ## 分类
 
@@ -9,6 +9,23 @@ updated_at: 2026-08-06
 - 明日方舟主动找号在 `platforms_required` 包含 `pxb7` 和 `pzds` 时，必须输出 `platform_shortlists.pxb7` 与 `platform_shortlists.pzds`。
 - 两段都必须有 `display_candidates`；若没有完全符合项，允许展示明确标注的 near match / list-only 项，但不得删除该平台段或伪造合格项。
 - 跨平台总榜可以通过 `best_value_listing` 选择任一平台的性价比第一。
+
+### output-in-budget-near-match-not-rendered
+
+- 预算内没有完整满足项、但 `near_match_listings` 已有主预算内详情复核账号时，最终答复必须展示这些账号的 ID/URL，不能只显示预算外精确项。
+- 报告按“预算内完整满足数量 → 预算内接近项 → 预算外完整满足项”固定分层；完整满足为零时必须明示 0，否则触发 `output-budget-status-undisclosed`。
+- 预算外账号可以进入跨平台性价比判断，但不能把预算内对照项从用户视野中挤掉。
+
+### selection-raw-request-provenance-missing
+
+- `user_request` 必须保留用户原话。资源阈值、标准化别名或当前卡池推导只能写入 `request_provenance.profile_input`，并分别保存 raw/profile SHA-256。
+- 用合成 prompt 覆盖原话、缺哈希或 provenance 与 `user_request` 不一致均为 high finding。
+
+### output-final-delivery-contract-missing
+
+- Finalizer 必须生成 `delivery_contract.mode: verbatim_required`，哈希匹配 `final_response`，并包含预算分层、双平台表格和 Self-improve 必需章节。
+- 如果存在 `delivered_response`/delivery receipt 且其哈希与 deterministic report 不一致，触发 `output-final-delivery-artifact-mismatch`；这代表 evaluator 验证的不是用户实际收到的内容。
+- `self_improve` 只存在 artifact、用户可见结果没有复盘章节时，触发 `self-improve-user-summary-missing`。
 
 ### selector-unscoped-freeform-exclusion
 
@@ -194,6 +211,7 @@ updated_at: 2026-08-06
 - 机器标签只在调试、日志或用户明确要求结构化输出时展示。
 - Top 推荐、价格浮动备选、风险备选和排除列表都保留 URL；超预算 200-300 元的账号只进“价格浮动备选”，不得混入主推荐。
 - 明日方舟双平台结果必须通过确定性 renderer 生成 Markdown 表格；artifact 已有候选却在最终答复中漏行时，输出 `output-platform-shortlist-render-underfilled`，保留各平台 available/expected/actual 数量证据。
+- 扩价运行还必须核对预算内 near-match 的 ID/URL 是否真实出现在最终答复；仅判断数组非空不足以证明用户看到了预算内选择。
 
 ### self_improve_closeout
 

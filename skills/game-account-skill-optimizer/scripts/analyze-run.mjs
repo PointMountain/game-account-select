@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const args = process.argv.slice(2);
 
@@ -168,6 +169,7 @@ const knowledgeCandidates = Array.isArray(artifact.knowledge_update_candidates) 
 const selectionProfile = artifact.selection_profile && typeof artifact.selection_profile === 'object'
   ? artifact.selection_profile
   : null;
+const sha256 = (value) => crypto.createHash('sha256').update(String(value ?? '')).digest('hex');
 const profileIsolation = artifact.profile_isolation && typeof artifact.profile_isolation === 'object'
   ? artifact.profile_isolation
   : null;
@@ -484,11 +486,18 @@ if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessRepor
 const slowAttempts = [...attempts, ...communityAttempts].filter((attempt) => Number(attempt.duration_ms ?? 0) >= 30000 || attempt.status === 'timeout');
 if (slowAttempts.length) {
   const platforms = [...new Set(slowAttempts.map(platformName))];
+  const budgetBreaches = slowAttempts.filter((attempt) => {
+    if (attempt.status === 'timeout') return true;
+    const budget = Number(attempt.wait_budget_ms);
+    return !Number.isFinite(budget) || budget <= 0 || Number(attempt.duration_ms ?? 0) > budget;
+  });
   addFinding({
     id: 'runtime-slow-platform-path',
-    severity: 'high',
+    severity: budgetBreaches.length ? 'high' : 'info',
     category: 'runtime',
-    summary: `Slow or timed-out platform path detected: ${platforms.join(', ')}`,
+    summary: budgetBreaches.length
+      ? `Slow or timed-out platform path exceeded its wait budget: ${platforms.join(', ')}`
+      : `Slow platform path completed inside its recorded wait budget: ${platforms.join(', ')}`,
     evidence: slowAttempts.map((attempt) => {
       const budget = attempt.wait_budget_ms ? `budget=${attempt.wait_budget_ms}ms` : 'budget=missing';
       return `${platformName(attempt)} ${attempt.tool ?? ''} ${attempt.query ?? ''}: ${attempt.duration_ms ?? 'unknown'}ms ${budget} ${attempt.evidence ?? attempt.error_text ?? ''}`.trim();
@@ -1045,6 +1054,97 @@ if (requiresDualPlatformOutput) {
       autopatchSafe: true,
     });
   }
+
+  if (!/本轮复盘与\s*Self-improve/i.test(finalResponse)) {
+    addFinding({
+      id: 'self-improve-user-summary-missing',
+      severity: 'high',
+      category: 'output_format',
+      summary: 'Structured self-improve state exists only in the artifact and was omitted from the user-facing result',
+      evidence: [`self_improve=${selfImprove ? 'present' : 'missing'}`, 'final response does not contain the deterministic self-improve summary section'],
+      suggestedTargets: [
+        'skills/game-account-arknights/scripts/render-selection-report.mjs',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-arknights/SKILL.md',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const requestProvenance = artifact.request_provenance && typeof artifact.request_provenance === 'object'
+    ? artifact.request_provenance
+    : null;
+  const provenanceValid = requestProvenance
+    && String(requestProvenance.raw_user_request ?? '') === String(artifact.user_request ?? '')
+    && requestProvenance.raw_user_request_sha256 === sha256(artifact.user_request ?? '')
+    && requestProvenance.profile_input_sha256 === sha256(requestProvenance.profile_input ?? '');
+  if (!provenanceValid) {
+    addFinding({
+      id: 'selection-raw-request-provenance-missing',
+      severity: 'high',
+      category: 'quality_gate',
+      summary: 'The raw user request and any derived runtime profile must remain separately auditable',
+      evidence: [
+        `request_provenance=${requestProvenance ? 'invalid' : 'missing'}`,
+        `user_request_chars=${String(artifact.user_request ?? '').length}`,
+        `selection_profile_source_chars=${String(selectionProfile?.source_text ?? '').length}`,
+      ],
+      suggestedTargets: [
+        'skills/game-account-select/scripts/create-run-artifact.mjs',
+        'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const deliveryContract = artifact.delivery_contract && typeof artifact.delivery_contract === 'object'
+    ? artifact.delivery_contract
+    : null;
+  const responseHash = sha256(finalResponse);
+  const requiredSections = ['预算分层', '螃蟹候选', '盼之候选', '本轮复盘与 Self-improve'];
+  const missingDeliverySections = requiredSections.filter((section) => !finalResponse.includes(section));
+  if (deliveryContract?.mode !== 'verbatim_required'
+    || deliveryContract?.final_response_sha256 !== responseHash
+    || missingDeliverySections.length) {
+    addFinding({
+      id: 'output-final-delivery-contract-missing',
+      severity: 'high',
+      category: 'quality_gate',
+      summary: 'The finalized report needs a verifiable verbatim-delivery contract so validated content is the content shown to the user',
+      evidence: [
+        `delivery_mode=${deliveryContract?.mode ?? 'missing'}`,
+        `hash_matches=${deliveryContract?.final_response_sha256 === responseHash}`,
+        `missing_sections=${missingDeliverySections.join(',') || 'none'}`,
+      ],
+      suggestedTargets: [
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-arknights/SKILL.md',
+        'skills/game-account-skill-evaluator/references/evaluation-rubric.md',
+      ],
+      autopatchSafe: true,
+    });
+  }
+
+  const deliveredResponse = typeof artifact.delivered_response === 'string'
+    ? artifact.delivered_response
+    : typeof artifact.delivery_receipt?.response === 'string'
+      ? artifact.delivery_receipt.response
+      : null;
+  if (deliveredResponse != null && sha256(deliveredResponse) !== responseHash) {
+    addFinding({
+      id: 'output-final-delivery-artifact-mismatch',
+      severity: 'high',
+      category: 'quality_gate',
+      summary: 'The response delivered to the user differs from the deterministic report that passed evaluation',
+      evidence: [`final_response_sha256=${responseHash}`, `delivered_response_sha256=${sha256(deliveredResponse)}`],
+      suggestedTargets: [
+        'skills/game-account-arknights/SKILL.md',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+      ],
+      autopatchSafe: true,
+    });
+  }
 }
 
 if (/<(?:game_account_evaluation|recommendations|skill_quality_report|community_refresh_report)\b/.test(finalResponse)) {
@@ -1068,7 +1168,7 @@ const feedback = [
 ].join('\n');
 
 const valuationPattern = /配队|队伍|team|主\s*C|主c|main\s*dps|专武|专属音擎|音擎|弧盘|模组|专精|限定|联动|命座|影画|潜能|核心角色|2\s*\+\s*1|1\s*\+\s*1|0\s*\+\s*1|1\s*\+\s*0|0\s*\+\s*0|舒适度|加分项|性价比|直伤电|异放|紊乱|妄想天使|薇薇安|Vivian|希希芙|希德|席德|耀佳音|耀嘉音|琉音|南宫羽/i;
-const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|南宫|狼|苍角|照|耀佳音|耀嘉音|琉音|卢西娅|橘福福|希希芙|希德|席德|妄想天使|异放|紊乱|薇薇安|Vivian|直伤电|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
+const independentTeamPattern = /三\s*(?:队|支)|独立\s*(?:队|三队)|三虚狩|虚狩|3\s*虚狩|柚叶|南宫|狼|苍角|(?:^|[、，,\s])照(?:$|[、，。,\s])|耀佳音|耀嘉音|琉音|卢西娅|橘福福|希希芙|希德|席德|妄想天使|异放|紊乱|薇薇安|Vivian|直伤电|最适配|适配队友|下位替代|共享辅助|抢(?:人|队友|辅助)|组成三队/i;
 const independentTeamConcernPattern = /不(?:能|足|完整|算|应)|缺|少|共享|抢|重复|无法|没法|没有证明|未证明|未验证|下位|旧口径|陷阱|误判|补齐|确认|风险/i;
 const hardConditionBudgetPattern = /给定金额.*(?:没有|无|不足).*满足|预算.*(?:没有|无|不足).*满足|没有满足条件|无满足条件|扩大(?:金额|预算|价格|范围)|突破.{0,6}(?:预算|价位|价格)|超预算|提高.{0,4}(?:预算|额度)|价格最低.*满足|最低.*满足|最低满足价|硬性标准.*预算/i;
 const uncertaintyText = [
@@ -1194,6 +1294,56 @@ if (selectionProfile?.budget_expansion?.enabled === true && exactBeyondBudget.le
     ],
     autopatchSafe: true
   });
+}
+if (isArknightsRun && selectionProfile?.budget_expansion?.enabled === true && exactBeyondBudget.length > 0) {
+  const inPrimaryBudget = (listing) => {
+    const price = Number(listing?.price);
+    if (!Number.isFinite(price)) return false;
+    const min = Number(selectionProfile?.budget?.primary_min);
+    if (Number.isFinite(min) && price < min) return false;
+    return !Number.isFinite(primaryBudgetMax) || price <= primaryBudgetMax;
+  };
+  const hasInPrimaryExact = [...recommendations, ...backupListings]
+    .some((listing) => listingExplicitlyPassesHardConditions(listing) && inPrimaryBudget(listing));
+  const budgetInNearMatches = nearMatchListings.filter(inPrimaryBudget);
+  const visibleBudgetInNearMatches = budgetInNearMatches.filter((listing) => {
+    const id = String(listing?.listing_id ?? '');
+    const url = String(listing?.url ?? '');
+    return Boolean((id && finalResponse.includes(id)) || (url && finalResponse.includes(url)));
+  });
+  const minimumExpected = Math.min(5, budgetInNearMatches.length);
+  if (!hasInPrimaryExact && minimumExpected > 0 && visibleBudgetInNearMatches.length < minimumExpected) {
+    addFinding({
+      id: 'output-in-budget-near-match-not-rendered',
+      severity: 'high',
+      category: 'output_format',
+      summary: 'Out-of-budget exact matches must not hide already-verified near matches inside the user\'s primary budget',
+      evidence: [
+        `primary_budget_max=${Number.isFinite(primaryBudgetMax) ? primaryBudgetMax : 'unknown'}`,
+        `budget_in_near_matches=${budgetInNearMatches.map((listing) => listing.listing_id ?? listing.url).join(',')}`,
+        `expected_rendered=${minimumExpected}`,
+        `actual_rendered=${visibleBudgetInNearMatches.length}`,
+      ],
+      suggestedTargets: [
+        'skills/game-account-arknights/scripts/render-selection-report.mjs',
+        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
+        'skills/game-account-toolkit/references/shared-listing-schema.md',
+      ],
+      autopatchSafe: true,
+    });
+  }
+  const budgetStatusDisclosed = /预算内完整满足全部硬条件[：:]\s*0\s*个|预算内未发现.*完整满足|预算内没有.*完整满足/.test(finalResponse);
+  if (!hasInPrimaryExact && !budgetStatusDisclosed) {
+    addFinding({
+      id: 'output-budget-status-undisclosed',
+      severity: 'high',
+      category: 'output_format',
+      summary: 'The final result must explicitly say when the primary budget contains zero full hard-condition matches',
+      evidence: [`primary_budget_max=${Number.isFinite(primaryBudgetMax) ? primaryBudgetMax : 'unknown'}`, 'final response does not disclose zero in-budget exact matches'],
+      suggestedTargets: ['skills/game-account-arknights/scripts/render-selection-report.mjs'],
+      autopatchSafe: true,
+    });
+  }
 }
 
 const needsCommunityEvidence = valuationPattern.test(uncertaintyText)

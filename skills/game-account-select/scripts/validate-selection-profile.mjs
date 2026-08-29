@@ -24,8 +24,11 @@ const approximatePrefix = parseSelectionProfile('明日方舟限定多，约1000
 assert.equal(approximatePrefix.budget.target, 1000);
 assert.equal(approximatePrefix.budget.primary_min, 800);
 assert.equal(approximatePrefix.budget.primary_max, 1200);
-const conflicting = parseSelectionProfile('明日方舟限定多、战力也高，约3000元');
-assert.ok(conflicting.clarification_required.includes('objective_conflict'));
+const naturalComposite = parseSelectionProfile('明日方舟限定多、战力也高，约3000元');
+assert.ok(!naturalComposite.clarification_required.includes('objective_conflict'));
+assert.equal(naturalComposite.objective, 'custom');
+const explicitlyUndecided = parseSelectionProfile('明日方舟约3000元，我没想好收藏还是战力哪个优先');
+assert.ok(explicitlyUndecided.clarification_required.includes('objective_conflict'));
 const explicitBlend = parseSelectionProfile('明日方舟限定和战力都要兼顾，约3000元');
 assert.ok(!explicitBlend.clarification_required.includes('objective_conflict'));
 const expandable = parseSelectionProfile('联动全齐，2000元以内；如果找不到可以突破预算上限，找最低满足价，同时保留预算内接近的号');
@@ -53,6 +56,12 @@ assert.ok(resourceFirst.hard_conditions.includes('orundum:80000-120000'));
 const structuredComposite = parseSelectionProfile('明日方舟，2000元左右，联动全齐，高练直接玩，合成玉10万左右');
 assert.equal(structuredComposite.objective, 'custom');
 assert.equal(structuredComposite.confirmation_required, false, 'multiple explicit hard/scenario requirements form a complete custom profile and should not trigger an unnecessary choice');
+const reportedRegression = parseSelectionProfile('帮我仔仔细细找一个2000元以下 限定齐全的 练度看得过去 且抽卡资源可以满足我下个池子出货的账号，多挑几个差不多的');
+assert.equal(reportedRegression.budget.primary_max, 2000);
+assert.equal(reportedRegression.objective, 'custom');
+assert.ok(reportedRegression.hard_conditions.includes('limited_complete:true'), '“限定齐全”必须成为独立硬条件，不能误用联动完整度');
+assert.equal(reportedRegression.confirmation_required, false, 'a coherent collector + combat + resource request must freeze automatically');
+assert.equal(reportedRegression.budget_expansion.enabled, true, 'price expansion remains an automatic fallback unless the user explicitly forbids it');
 
 const accountRecencyPreference = parseSelectionProfile('明日方舟2000元左右，联动全齐，合成玉6万以上，不要只有早期收藏且阵容断代的陈年仓库号');
 assert.deepEqual(accountRecencyPreference.exclusions, [], 'account-level age language must not become an operator exclusion');
@@ -84,6 +93,62 @@ assert.equal(artifact.selection_profile.budget_expansion.enabled, true);
 assert.ok(artifact.profile_confirmation.profile_digest);
 assert.deepEqual(artifact.knowledge_update_candidates, []);
 assert.deepEqual(artifact.profile_isolation.durable_updates_from_profile, []);
+assert.equal(artifact.browser_route.status, 'pending_preflight');
+assert.equal(artifact.browser_route.selected_transport, null);
+assert.equal(artifact.request_provenance.raw_user_request, '限定联动多，1000 元左右，螃蟹');
+assert.equal(artifact.request_provenance.profile_input_origin, 'raw_user_request');
+assert.equal(artifact.request_provenance.derived_input_changed, false);
+assert.match(artifact.request_provenance.raw_user_request_sha256, /^[a-f0-9]{64}$/);
+
+const derivedProfileRun = spawnSync(process.execPath, [
+  artifactScript,
+  '--game', '明日方舟',
+  '--user-request', '2000元以下，联动齐全、练度够并能抽下一池',
+  '--profile-request', '2000元以下，联动全齐、队伍成熟，合成玉30000以上',
+  '--json',
+], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
+assert.equal(derivedProfileRun.status, 0, derivedProfileRun.stderr);
+const derivedArtifact = JSON.parse(derivedProfileRun.stdout);
+assert.equal(derivedArtifact.user_request, '2000元以下，联动齐全、练度够并能抽下一池');
+assert.equal(derivedArtifact.request_provenance.profile_input_origin, 'derived_runtime_profile');
+assert.equal(derivedArtifact.request_provenance.derived_input_changed, true);
+assert.ok(derivedArtifact.selection_profile.hard_conditions.includes('orundum:30000+'));
+
+const routedRun = spawnSync(process.execPath, [
+  artifactScript,
+  '--game', '明日方舟',
+  '--user-request', '限定联动多，1000 元左右，螃蟹',
+  '--browser-route-json', JSON.stringify({
+    requested: true,
+    mode: 'unattended',
+    status: 'ready',
+    selected_transport: 'chrome_use_extension',
+    fallback_probe: 'skipped_primary_ready',
+    unattended_safe: true,
+    requires_user_presence_now: false,
+    authorization_may_recur: false,
+  }),
+  '--json',
+], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
+assert.equal(routedRun.status, 0, routedRun.stderr);
+const routedArtifact = JSON.parse(routedRun.stdout);
+assert.equal(routedArtifact.browser_route.selected_transport, 'chrome_use_extension');
+assert.equal(routedArtifact.browser_route.fallback_probe, 'skipped_primary_ready');
+assert.equal(routedArtifact.browser_route.unattended_safe, true);
+
+const invalidUnattendedCdpRun = spawnSync(process.execPath, [
+  artifactScript,
+  '--game', '明日方舟',
+  '--user-request', '限定联动多，1000 元左右，螃蟹',
+  '--browser-route-json', JSON.stringify({
+    mode: 'unattended',
+    status: 'ready',
+    selected_transport: 'web_access_cdp',
+  }),
+  '--json',
+], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
+assert.equal(invalidUnattendedCdpRun.status, 2);
+assert.match(invalidUnattendedCdpRun.stderr, /cannot select web_access_cdp in unattended mode/);
 
 const overrideRun = spawnSync(process.execPath, [
   artifactScript,

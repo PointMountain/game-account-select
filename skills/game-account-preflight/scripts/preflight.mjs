@@ -4,11 +4,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { resolveBrowserRoute } from './browser-routing.mjs';
 
 const args = new Set(process.argv.slice(2));
 const wantsJson = args.has('--json');
 const strict = args.has('--strict');
-const needsBrowser = args.has('--browser');
+const unattended = args.has('--unattended');
+const needsBrowser = args.has('--browser') || unattended;
 const checkAdapters = args.has('--opencli-adapters') || args.has('--adapters');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoSkillsRoot = path.resolve(__dirname, '..', '..');
@@ -158,49 +160,67 @@ checks.push({
   action: communityUpdaterSkill.ok ? 'none' : 'Install game-account-community-updater for evidence refresh support.'
 });
 
-const chromeUse = checkChromeUse();
-checks.push({
-  name: 'chrome-use extension relay',
-  required: false,
-  strict_relevant: false,
-  ok: chromeUse.ok,
-  found: chromeUse.found,
-  detail: chromeUse.detail,
-  required_for: 'preferred permission-light access to the user-visible, logged-in Chrome session',
-  action: chromeUse.ok ? 'none' : 'Install/enable chrome-use and its Chrome extension, or use the web-access CDP fallback.'
+const browser = resolveBrowserRoute({
+  needsBrowser,
+  unattended,
+  checkChromeUse,
+  checkWebAccessSkill,
+  checkChromePort,
 });
 
-const webAccess = checkWebAccessSkill();
-checks.push({
-  name: 'web-access skill',
-  required: false,
-  strict_relevant: false,
-  ok: webAccess.ok,
-  found: webAccess.found,
-  required_for: 'fallback Chrome/CDP access to dynamic or logged-in pages',
-  action: webAccess.ok ? 'none' : 'Install or enable the web-access skill before browser-based community refresh.'
-});
+if (needsBrowser) {
+  checks.push({
+    name: 'chrome-use extension relay',
+    required: false,
+    strict_relevant: false,
+    ok: browser.chromeUse.ok,
+    found: browser.chromeUse.found,
+    detail: browser.chromeUse.detail,
+    required_for: 'primary permission-light access to the user-visible, logged-in Chrome session',
+    action: browser.chromeUse.ok
+      ? 'none'
+      : unattended
+        ? 'Reconnect chrome-use and its Chrome extension before the unattended run.'
+        : 'Reconnect chrome-use and its Chrome extension, or continue interactively with the web-access CDP fallback.'
+  });
 
-const chrome = checkChromePort();
-checks.push({
-  name: 'chrome remote debugging',
-  required: false,
-  strict_relevant: false,
-  ok: chrome.ok,
-  found: chrome.found,
-  required_for: 'web-access browser fallback when chrome-use relay is unavailable',
-  action: chrome.ok ? 'none' : 'Enable Chrome remote debugging and authorize CDP access.'
-});
+  if (!browser.webAccess.skipped) {
+    checks.push({
+      name: 'web-access skill',
+      required: false,
+      strict_relevant: false,
+      ok: browser.webAccess.ok,
+      found: browser.webAccess.found,
+      required_for: 'interactive Chrome/CDP fallback after chrome-use is unavailable',
+      action: browser.webAccess.ok ? 'none' : 'Install or enable web-access only if an interactive CDP fallback is acceptable.'
+    });
+  }
 
-const browserAccessOk = chromeUse.ok || (webAccess.ok && chrome.ok);
-checks.push({
-  name: 'browser automation access',
-  required: needsBrowser,
-  ok: browserAccessOk,
-  found: chromeUse.ok ? 'chrome-use extension relay' : webAccess.ok && chrome.ok ? 'web-access + localhost:9222' : null,
-  required_for: 'dynamic or logged-in platform/community pages',
-  action: browserAccessOk ? 'none' : 'Connect chrome-use through its Chrome extension, or enable the web-access CDP fallback.'
-});
+  if (!browser.chromePort.skipped) {
+    checks.push({
+      name: 'chrome remote debugging',
+      required: false,
+      strict_relevant: false,
+      ok: browser.chromePort.ok,
+      found: browser.chromePort.found,
+      required_for: 'interactive web-access fallback after chrome-use is unavailable',
+      action: browser.chromePort.ok ? 'none' : 'With the user present, enable Chrome remote debugging and authorize CDP access.'
+    });
+  }
+
+  checks.push({
+    name: 'browser automation access',
+    required: true,
+    ok: browser.browserAccessOk,
+    found: browser.route.selected_transport,
+    required_for: 'dynamic or logged-in platform/community pages',
+    action: browser.browserAccessOk
+      ? 'none'
+      : unattended
+        ? 'Reconnect the chrome-use extension relay; web-access/CDP is intentionally disabled in unattended mode.'
+        : 'Reconnect chrome-use, or authorize the web-access CDP fallback while present.'
+  });
+}
 
 const requiredFailures = checks.filter((check) => check.required && !check.ok);
 const optionalFailures = checks.filter((check) => !check.required && !check.ok && check.strict_relevant !== false);
@@ -208,6 +228,8 @@ const result = {
   ok: requiredFailures.length === 0 && (!strict || optionalFailures.length === 0),
   strict,
   needs_browser: needsBrowser,
+  unattended,
+  browser_route: browser.route,
   checks_opencli_adapters: checkAdapters,
   checks,
   missing_required: requiredFailures.map((check) => check.name),
@@ -221,6 +243,7 @@ if (wantsJson) {
 } else {
   console.log(`<preflight_report>`);
   console.log(`  <ok>${result.ok}</ok>`);
+  console.log(`  <browser_route format="json">${JSON.stringify(result.browser_route)}</browser_route>`);
   console.log(`  <checks format="json">${JSON.stringify(result.checks)}</checks>`);
   console.log(`  <missing_optional format="json">${JSON.stringify(result.missing_optional)}</missing_optional>`);
   console.log(`  <missing_required format="json">${JSON.stringify(result.missing_required)}</missing_required>`);

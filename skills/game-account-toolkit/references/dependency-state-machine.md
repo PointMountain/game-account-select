@@ -32,12 +32,13 @@ node --version
 
 ## CHECK_BROWSER_ACCESS
 
-若任务需要平台页面访问，先加载 `chrome-use` 并执行 `chrome-use skills get core --full`，检查扩展 relay；不可用时再加载 `web-access` 并检查 CDP。
+若任务需要平台页面访问，先加载 `chrome-use` 并执行 `chrome-use skills get core --full`，检查扩展 relay。浏览器传输是互斥选择，不是两套依赖的并行体检：relay 成功后立即冻结 `chrome_use_extension`，不得再加载 `web-access`、运行其 `check-deps.mjs` 或探测 remote-debugging。
 
 判定：
 
-- `chrome-use browsers --json` 返回至少一个连接浏览器：优先继续，不要求 remote-debugging-port。
-- `chrome-use` 不可用但 Chrome remote debugging 可用：用 `web-access` 继续。
+- `chrome-use browsers --json` 返回至少一个连接浏览器：使用 `chrome_use_extension` 继续，`fallback_probe` 记为 `skipped_primary_ready`。
+- `chrome-use` 不可用、用户在场且允许交互授权：此时才加载 `web-access`、检查 Chrome remote debugging，并用 `web_access_cdp` 继续。
+- 无人值守模式下 `chrome-use` 不可用：`fallback_probe` 记为 `skipped_unattended`，不得尝试 web-access/CDP；降级静态来源或进入 `NEED_USER_ACTION`。
 - 两条通道都不可用：提示用户连接 `chrome-use` 扩展，或按 `web-access` 指南开启 CDP。
 - 站点内容通过 WebFetch 足够获取：可不启用 CDP。
 
@@ -64,6 +65,10 @@ capabilities:
   chrome_use_relay: true|false
   browser_cdp: true|false
   browser_access: true|false
+browser_route:
+  selected_transport: chrome_use_extension|web_access_cdp|null
+  fallback_probe: skipped_primary_ready|skipped_unattended|completed_after_primary_unavailable
+  unattended_safe: true|false
   web_fetch: true|false
   ocr: true|false
   sample_store: true|false

@@ -1,7 +1,7 @@
 ---
 name: game-account-preflight
-description: 游戏账号 skill 执行前准备和环境校验。检查 Node、git、gh、opencli、chrome-use 扩展桥、web-access/CDP 兜底等依赖，能自动处理的给出安全操作，不能自动处理的输出安装指引。
-argument-hint: "[--json|--strict|--browser|--opencli-adapters]"
+description: 游戏账号 skill 执行前准备和环境校验。检查 Node、git、gh、opencli 和浏览器路由；chrome-use 扩展桥可用时独占浏览器主路径，不再探测 web-access/CDP，并支持禁止交互式授权的无人值守模式。
+argument-hint: "[--json|--strict|--browser|--unattended|--opencli-adapters]"
 ---
 
 # Game Account Preflight Skill
@@ -25,7 +25,11 @@ argument-hint: "[--json|--strict|--browser|--opencli-adapters]"
 node skills/game-account-preflight/scripts/preflight.mjs --json
 ```
 
-如需要浏览器，追加 `--browser`。该检查优先接受已连接的 `chrome-use` 扩展 relay；不可用时才要求 `web-access` + Chrome remote debugging 兜底。如需要确认仓库托管的 Pxb7/PZDS OpenCLI adapter 是否已同步到本机，追加 `--opencli-adapters`。
+如需要浏览器，追加 `--browser`。该检查先验证 `chrome-use` 扩展 relay；一旦可用，就冻结 `browser_route.selected_transport: chrome_use_extension`，跳过 `web-access` 和 remote-debugging 探针，避免双重初始化与授权弹窗。
+
+用户不在电脑前、后台执行或明确要求无人值守时使用 `--unattended`（它隐含 `--browser`）。这个模式禁止 CDP 兜底：若 relay 不可用，预检会停止浏览器路径并记录需要用户恢复扩展连接，不会调用 `web-access`。只有普通交互模式中 relay 确实不可用时，才检查 `web-access` + Chrome remote debugging；启动或授权 CDP 前仍需用户在场。
+
+如需要确认仓库托管的 Pxb7/PZDS OpenCLI adapter 是否已同步到本机，追加 `--opencli-adapters`。
 
 ## 输出
 
@@ -34,6 +38,7 @@ node skills/game-account-preflight/scripts/preflight.mjs --json
 ```xml
 <preflight_report>
   <ok>true|false</ok>
+  <browser_route format="json">{}</browser_route>
   <checks format="json">[]</checks>
   <missing_optional format="json">[]</missing_optional>
   <missing_required format="json">[]</missing_required>
@@ -47,5 +52,7 @@ node skills/game-account-preflight/scripts/preflight.mjs --json
 - 不静默安装全局工具。
 - 不静默安装或修改 Codex skill。
 - 不绕过 Chrome 授权、验证码、登录墙或平台风控。
+- `browser_route.selected_transport` 一旦选定，本轮不再初始化另一条浏览器传输；chrome-use 成功后不得加载 `web-access` 或运行它的 `check-deps.mjs`。
+- `--unattended` 下禁止尝试 `web-access`/CDP，即使本机安装了该 skill。
 - 对缺失的 `opencli`、`chrome-use`、`web-access` 或 Chrome remote debugging 只输出可执行安装/授权指引。
 - 对缺失或版本不一致的仓库托管 OpenCLI adapter，只输出安装脚本指引；不静默写入 `~/.opencli`。

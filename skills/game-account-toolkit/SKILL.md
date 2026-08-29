@@ -57,7 +57,7 @@ game-account-toolkit/
 3. 若全部存在，继续执行。
 4. 若缺少可本地安装的 npm 依赖，先说明将安装什么、安装到哪里、为什么需要，再请求用户确认。
 5. 若缺少系统级依赖或浏览器设置，给出人工安装步骤，不静默安装。
-6. 若目标站点需要浏览器访问，优先加载并遵循 `chrome-use`，先执行 `chrome-use skills get core --full`；其扩展 relay 不可用时，再加载 `web-access` 走 CDP 兜底。
+6. 若目标站点需要浏览器访问，优先加载并遵循 `chrome-use`，先执行 `chrome-use skills get core --full`；relay 可用后冻结单一传输，禁止再加载 `web-access` 或运行 CDP 前置检查。只有 relay 确实不可用且用户在场时，才加载 `web-access` 走 CDP 兜底；无人值守任务不走该兜底。
 
 ## 安全边界
 
@@ -74,7 +74,7 @@ game-account-toolkit/
 
 1. 已验证的 OpenCLI adapter 或静态读取能力。
 2. `chrome-use` 扩展 relay，用命名 session 复用真实 Chrome；本机实测不会触发 remote-debugging 授权弹窗。
-3. `web-access` + CDP 作为浏览器兜底。
+3. `web-access` + CDP 只作为需要用户在场的浏览器兜底，不与 chrome-use 同时初始化。
 4. 本 skill 的 `scripts/check-deps.mjs` 做本地依赖检查。
 5. OCR、截图解析等能力缺失时，先降级为人工截图/文本输入，再建议安装。
 

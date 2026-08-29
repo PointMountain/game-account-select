@@ -196,6 +196,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const listingTimeOmissionFixture = path.join(fixtureDir, 'listing-time-omission-run.json');
   const arknightsSinglePlatformOutputFixture = path.join(fixtureDir, 'arknights-single-platform-output-run.json');
   const arknightsPostRunPresentationFixture = path.join(fixtureDir, 'arknights-post-run-presentation-regression.json');
+  const arknightsBudgetDeliveryFixture = path.join(fixtureDir, 'arknights-budget-delivery-self-improve-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -494,6 +495,28 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     }
   } else {
     issue('Missing Arknights post-run presentation/self-improve optimizer fixture');
+  }
+
+  if (fs.existsSync(arknightsBudgetDeliveryFixture)) {
+    const budgetDeliveryReport = runFixture(arknightsBudgetDeliveryFixture);
+    const findingIds = new Set((budgetDeliveryReport?.findings ?? []).map((finding) => finding.id));
+    const requiredFindings = [
+      'output-in-budget-near-match-not-rendered',
+      'output-budget-status-undisclosed',
+      'self-improve-user-summary-missing',
+      'selection-raw-request-provenance-missing',
+      'output-final-delivery-contract-missing',
+    ];
+    const missing = requiredFindings.filter((id) => !findingIds.has(id));
+    const nearEvidence = (budgetDeliveryReport?.findings ?? [])
+      .find((finding) => finding.id === 'output-in-budget-near-match-not-rendered')?.evidence?.join('\n') ?? '';
+    if (!missing.length && /2300429263421710046/.test(nearEvidence) && /2293093385667313261/.test(nearEvidence)) addScore(5);
+    else {
+      if (missing.length) issue(`Optimizer missed Arknights budget/delivery findings: ${missing.join(', ')}`);
+      if (!/2300429263421710046/.test(nearEvidence) || !/2293093385667313261/.test(nearEvidence)) issue('Optimizer did not preserve the omitted in-budget near-match ids');
+    }
+  } else {
+    issue('Missing Arknights budget/delivery/self-improve optimizer fixture');
   }
 
   if (fs.existsSync(redoFixture)) {
