@@ -8,6 +8,9 @@ const interactive = resolveBrowserRoute({
 });
 assert.equal(interactive.browserAccessOk, true);
 assert.equal(interactive.route.selected_transport, 'ego_browser');
+assert.equal(interactive.route.query_governance, 'ego_ops');
+assert.equal(interactive.route.operation_knowledge, 'progressive_read');
+assert.equal(interactive.route.knowledge_writeback, 'success_only');
 assert.equal(interactive.route.runtime_validation, 'first_browser_operation');
 assert.equal(interactive.route.task_space_required, true);
 assert.equal(interactive.route.cleanup_policy, 'complete_task_space');
@@ -32,5 +35,6 @@ const browserNotRequested = resolveBrowserRoute({
 assert.equal(browserNotRequested.route.status, 'not_required');
 assert.equal(browserNotRequested.route.runtime_validation, 'not_required');
 assert.equal(browserNotRequested.route.task_space_required, false);
+assert.equal(browserNotRequested.route.query_governance, 'not_required');
 
 console.log('game-account-preflight browser routing validation passed');

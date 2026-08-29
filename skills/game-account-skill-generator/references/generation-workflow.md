@@ -1,6 +1,6 @@
 # 游戏账号 skill 生成流程
 
-updated_at: 2026-05-16
+updated_at: 2026-08-30
 
 ## 流程
 
@@ -14,9 +14,10 @@ updated_at: 2026-05-16
    - `{{title_name}}`
    - `{{slug}}`
    - `{{date}}`
-5. 重命名验证样例为 `<slug>-validation-sample.json`。
-6. 运行生成后的 `scripts/validate-sample.mjs`。
-7. 输出生成报告。
+5. 重命名估值样例与 run artifact 为 `<slug>-validation-sample.json`、`<slug>-run-artifact.json`。
+6. 运行生成后的 `scripts/validate-sample.mjs` 和 `game-account-skill-evaluator`。
+7. 输出目录含 toolkit 时运行 `scripts/validate-finalizer.mjs`；外部暂存目录明确标记为待安装后验证。
+8. 输出生成报告。
 
 ## 保守默认
 
@@ -26,6 +27,8 @@ updated_at: 2026-05-16
 - 社区来源全部 `not_checked`
 - 只有命名核心资产、资源和风险字段能给稳定分。
 - 总数量、高等级、极品号宣传词均视为陷阱。
+- 平台 list/detail capability 全部默认为 unsupported；只有 `ego-ops` + `ego-browser` 实证后才能写入 support matrix。
+- 新 skill 必须生成 fixture-independent evaluator、raw-artifact finalizer、确定性 report 和 redo gate 回归。
 
 ## 后续门槛
 
@@ -33,3 +36,4 @@ updated_at: 2026-05-16
 
 - `game-account-community-updater` 刷新社区证据。
 - `game-account-skill-evaluator` 判断是否达到使用标准。
+- `scripts/validate-finalizer.mjs` 验证 sidecar、self-improve、SHA delivery contract 和 redo gate。

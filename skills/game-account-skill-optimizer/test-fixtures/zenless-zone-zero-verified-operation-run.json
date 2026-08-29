@@ -1,0 +1,84 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-zenless-zone-zero",
+  "user_request": "千元内性价比高，硬性标准全部虚狩",
+  "budget_max": 1000,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "JHYXJ0699",
+      "status": "success",
+      "duration_ms": 8200,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-verified-operation",
+      "operation": "pxb7/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-detail.md",
+      "operation_verified": true,
+      "evidence": "verified ego-ops operation returned binding/resources/counts/voidHunters for JHYXJ0699"
+    },
+    {
+      "platform": "pzds",
+      "query": "QL9CHD",
+      "status": "success",
+      "duration_ms": 9000,
+      "wait_budget_ms": 15000,
+      "result_count": 1,
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-verified-operation",
+      "operation": "pzds/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
+      "operation_verified": true,
+      "evidence": "verified ego-ops operation returned binding/resources/counts/voidHunters for QL9CHD"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "ego_ops_verified_operation",
+      "operation": "generic/semantic-search",
+      "query": "绝区零 叶瞬光 配队 星见雅 仪玄",
+      "status": "success",
+      "duration_ms": 8000,
+      "wait_budget_ms": 15000,
+      "result_count": 3,
+      "evidence": "社群证据已读取"
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ0699",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2187082765844721999/1",
+      "price": 788,
+      "recommendation_tier": "primary",
+      "reason": "verified operation found all void hunters and low binding risk"
+    },
+    {
+      "listing_id": "QL9CHD",
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsDetails/QL9CHD/6",
+      "price": 799,
+      "recommendation_tier": "backup",
+      "reason": "verified operation found all void hunters"
+    }
+  ],
+  "backup_listings": [],
+  "excluded_listings": [],
+  "missing_fields": [],
+  "cleanup_reports": [
+    {
+      "ok": true,
+      "query_session_id": "zzz-verified-operation",
+      "ego_task_spaces_remaining": [],
+      "process_audit_after": []
+    }
+  ],
+  "final_response": "已优先复用 verified ego-ops operation，并通过 ego-browser 复验 pxb7 和 pzds 详情。",
+  "user_feedback": []
+}

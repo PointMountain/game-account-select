@@ -52,7 +52,7 @@ const requestedTaskSpaces = unique(valuesAfter('--task-space'));
 const fixturePath = valueAfter('--task-spaces-fixture');
 const processPattern = valueAfter(
   '--process-pattern',
-  'ego-browser\\s+nodejs|run-with-timeout|opencli\\s+(?:pxb7|pzds)|zzz-detail|arknights-(?:list|detail)|selectPageList|goodsList/275',
+  'ego-browser\\s+nodejs|run-with-timeout|run-ego-operation|zzz-detail|arknights-(?:list|detail)|selectPageList|goodsList/275',
 );
 const kill = args.has('--kill');
 
@@ -92,17 +92,20 @@ function readFixture(file) {
   return { absolute, taskSpaces };
 }
 
-function fixtureMatch(taskSpaces, target) {
-  return taskSpaces.find((space) => (
-    String(space?.id ?? '') === target
-    || String(space?.taskId ?? '') === target
-    || String(space?.name ?? '') === target
+function decideTaskSpaceCompletion(taskSpaces, target) {
+  const matched = taskSpaces.find((space) => (
+    String(space?.id ?? '') === String(target)
+    || String(space?.taskId ?? '') === String(target)
+    || String(space?.name ?? '') === String(target)
   )) ?? null;
+  if (!matched) return { action: 'already_closed', matched: null };
+  if (matched.ownership !== 'agent') return { action: 'reject_non_agent', matched };
+  return { action: 'complete_agent_owned', matched };
 }
 
 function completeOwnedTaskSpace(target, fixture) {
   if (dryRun) {
-    const match = fixture ? fixtureMatch(fixture.taskSpaces, target) : null;
+    const match = fixture ? decideTaskSpaceCompletion(fixture.taskSpaces, target).matched : null;
     return {
       target,
       ok: true,
@@ -113,12 +116,32 @@ function completeOwnedTaskSpace(target, fixture) {
     };
   }
 
+  if (fixture) {
+    const decision = decideTaskSpaceCompletion(fixture.taskSpaces, target);
+    const match = decision.matched;
+    const matched = match ? { id: match.id ?? null, taskId: match.taskId ?? null, name: match.name ?? null, ownership: match.ownership ?? null } : null;
+    const result = decision.action === 'already_closed'
+      ? { target, done: true, already_closed: true }
+      : decision.action === 'reject_non_agent'
+        ? { target, done: false, skipped: 'task-space-not-agent-owned', ownership: match.ownership, id: match.id, name: match.name }
+        : { target, done: true, id: match.id, name: match.name, fixture_simulated_completion: true };
+    return {
+      target,
+      ok: result.done === true,
+      dry_run: false,
+      matched,
+      result,
+      execution: { ok: true, status: 0, signal: null, stdout: '', stderr: '', command: 'shared completion decision with fixture execution' },
+    };
+  }
+
   const script = [
     `const target = ${JSON.stringify(target)}`,
     'const spaces = await listTaskSpaces()',
-    'const matched = spaces.find((space) => String(space.id) === String(target) || String(space.taskId) === String(target) || String(space.name) === String(target))',
-    "if (!matched) cliLog(JSON.stringify({ target, done: true, already_closed: true }))",
-    "else if (matched.ownership !== 'agent') cliLog(JSON.stringify({ target, done: false, skipped: 'task-space-not-agent-owned', ownership: matched.ownership, id: matched.id, name: matched.name }))",
+    `const decision = (${decideTaskSpaceCompletion.toString()})(spaces, target)`,
+    'const matched = decision.matched',
+    "if (decision.action === 'already_closed') cliLog(JSON.stringify({ target, done: true, already_closed: true }))",
+    "else if (decision.action === 'reject_non_agent') cliLog(JSON.stringify({ target, done: false, skipped: 'task-space-not-agent-owned', ownership: matched.ownership, id: matched.id, name: matched.name }))",
     'else { const result = await completeTaskSpace(matched.id, { keep: false }); cliLog(JSON.stringify({ target, id: matched.id, name: matched.name, ...result })) }',
   ].join('\n');
   const execution = run('ego-browser', ['nodejs'], { input: `${script}\n`, timeout: 30000 });

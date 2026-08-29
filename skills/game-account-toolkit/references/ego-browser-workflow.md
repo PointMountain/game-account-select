@@ -2,21 +2,19 @@
 
 ## 目标
 
-用一个隔离 task space 完成平台与社区页面的观察、操作、结构化抽取、交叉验证和清理。效率来自复用空间与标签、批量提取和及时停止；准确性来自页面身份验证、最小记录边界和双证据读回。
+在 ego-ops 任务卡和 operation 约束下，用一个隔离 task space 完成平台与社区页面的观察、操作、结构化抽取、交叉验证和清理。效率来自复用空间与标签、批量提取和及时停止；准确性来自页面身份验证、最小记录边界和双证据读回。
 
-## 1. 创建并冻结 task space
+## 1. 从已验证 operation 创建并冻结 task space
 
-首次操作直接运行，不做命令或版本预探针：
+正常筛选只能通过仓库 operation runner 启动；它会校验 manifest、support matrix 和 ego-ops 知识后，在同一 task space 内执行 ego-browser：
 
 ```bash
-ego-browser nodejs <<'EOF'
-const task = await useOrCreateTaskSpace('gas-<game>-<timestamp>')
-await openOrReuseTab('<url>', { wait: true, timeout: 20 })
-cliLog(JSON.stringify({ task_space_id: task.id, page: await pageInfo() }))
-EOF
+npm run query:ego -- --operation <platform>/<game>-list --input '<json>' --task-space gas-<game>-<timestamp> --json
 ```
 
-保存返回的数字 id。后续同一用户目标的所有 heredoc 以 `useOrCreateTaskSpace(id)` 开头；多平台使用少量标签，不为每个平台创建新空间。
+保存返回的数字 id。后续同一用户目标继续传同一个 `--task-space`；多平台不创建独立空间。矩阵单元缺失、operation 漂移或知识未验证时立即 fail closed，记录 coverage gap 并改用用户材料。
+
+维护者探索也必须经由 operation runner 显式执行 `npm run query:ego -- --operation <manifest-candidate> --allow-exploration ...`，不能绕过 runner 直接调用 ego-browser。探索结果在完成知识回写、矩阵升级、离线回归和 live smoke 前，不能进入真实推荐。
 
 ## 2. 先验证页面身份
 
@@ -66,7 +64,7 @@ EOF
 - 只打开短名单详情，避免大量标签和高频访问。
 - 详情页 URL/id 必须与列表记录一致。
 - 角色/装备/资源/绑定事实同时保留来源状态；标题摘要不能替代资产卡片或验号报告。
-- 关键推荐字段至少由两类证据确认：语义文本 + DOM、DOM + 截图、页面 + verified adapter，或页面 + 用户确认。
+- 关键推荐字段至少由两类证据确认：语义文本 + DOM、DOM + 截图、页面实时观察 + ego-ops operation 检查点，或页面 + 用户确认。
 
 ## 6. 操作后验证
 

@@ -29,8 +29,8 @@ description: 明日方舟账号的通用动态估值与筛选能力。把限定/
 3. 预算或主要目标缺失、或用户明确表示尚未决定哪个目标优先时只补问关键项；收藏、战力、养成和资源并列出现时自动形成 `custom` 复合画像，不得强迫用户删减条件或先选择固定抽数。其余缺项用中性假设并写入 `assumptions`。
 4. 查询前向用户展示画像。预算和目标完整时自动记录 `profile_confirmation` 和 digest，冻结为 run-only artifact 后继续，不要求用户先选择预算策略。
    - 只有用户明确未决定主目标产生的 `objective_conflict`，或预算/目标真正缺失时才停止补问；`--profile-confirmed` 仅用于消解已经展示并由用户确认的真实冲突。
-5. 主动找号必须同时运行螃蟹与盼之的明日方舟列表/详情 adapter。两边分别形成可见清单；某边没有完全符合项时仍要显示该平台的近似项或明确覆盖缺口，禁止把单平台结果写成完成态。
-6. 平台 adapter 只读取价格、区服、资产、资源、挂牌/验号时间和风险事实；不得在 adapter 中决定账号是否值得买。
+5. 主动找号必须通过 ego-ops 同时运行螃蟹与盼之的明日方舟列表/详情 operation，并由 ego-browser 在当前页面复验。两边分别形成可见清单；某边没有完全符合项时仍要显示该平台的近似项或明确覆盖缺口，禁止把单平台结果写成完成态。
+6. 平台 operation 只读取价格、区服、资产、资源、挂牌/验号时间和风险事实；不得在查询层决定账号是否值得买。
 7. 用 `scripts/score-listings.mjs` 计算独立基础维度，再按冻结画像做跨平台统一排序；总榜可以选出任意平台的性价比第一，但不能吞掉另一平台清单。
 8. 输出候选、风险、缺失字段、证据覆盖和人工验号项。
 9. 默认先查本轮预算主区间和浮动区间；没有硬条件完整项时，两平台自动向更低价和更高价逐档扩展，各自在首个精确满足价档停止。只有用户明确要求严格预算才禁用；同时保留预算附近近似项，按收藏补齐与推图提升分别解释差价。
@@ -47,14 +47,14 @@ description: 明日方舟账号的通用动态估值与筛选能力。把限定/
 ```bash
 node skills/game-account-select/scripts/parse-selection-profile.mjs --request "明日方舟限定/联动多，1000元左右，螃蟹" --json
 node skills/game-account-arknights/scripts/score-listings.mjs --input <listings.json> --request "战力优先，3000元左右"
-opencli pxb7 arknights-list --minPrice 800 --maxPrice 1200 --limit 20 -f json
-opencli pxb7 arknights-detail <url-or-id> -f json
-opencli pzds arknights-list --minPrice 800 --maxPrice 1200 --limit 20 -f json
-opencli pzds arknights-detail <url-or-id> -f json
+npm run query:ego -- --operation pxb7/arknights-list --task-space <run-id> --min-price 800 --max-price 1200 --limit 20 --json
+npm run query:ego -- --operation pxb7/arknights-detail --task-space <run-id> --input <url-or-id> --json
+npm run query:ego -- --operation pzds/arknights-list --task-space <run-id> --min-price 800 --max-price 1200 --limit 20 --json
+npm run query:ego -- --operation pzds/arknights-detail --task-space <run-id> --input <url-or-id> --json
 node skills/game-account-arknights/scripts/run-dual-platform-selection.mjs --request "限定多，1000元左右" --details-per-platform 5 --display-per-platform 5 --out /tmp/arknights-dual.json --report-out /tmp/arknights-dual.md
 ```
 
-双平台执行器中的 OpenCLI adapter 是结构化批量读取路径，不代表浏览器传输。需要网页复核时必须在外层 selector 已创建的 ego-browser task space 内完成，并把 task space、标签和验证方式写入 `platform_attempts`；结束后用 `completeTaskSpace` 生成 `cleanup_reports`。
+双平台执行器统一使用 ego-ops operation，并在外层 selector 创建的单一 ego-browser task space 内完成。把任务卡、operation、知识状态、task space 和验证方式写入 `platform_attempts`；结束后用 `completeTaskSpace` 生成 `cleanup_reports`。
 
 ## 独立基础维度
 

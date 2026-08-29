@@ -28,6 +28,10 @@ const toolkitPriorityPath = path.resolve('skills/game-account-toolkit/references
 const priorityConfig = fs.existsSync(toolkitPriorityPath)
   ? JSON.parse(fs.readFileSync(toolkitPriorityPath, 'utf8'))
   : { required_default_coverage: ['pxb7', 'pzds'], platforms: [] };
+const supportMatrixPath = path.resolve('skills/game-account-toolkit/references/operation-support-matrix.json');
+const supportMatrix = fs.existsSync(supportMatrixPath)
+  ? JSON.parse(fs.readFileSync(supportMatrixPath, 'utf8'))
+  : { games: {} };
 const platformAliasMap = new Map();
 for (const platform of priorityConfig.platforms ?? []) {
   platformAliasMap.set(String(platform.id).toLowerCase(), platform.id);
@@ -173,6 +177,162 @@ const sha256 = (value) => crypto.createHash('sha256').update(String(value ?? '')
 const profileIsolation = artifact.profile_isolation && typeof artifact.profile_isolation === 'object'
   ? artifact.profile_isolation
   : null;
+
+function supportGameKey() {
+  const text = `${artifact.game ?? ''} ${targetSkill}`;
+  if (/arknights|明日方舟/i.test(text)) return 'arknights';
+  if (/zenless|绝区零|zzz/i.test(text)) return 'zenless-zone-zero';
+  if (/wuthering|鸣潮/i.test(text)) return 'wuthering-waves';
+  if (/neverness|异环/i.test(text)) return 'neverness-to-everness';
+  return null;
+}
+
+const matrixGameKey = supportGameKey();
+const matrixGame = matrixGameKey ? supportMatrix.games?.[matrixGameKey] : null;
+function claimedOperations(attempt) {
+  return unique([
+    String(attempt.operation ?? '').trim(),
+    ...(Array.isArray(attempt.operations) ? attempt.operations.map((operation) => String(operation ?? '').trim()) : []),
+  ]);
+}
+
+function operationMode(operation) {
+  if (/-list$/.test(operation)) return 'list';
+  if (/-detail$/.test(operation)) return 'detail';
+  return null;
+}
+
+function analyzeOperationSupport(attempt, { platformOverride = null, modeOverride = null } = {}) {
+  const platform = platformOverride ?? platformName(attempt);
+  const operations = claimedOperations(attempt);
+  const declaredMode = modeOverride ?? (['list', 'detail'].includes(String(attempt.operation_mode ?? attempt.mode ?? '').toLowerCase())
+    ? String(attempt.operation_mode ?? attempt.mode).toLowerCase()
+    : null);
+  if (attempt.browser_used === false && operations.length === 0) {
+    return { valid: true, platform, operations, reasons: ['non-browser user material'] };
+  }
+  const reasons = [];
+  if (!matrixGameKey || !matrixGame) reasons.push(`game=${matrixGameKey ?? 'unknown'} has no support-matrix entry`);
+  const platformCapabilities = matrixGame?.[platform];
+  if (!platformCapabilities) reasons.push(`platform=${platform} has no support-matrix entry for game=${matrixGameKey ?? 'unknown'}`);
+  if (operations.length === 0) reasons.push('operation claim is missing');
+  for (const operation of operations) {
+    const mode = operationMode(operation);
+    if (!mode) {
+      reasons.push(`operation=${operation} does not identify list/detail mode`);
+      continue;
+    }
+    if (declaredMode && declaredMode !== mode) reasons.push(`attempt mode=${declaredMode}, operation=${operation} claims mode=${mode}`);
+    const capability = platformCapabilities?.[mode];
+    if (!capability) reasons.push(`matrix cell ${matrixGameKey ?? 'unknown'}/${platform}/${mode} is missing`);
+    else if (capability.status !== 'verified') reasons.push(`matrix cell ${matrixGameKey}/${platform}/${mode} status=${capability.status ?? 'missing'}`);
+    else if (!capability.operation) reasons.push(`matrix cell ${matrixGameKey}/${platform}/${mode} has no operation`);
+    else if (capability.operation !== operation) reasons.push(`matrix cell ${matrixGameKey}/${platform}/${mode} expects ${capability.operation}, claimed ${operation}`);
+  }
+  return { valid: reasons.length === 0, platform, operations, reasons };
+}
+
+function nestedOperationAttempts(attempt) {
+  const parentPlatform = platformName(attempt);
+  const records = [];
+  const add = (items, mode, pathLabel) => {
+    for (const [index, item] of (Array.isArray(items) ? items : []).entries()) {
+      records.push({
+        attempt: item,
+        mode,
+        path: `${pathLabel}[${index}]`,
+        platform: item?.platform ? platformName(item) : parentPlatform,
+      });
+    }
+  };
+  add(attempt.list_attempts, 'list', 'list_attempts');
+  add(attempt.detail_attempts, 'detail', 'detail_attempts');
+  add(attempt.budget_expansion?.list_attempts, 'list', 'budget_expansion.list_attempts');
+  add(attempt.budget_expansion?.detail_attempts, 'detail', 'budget_expansion.detail_attempts');
+  if (attempt.health_check?.operation) {
+    records.push({
+      attempt: { ...attempt.health_check, status: attempt.health_check.ok === true ? 'success' : 'error' },
+      mode: 'list',
+      path: 'health_check',
+      platform: parentPlatform,
+    });
+  }
+  return records;
+}
+
+const operationSupportByAttempt = new Map(attempts.map((attempt) => [attempt, analyzeOperationSupport(attempt)]));
+const nestedOperationRecords = attempts.flatMap((attempt) => nestedOperationAttempts(attempt)
+  .map((record) => ({
+    ...record,
+    parent: attempt,
+    analysis: analyzeOperationSupport(record.attempt, { platformOverride: record.platform, modeOverride: record.mode }),
+  })));
+const unsupportedSuccessClaims = attempts.filter((attempt) => {
+  if (!['success', 'partial'].includes(String(attempt.status ?? '').toLowerCase())) return false;
+  return !operationSupportByAttempt.get(attempt).valid;
+});
+const unsupportedNestedClaims = nestedOperationRecords.filter((record) => !record.analysis.valid);
+const operationSummaryMismatches = attempts.flatMap((attempt) => {
+  const nestedOperations = unique(nestedOperationRecords
+    .filter((record) => record.parent === attempt)
+    .flatMap((record) => record.analysis.operations));
+  if (nestedOperations.length === 0) return [];
+  const summaryOperations = claimedOperations(attempt);
+  const same = summaryOperations.length === nestedOperations.length
+    && [...summaryOperations].sort().every((operation, index) => operation === [...nestedOperations].sort()[index]);
+  return same ? [] : [{ attempt, platform: platformName(attempt), summaryOperations, nestedOperations }];
+});
+const attemptsWithInvalidNestedOperations = new Set(unsupportedNestedClaims.map((record) => record.parent));
+const attemptsWithSummaryMismatch = new Set(operationSummaryMismatches.map((item) => item.attempt));
+if (unsupportedSuccessClaims.length || unsupportedNestedClaims.length || operationSummaryMismatches.length) {
+  addFinding({
+    id: 'platform-operation-support-claim-mismatch',
+    severity: 'high',
+    category: 'platform_coverage',
+    summary: 'A platform attempt claimed success without a verified operation in the support matrix',
+    evidence: [
+      ...unsupportedSuccessClaims.flatMap((attempt) => {
+        const analysis = operationSupportByAttempt.get(attempt);
+        const claim = analysis.operations.length ? analysis.operations.join(',') : 'missing';
+        return analysis.reasons.map((reason) => `${matrixGameKey ?? 'unknown'} ${analysis.platform} status=${attempt.status} operations=${claim}: ${reason}`);
+      }),
+      ...unsupportedNestedClaims.flatMap((record) => {
+        const claim = record.analysis.operations.length ? record.analysis.operations.join(',') : 'missing';
+        return record.analysis.reasons.map((reason) => `${matrixGameKey ?? 'unknown'} ${record.platform} ${record.path} status=${record.attempt.status ?? 'missing'} operations=${claim}: ${reason}`);
+      }),
+      ...operationSummaryMismatches.map((item) => `${matrixGameKey ?? 'unknown'} ${item.platform} summary operations=${item.summaryOperations.join(',') || 'missing'} do not equal nested operations=${item.nestedOperations.join(',') || 'missing'}`),
+    ],
+    suggestedTargets: [
+      'skills/game-account-toolkit/references/operation-support-matrix.json',
+      'skills/game-account-toolkit/ego-operations/manifest.json',
+      'skills/game-account-toolkit/scripts/validate-operation-support-matrix.mjs',
+      'skills/game-account-select/references/selection-state-machine.md',
+    ],
+    autopatchSafe: false,
+  });
+}
+const requiredDetailFailures = attempts.flatMap((attempt) => (
+  Array.isArray(attempt.detail_attempts)
+    ? attempt.detail_attempts
+      .filter((detail) => String(detail.status ?? '').toLowerCase() !== 'success')
+      .map((detail) => ({ platform: platformName(attempt), detail }))
+    : []
+));
+if (requiredDetailFailures.length) {
+  addFinding({
+    id: 'platform-required-detail-operation-failed',
+    severity: 'high',
+    category: 'platform_coverage',
+    summary: 'One or more required shortlist detail operations failed, so the affected candidates are not releasable',
+    evidence: requiredDetailFailures.map(({ platform, detail }) => `${platform} ${detail.listing_id ?? detail.url ?? 'unknown'} status=${detail.status ?? 'missing'} operation=${detail.operation ?? 'missing'} error=${detail.error_text ?? 'missing'}`),
+    suggestedTargets: [
+      'skills/game-account-arknights/scripts/run-pxb7-selection.mjs',
+      'skills/game-account-toolkit/scripts/run-ego-operation.mjs',
+      'skills/game-account-select/references/selection-state-machine.md',
+    ],
+    autopatchSafe: false,
+  });
+}
 const executionIssues = [
   ...(Array.isArray(artifact.errors) ? artifact.errors : []),
   ...(Array.isArray(artifact.exceptions) ? artifact.exceptions : []),
@@ -200,6 +360,34 @@ const looksLikeSelectionRun = attempts.length > 0
   || recommendations.length > 0
   || backupListings.length > 0
   || excludedListings.length > 0;
+const requestProvenance = artifact.request_provenance && typeof artifact.request_provenance === 'object'
+  ? artifact.request_provenance
+  : null;
+const provenanceValid = requestProvenance
+  && String(artifact.user_request ?? '').length > 0
+  && String(requestProvenance.raw_user_request ?? '') === String(artifact.user_request ?? '')
+  && requestProvenance.raw_user_request_sha256 === sha256(artifact.user_request ?? '')
+  && String(requestProvenance.profile_input ?? '').length > 0
+  && requestProvenance.profile_input_sha256 === sha256(requestProvenance.profile_input ?? '');
+if (looksLikeSelectionRun && !provenanceValid) {
+  addFinding({
+    id: 'selection-raw-request-provenance-missing',
+    severity: 'high',
+    category: 'quality_gate',
+    summary: 'The raw user request and any derived runtime profile must remain separately auditable',
+    evidence: [
+      `request_provenance=${requestProvenance ? 'invalid' : 'missing'}`,
+      `user_request_chars=${String(artifact.user_request ?? '').length}`,
+      `selection_profile_source_chars=${String(selectionProfile?.source_text ?? '').length}`,
+    ],
+    suggestedTargets: [
+      'skills/game-account-select/scripts/create-run-artifact.mjs',
+      'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
+      'skills/game-account-toolkit/scripts/finalize-game-evaluation.mjs',
+    ],
+    autopatchSafe: true,
+  });
+}
 const hasCoveragePlan = artifact.coverage_plan
   && Array.isArray(artifact.coverage_plan.source_tasks)
   && artifact.coverage_plan.source_tasks.length > 0;
@@ -420,9 +608,10 @@ const browserLikeAttempts = attempts.filter((attempt) => {
     attempt.method,
     attempt.source,
     attempt.fallback_used,
-    attempt.adapter_command,
-    attempt.detail_adapter_command,
-    attempt.verify_command,
+    attempt.operation,
+    attempt.operation_reference,
+    attempt.detail_operation_command,
+    attempt.knowledge_validation_command,
     attempt.evidence,
     attempt.url
   ].filter(Boolean).join('\n');
@@ -440,10 +629,10 @@ const residualProcessReports = cleanupReports.filter((report) => {
     ...(Array.isArray(report.residual_processes) ? report.residual_processes : []),
     ...(Array.isArray(report.leftover_processes) ? report.leftover_processes : [])
   ];
-  return residuals.some((line) => /ego-browser\s+nodejs|run-with-timeout|opencli\s+(?:pxb7|pzds)|zzz-detail|selectPageList|goodsList\/275/i.test(String(line)));
+  return residuals.some((line) => /ego-browser\s+nodejs|run-with-timeout|run-ego-operation|zzz-detail|selectPageList|goodsList\/275/i.test(String(line)));
 });
 const incompleteTaskSpaceReports = cleanupReports.filter((report) => (
-  report?.ok === false
+  report?.ok !== true
   || (Array.isArray(report?.ego_task_spaces_remaining) && report.ego_task_spaces_remaining.length > 0)
 ));
 if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessReports.length || incompleteTaskSpaceReports.length) {
@@ -464,7 +653,7 @@ if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessRepor
         return residuals.map((line) => `residual process after cleanup: ${line}`);
       }),
       ...incompleteTaskSpaceReports.flatMap((report) => [
-        report?.ok === false ? `cleanup_report ok=false${report.error ? `: ${report.error}` : ''}` : null,
+        report?.ok !== true ? `cleanup_report ok=${String(report?.ok)}${report?.error ? `: ${report.error}` : ''}` : null,
         ...(Array.isArray(report?.ego_task_spaces_remaining)
           ? report.ego_task_spaces_remaining.map((taskSpace) => `ego task space remained after cleanup: ${taskSpace}`)
           : []),
@@ -534,6 +723,7 @@ if (missingBudgetAttempts.length) {
 
 const emptyAttempts = attempts.filter((attempt) => {
   const status = String(attempt.status ?? '');
+  if (status === 'unsupported') return false;
   const evidence = `${attempt.error_text ?? ''}\n${attempt.evidence ?? ''}`;
   return status === 'empty_result'
     || status === 'empty'
@@ -558,80 +748,43 @@ if (emptyAttempts.length) {
   });
 }
 
-function explicitFalse(value) {
-  return value === false || String(value).toLowerCase() === 'false';
+function hasVerifiedOperation(attempt) {
+  return attempt.operation_verified === true
+    || attempt.knowledge_status === 'verified_operation_available'
+    || Boolean(attempt.operation_reference && attempt.operation);
 }
 
-function explicitTrue(value) {
-  return value === true || String(value).toLowerCase() === 'true';
-}
-
-function hasVerifiedAdapter(attempt) {
+function hasOperationGap(attempt) {
   const text = [
-    explicitTrue(attempt.adapter_available) ? 'adapter_available_true' : '',
-    explicitTrue(attempt.opencli_adapter_available) ? 'opencli_adapter_available_true' : '',
-    explicitTrue(attempt.detail_adapter_available) ? 'detail_adapter_available_true' : '',
-    explicitTrue(attempt.adapter_verified) ? 'adapter_verified_true' : '',
-    explicitTrue(attempt.detail_adapter_verified) ? 'detail_adapter_verified_true' : '',
-    attempt.opencli_adapter,
-    attempt.adapter_command,
-    attempt.detail_adapter_command,
-    attempt.verify_command
-  ].filter(Boolean).join('\n');
-  return /adapter_available_true|opencli_adapter_available_true|detail_adapter_available_true|adapter_verified_true|detail_adapter_verified_true|opencli\s+(?:browser\s+\S+\s+verify\s+)?(?:pxb7|pzds)\/(?:detail|zzz-detail)|opencli\s+(?:pxb7|pzds)\s+(?:detail|zzz-detail)/i.test(text);
-}
-
-function hasExplicitAdapterGap(attempt) {
-  const fallbackText = [
-    attempt.tool,
+    attempt.knowledge_status,
+    attempt.list_operation_status,
+    attempt.detail_operation_status,
     attempt.fallback_used,
     attempt.error_text,
-    attempt.evidence
+    attempt.evidence,
   ].filter(Boolean).join('\n');
-  const listGap = explicitFalse(attempt.list_adapter_available)
-    && /ego_browser|semantic_snapshot|direct_dom|browser_fetch|visual|browser DOM|自然导航|one-?off|临时|手工|截图|list adapter|列表.*(?:adapter|适配器).*缺|列表.*降级/i.test(fallbackText);
-  const detailGap = explicitFalse(attempt.detail_adapter_available)
-    && /ego_browser|semantic_snapshot|direct_dom|browser_fetch|visual|browser DOM|detail|详情|one-?off|临时|手工|截图|detail adapter|详情.*(?:adapter|适配器).*缺|详情.*降级/i.test(fallbackText);
-  const text = [
-    explicitFalse(attempt.adapter_available) ? 'adapter_available_false' : '',
-    explicitFalse(attempt.opencli_adapter_available) ? 'opencli_adapter_available_false' : '',
-    listGap ? 'list_adapter_available_false' : '',
-    detailGap ? 'detail_adapter_available_false' : '',
-    attempt.tool,
-    attempt.fallback_used,
-    attempt.error_text,
-    attempt.evidence
-  ].filter(Boolean).join('\n');
-  return /adapter_available_false|opencli_adapter_available_false|list_adapter_available_false|detail_adapter_available_false|no\s+opencli\s+adapter|missing\s+adapter|没有.*adapter|没有.*适配器|无.*adapter/i.test(text);
+  return /exploration_required|operation_missing|operation_drift|missing_operation|list_operation_missing|detail_operation_missing/i.test(text);
 }
 
-const adapterGapAttempts = attempts.filter((attempt) => {
-  if (hasVerifiedAdapter(attempt) && !explicitFalse(attempt.list_adapter_available) && !explicitFalse(attempt.detail_adapter_available)) return false;
-  if (hasExplicitAdapterGap(attempt)) return true;
-
-  const text = [
-    attempt.tool,
-    attempt.fallback_used,
-    attempt.error_text,
-    attempt.evidence
-  ].filter(Boolean).join('\n');
-  return !hasVerifiedAdapter(attempt) && /ego_browser|semantic_snapshot|direct_dom|browser_fetch|visual/i.test(text);
+const operationGapAttempts = attempts.filter((attempt) => hasOperationGap(attempt));
+const verifiedOperationAttempts = attempts.filter((attempt) => {
+  if (!hasVerifiedOperation(attempt)) return false;
+  if (attemptsWithInvalidNestedOperations.has(attempt) || attemptsWithSummaryMismatch.has(attempt)) return false;
+  const analysis = operationSupportByAttempt.get(attempt);
+  return analysis?.valid && analysis.operations.length > 0;
 });
-const verifiedAdapterAttempts = attempts.filter((attempt) => {
-  return hasVerifiedAdapter(attempt);
-});
-if (adapterGapAttempts.length) {
+if (operationGapAttempts.length) {
   addFinding({
-    id: 'platform-opencli-adapter-gap',
+    id: 'platform-ego-ops-operation-gap',
     severity: 'medium',
     category: 'platform_coverage',
-    summary: 'Repeat platform paths without a reusable OpenCLI adapter should become adapter-generation candidates',
-    evidence: adapterGapAttempts.map((attempt) => {
+    summary: 'Repeated platform paths without verified ego-ops knowledge should become operation writeback candidates after a successful run',
+    evidence: operationGapAttempts.map((attempt) => {
       const source = `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}`.trim();
       const capability = [
-        explicitFalse(attempt.list_adapter_available) ? 'list_adapter_available=false' : null,
-        explicitFalse(attempt.detail_adapter_available) ? 'detail_adapter_available=false' : null,
-        explicitTrue(attempt.detail_adapter_available) ? 'detail_adapter_available=true' : null
+        `knowledge_status=${attempt.knowledge_status ?? 'missing'}`,
+        attempt.list_operation_status ? `list_operation_status=${attempt.list_operation_status}` : null,
+        attempt.detail_operation_status ? `detail_operation_status=${attempt.detail_operation_status}` : null,
       ].filter(Boolean).join(' ');
       const fallback = attempt.fallback_used ? `fallback=${attempt.fallback_used}` : 'fallback=missing';
       const note = attempt.error_text ?? attempt.evidence ?? '';
@@ -647,17 +800,17 @@ if (adapterGapAttempts.length) {
     autopatchSafe: false
   });
 }
-if (verifiedAdapterAttempts.length) {
+if (verifiedOperationAttempts.length) {
   addFinding({
-    id: 'platform-opencli-adapter-reuse',
+    id: 'platform-ego-ops-operation-reuse',
     severity: 'info',
     category: 'platform_coverage',
-    summary: 'Verified OpenCLI adapters should be reused before falling back to manual browser DOM reads',
-    evidence: verifiedAdapterAttempts.map((attempt) => {
+    summary: 'Verified ego-ops operations should be reused as prior knowledge and revalidated on the current page',
+    evidence: verifiedOperationAttempts.map((attempt) => {
       const source = `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}`.trim();
-      const command = attempt.detail_adapter_command ?? attempt.adapter_command ?? attempt.opencli_adapter ?? 'adapter command missing';
-      const verify = attempt.verify_command ? `verify=${attempt.verify_command}` : 'verify=missing';
-      return `${source}: ${command}; ${verify}; ${attempt.evidence ?? ''}`.trim();
+      const operation = attempt.operation ?? attempt.detail_operation_command ?? 'operation missing';
+      const reference = attempt.operation_reference ? `reference=${attempt.operation_reference}` : 'reference=missing';
+      return `${source}: ${operation}; ${reference}; ${attempt.evidence ?? ''}`.trim();
     }),
     suggestedTargets: [
       'skills/game-account-select/references/selection-state-machine.md',
@@ -769,7 +922,7 @@ function claimsSignatureCompleteness(listing) {
   return /专武|专属音擎|带签|签名|signature|W-Engine|S级音擎|S级武器|0\s*\+\s*1|1\s*\+\s*1|2\s*\+\s*1/i.test(JSON.stringify(listing));
 }
 
-const verifiedDetailPlatforms = new Set(verifiedAdapterAttempts
+const verifiedDetailPlatforms = new Set(verifiedOperationAttempts
   .map(platformName)
   .filter((platform) => ['pxb7', 'pzds'].includes(platform)));
 const statusRelevantListings = [...recommendations, ...backupListings]
@@ -786,9 +939,9 @@ if (isZenlessRun() && verifiedDetailPlatforms.size > 0 && listingsMissingAgentSt
     category: 'platform_coverage',
     summary: 'ZZZ pxb7/pzds detail results should preserve asset-card agentStatuses before valuation',
     evidence: [
-      ...verifiedAdapterAttempts
+      ...verifiedOperationAttempts
         .filter((attempt) => verifiedDetailPlatforms.has(platformName(attempt)))
-        .map((attempt) => `${platformName(attempt)} verified detail adapter: ${attempt.adapter_command ?? attempt.detail_adapter_command ?? attempt.opencli_adapter ?? 'command missing'}`),
+        .map((attempt) => `${platformName(attempt)} verified detail operation: ${attempt.operation ?? attempt.detail_operation_command ?? 'operation missing'}; ${attempt.operation_reference ?? 'reference missing'}`),
       ...listingsMissingAgentStatuses.map((listing) => {
         const id = listing.listing_id ?? listing.id ?? listing.title ?? listing.url ?? 'unknown';
         return `${listingPlatform(listing)} ${id}: missing agentStatuses while using ZZZ asset-card detail data`;
@@ -826,8 +979,9 @@ if (isZenlessRun() && verifiedDetailPlatforms.size > 0 && listingsMissingSWeapon
       'skills/game-account-select/references/selection-state-machine.md',
       'skills/game-account-toolkit/references/shared-listing-schema.md',
       'skills/game-account-toolkit/references/platform-access-policy.md',
-      'skills/game-account-toolkit/opencli-adapters/games/zenless-zone-zero/clis/pxb7/zzz-detail.js',
-      'skills/game-account-toolkit/opencli-adapters/games/zenless-zone-zero/clis/pzds/zzz-detail.js',
+      'skills/game-account-toolkit/ego-operations/zzz-parsers.mjs',
+      'ego-ops/references/sites/pxb7/operations/zzz-detail.md',
+      'ego-ops/references/sites/pzds/operations/zzz-detail.md',
       'skills/game-account-zenless-zone-zero/references/signature-engines.json',
       'skills/game-account-zenless-zone-zero/references/valuation-rules.md',
       'skills/game-account-skill-optimizer/references/optimization-workflow.md',
@@ -1066,33 +1220,6 @@ if (requiresDualPlatformOutput) {
         'skills/game-account-arknights/scripts/render-selection-report.mjs',
         'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
         'skills/game-account-arknights/SKILL.md',
-      ],
-      autopatchSafe: true,
-    });
-  }
-
-  const requestProvenance = artifact.request_provenance && typeof artifact.request_provenance === 'object'
-    ? artifact.request_provenance
-    : null;
-  const provenanceValid = requestProvenance
-    && String(requestProvenance.raw_user_request ?? '') === String(artifact.user_request ?? '')
-    && requestProvenance.raw_user_request_sha256 === sha256(artifact.user_request ?? '')
-    && requestProvenance.profile_input_sha256 === sha256(requestProvenance.profile_input ?? '');
-  if (!provenanceValid) {
-    addFinding({
-      id: 'selection-raw-request-provenance-missing',
-      severity: 'high',
-      category: 'quality_gate',
-      summary: 'The raw user request and any derived runtime profile must remain separately auditable',
-      evidence: [
-        `request_provenance=${requestProvenance ? 'invalid' : 'missing'}`,
-        `user_request_chars=${String(artifact.user_request ?? '').length}`,
-        `selection_profile_source_chars=${String(selectionProfile?.source_text ?? '').length}`,
-      ],
-      suggestedTargets: [
-        'skills/game-account-select/scripts/create-run-artifact.mjs',
-        'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
-        'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
       ],
       autopatchSafe: true,
     });

@@ -27,6 +27,7 @@ argument-hint: "[run artifact json or --manual notes]"
 - `../game-account-toolkit/references/skill-io-contract.md`
 - `../game-account-toolkit/references/platform-access-policy.md`
 - `../game-account-toolkit/references/platform-priority.json`
+- `../game-account-toolkit/references/operation-support-matrix.json`
 - `references/optimization-workflow.md`
 - `references/issue-taxonomy.md`
 - `references/optimization-knowledge.md`
@@ -114,5 +115,6 @@ autopatch_safe: boolean
 - 只有用户明确要求“实现/应用这些优化”时，才修改目标文件。
 - 修改后必须运行目标 skill 的验证脚本和 `game-account-skill-evaluator`。未通过时输出 `redo_required` 并继续重做。
 - 不把平台失败归咎于用户；必须记录具体失败路径和降级路径。
+- 不把优先级配置当作已支持能力；platform/game/mode 未在 support matrix 标为 verified 时，输出 operation gap 或 unsupported 覆盖缺口。
 - 不绕过验证码、登录墙、反自动化限制或平台频率限制。
 - 不把单次用户反馈直接升级为通用规则；需要标注证据等级和验证需求。

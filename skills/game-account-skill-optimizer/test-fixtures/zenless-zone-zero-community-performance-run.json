@@ -13,12 +13,14 @@
       "duration_ms": 7200,
       "wait_budget_ms": 15000,
       "result_count": 50,
-      "adapter_available": false,
-      "fallback_used": "ego_browser_direct",
+      "query_governance": "ego_ops",
+      "knowledge_status": "exploration_required",
+      "list_operation_status": "operation_missing",
+      "fallback_used": "ego_ops_readonly_exploration",
       "browser_transport": "ego_browser",
       "query_session_id": "gas-zzz-community-performance",
       "ego_task_space_id": 101,
-      "evidence": "opencli list had no pxb7 site command; product pages were readable through browser DOM"
+      "evidence": "ego-ops had no verified pxb7 list operation; product pages were readable through ego-browser semantic and direct reads"
     },
     {
       "platform": "pzds",
@@ -26,12 +28,14 @@
       "status": "partial",
       "duration_ms": 19000,
       "result_count": 10,
-      "adapter_available": false,
-      "fallback_used": "ego_browser_semantic",
+      "query_governance": "ego_ops",
+      "knowledge_status": "exploration_required",
+      "list_operation_status": "operation_missing",
+      "fallback_used": "ego_ops_readonly_exploration",
       "browser_transport": "ego_browser",
       "query_session_id": "gas-zzz-community-performance",
       "ego_task_space_id": 101,
-      "error_text": "no opencli adapter; detail asset tab failed with XMLHttpRequest header error"
+      "error_text": "operation_missing; detail asset tab failed with a page request header error"
     },
     {
       "platform": "xianyu",
@@ -39,13 +43,16 @@
       "status": "timeout",
       "duration_ms": 45000,
       "result_count": 0,
-      "error_text": "adapter response timed out"
+      "query_governance": "ego_ops",
+      "knowledge_status": "exploration_required",
+      "list_operation_status": "operation_missing",
+      "error_text": "ego-ops readonly exploration timed out"
     }
   ],
   "community_attempts": [
     {
       "source": "bilibili",
-      "tool": "opencli subtitle",
+      "tool": "ego_ops_readonly_exploration",
       "query": "绝区零 叶瞬光 配队 星见雅 仪玄 2.8",
       "status": "timeout",
       "duration_ms": 46000,
@@ -54,7 +61,7 @@
     },
     {
       "source": "youtube",
-      "tool": "opencli search",
+      "tool": "ego_ops_readonly_exploration",
       "query": "Zenless Zone Zero Void Hunter teams Miyabi Yixuan Ye Shunguang signature weapon",
       "status": "timeout",
       "duration_ms": 41000,
@@ -63,7 +70,7 @@
     },
     {
       "source": "xiaohongshu",
-      "tool": "opencli search",
+      "tool": "ego_ops_readonly_exploration",
       "query": "绝区零 叶瞬光 配队 星见雅 仪玄",
       "status": "timeout",
       "duration_ms": 42000,
@@ -114,7 +121,7 @@
   ],
   "rule_update_suggestions": [
     "社群配队不确定时必须先找社群答案，不能只用平台标题高置信排序",
-    "opencli B站字幕、YouTube搜索和小红书搜索超时时，应改用浏览器DOM、页面metadata、攻略站或用户截图降级",
+    "ego-ops 读取 B站、YouTube 和小红书超时时，应在同一 task space 里按语义读取、直接读取、视觉读取顺序降级，仍失败则请求用户提供材料",
     "1000元预算允许上下波动二三百的账号应作为价格浮动备选单独展示，并保留链接",
     "全部虚狩不能按三虚狩+两个辅助算完整，必须检查星见雅、仪玄、叶瞬光能否无重复队友组成三队",
     "星见雅队优先确认柚叶；没有柚叶时必须说明耀嘉音、妮可、苍角、月城柳或莱卡恩等下位替代"

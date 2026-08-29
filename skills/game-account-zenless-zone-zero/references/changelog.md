@@ -1,5 +1,11 @@
 # 绝区零（ZZZ）skill changelog
 
+## 2026-08-30
+
+- 用共享确定性 finalizer 统一 provenance 双哈希、run-only 画像、optimizer/evaluator sidecar、self-improve、质量门禁与最终交付哈希，并增加完整回归 fixture。
+- 将 PXB7/PZDS 详情解析器明确降为 `exploration_only`：外部 `ego-ops` 尚无对应 verified operation，正常筛选默认在启动浏览器前 fail closed。
+- 正常评估优先使用用户提供的链接、截图或文本；只有维护者受控探索、知识回写、矩阵升级、离线验证和真实 smoke 全部完成后才能发布平台能力。
+
 ## 2026-08-03
 
 - 迁移明日方舟式 self-improve 闭环：真实 run artifact、`knowledge_update_candidates`、确定性报告、optimizer/evaluator sidecar、applied/pending 知识状态与 redo gate。

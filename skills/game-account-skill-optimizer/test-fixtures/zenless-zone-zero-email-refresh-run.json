@@ -24,7 +24,7 @@
       "status": "timeout",
       "duration_ms": 45000,
       "result_count": 0,
-      "error_text": "adapter response timed out"
+      "error_text": "ego-ops operation timed out"
     }
   ],
   "recommendations": [

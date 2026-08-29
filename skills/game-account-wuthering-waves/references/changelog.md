@@ -1,5 +1,11 @@
 # Wuthering Waves（鸣潮）skill changelog
 
+## 2026-08-30
+
+- 新增可复用 `evaluate-listing.mjs`、确定性 `finalize-evaluation-run.mjs`、run artifact fixture 与 finalizer 回归，不再把样例验证器当作唯一评分入口。
+- 接入统一 `request_provenance`、run-only `selection_profile`、coverage/experience/knowledge candidates、optimizer/evaluator sidecar、delivery hash 与 redo gate。
+- 平台能力按 support matrix fail closed；未验证的 PXB7/PZDS list/detail 不切换到其他网页软件，也不伪装成已覆盖。
+
 ## 2026-05-17
 
 - 增加热门配队/队伍原型评分，明确爱莫林、卡千夏、日月守、奥尤、绯雪队等标签应影响买号排序。

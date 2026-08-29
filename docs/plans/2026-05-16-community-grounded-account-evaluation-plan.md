@@ -53,7 +53,7 @@ Out of scope:
    Rationale: the product's safety model avoids unnecessary保存 of raw pages/screenshots and supports repeatable testing.
 
 4. Treat Douyin as an optional/community signal source when available.
-   Rationale: current local opencli registry exposes Douyin creator/profile/video routes but not a general public search route. The flow should record that limitation and fall back to Bilibili/Xiaohongshu/Tieba/Weibo/search when Douyin cannot be queried reliably.
+   Rationale: the prior Douyin route exposed creator/profile/video paths but not a reliable general public search route. The flow should record that limitation and fall back to Bilibili/Xiaohongshu/Tieba/Weibo when Douyin cannot be queried reliably.
 
 ## Existing Patterns To Follow
 
@@ -153,7 +153,7 @@ Verification:
 
 ## Dependencies
 
-- `opencli` registry currently includes Bilibili search/video/subtitle/comment routes and Xiaohongshu search/note/comment routes.
+- Prior structured routes included Bilibili search/video/subtitle/comment and Xiaohongshu search/note/comment, but all future live access must use ego-ops-governed browser operations.
 - Douyin has creator and hashtag routes but no general public search route in the current registry; the implementation must expose this as a coverage limitation.
 - Live community information is time-sensitive, so all evidence snapshots must include `updated_at`.
 

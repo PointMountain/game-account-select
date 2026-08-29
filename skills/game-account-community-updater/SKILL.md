@@ -18,6 +18,8 @@ argument-hint: "[skill path] [evidence json]"
 
 - `references/update-workflow.md`
 - `../game-account-toolkit/references/community-research-protocol.md`
+- `../game-account-toolkit/references/ego-ops-query-contract.md`
+- `../game-account-toolkit/references/operation-support-matrix.json`
 - `../game-account-toolkit/references/skill-io-contract.md`
 
 ## 执行
@@ -32,7 +34,7 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 
 安全刷新模式：
 
-1. 用 ego-browser、已验证的结构化 adapter 或公开来源获取少量高信号材料；同一刷新目标复用一个 task space，按语义快照、直接 DOM/页内请求、视觉复核的顺序读取并验证。
+1. 由 ego-ops 治理查询并用 ego-browser 获取少量高信号材料；同一刷新目标复用一个 task space，优先复用矩阵中的已验证 operation。没有对应 operation 时只能按 ego-ops 受控探索并记录 coverage gap，不能切换其它查询软件。
 2. 把来源整理为 evidence JSON。
 3. 运行脚本写入快照或输出到临时目录。
 

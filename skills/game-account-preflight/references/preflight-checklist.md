@@ -11,8 +11,7 @@ updated_at: 2026-08-29
 
 ## 条件检查
 
-- opencli：结构化搜索与仓库托管 adapter 的可选交叉验证能力。
-- repo-managed OpenCLI adapters：Pxb7/PZDS 游戏专用字段解析是否已同步到本机 `~/.opencli`。
+- ego-ops：所有动态查询的任务卡、站点 operation、授权边界、结果验证和成功后知识写回层。
 - ego-browser：所有动态、交互式或登录态网页的唯一浏览器传输。显式使用时不提前执行命令、版本或连接探针；首次真实操作验证运行时。
 - OCR：只有当账号资产只在图片中时需要。
 
@@ -27,8 +26,8 @@ updated_at: 2026-08-29
 
 禁止静默自动动作：
 
-- 全局安装 `opencli` 或系统包。
-- 静默写入或覆盖 `~/.opencli` adapter。
+- 全局安装未声明的软件或系统包。
+- 在失败、页面临时异常或未完成验证时更新 ego-ops 的 `last_verified`。
 - 修改浏览器或系统设置。
 - 安装或删除 Codex skills。
 - 写入用户 shell profile。
@@ -40,10 +39,10 @@ updated_at: 2026-08-29
 - 富交互、虚拟化或 canvas 页面先截图并用坐标/真实键盘操作； substantial write 前先做小探针并读回。
 - 首次实际操作若报告命令缺失或环境缺失，读取 ego-browser 的 `references/install.md` 后恢复原任务。
 - 用户控制、inactive 或未分配状态必须暂停等待确认；不能自动夺回控制。
-- 页面不可读时依次尝试 ego-browser 的语义、直接 DOM/页内请求、视觉工作流，再降级为公开元数据、已验证 adapter 或用户链接/截图/文本；每次都记录覆盖缺口。
+- 页面不可读时依次尝试 ego-ops 已验证 operation、低风险只读探索、ego-browser 视觉工作流，再降级为官方来源或用户链接/截图/文本；每次都记录覆盖缺口。
 
 ## 其它降级
 
-- 缺 `opencli`：仍可用 ego-browser 和用户材料完成浏览器读取，adapter 交叉验证标记为未覆盖。
-- 缺 repo-managed OpenCLI adapter：只把详情字段验证标记为降级，不阻止 ego-browser 读取；安装前先比较差异，确认后再加 `--force`。
+- 缺 ego-ops：停止动态查询并安装或链接该 skill；不能绕过治理层直接换其它查询软件。
+- 缺目标站点 operation：允许在明确只读任务卡下探索；成功后才生成脱敏 operation，失败不写回。
 - 缺 OCR：让用户复制文本或手动转写关键资产。

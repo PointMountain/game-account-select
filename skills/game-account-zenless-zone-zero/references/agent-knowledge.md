@@ -105,7 +105,7 @@ standard_or_lower_priority:
 
 - 新增需要记录的代理人时，同步补充中文名、常见别名和专属音擎名。
 - 名称别名只放能在平台页面或可靠资料中确认的写法，避免把泛用 S 音擎误算成专武。
-- 平台 adapter 应输出 `sWEngineNames`；标准化层应同步到 `game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name`。
+- 平台 detail operation 应输出 `sWEngineNames`；标准化层应同步到 `game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name`。
 
 ## 队伍判断
 

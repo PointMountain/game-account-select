@@ -1,5 +1,11 @@
 # Neverness to Everness（异环）skill changelog
 
+## 2026-08-30
+
+- 新增可复用 `evaluate-listing.mjs`、确定性 `finalize-evaluation-run.mjs`、run artifact fixture 与 finalizer 回归，形成可独立复测的估值和交付接口。
+- 接入统一 `request_provenance`、run-only `selection_profile`、coverage/experience/knowledge candidates、optimizer/evaluator sidecar、delivery hash 与 redo gate。
+- 平台能力按 support matrix fail closed；未验证的 PXB7/PZDS list/detail 只记录覆盖缺口，不切换到其他网页软件。
+
 ## 2026-05-16
 
 - 增加 `community-evidence.md` 和 `asset-knowledge.md`，明确异环早期市场下必须命名 S 角色、S 弧盘、觉醒、资源和账号类型。

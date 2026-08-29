@@ -39,8 +39,8 @@
     }
   },
   "platform_attempts": [
-    { "platform": "pxb7", "status": "success", "result_count": 60, "query_session_id": "bad-session", "adapter_available": true, "adapter_verified": true },
-    { "platform": "pzds", "status": "partial", "result_count": 10, "query_session_id": "bad-session", "adapter_available": true, "adapter_verified": true }
+    { "platform": "pxb7", "status": "success", "result_count": 60, "query_session_id": "bad-session", "query_governance": "ego_ops", "operation": "pxb7/arknights-list", "operation_verified": true },
+    { "platform": "pzds", "status": "partial", "result_count": 10, "query_session_id": "bad-session", "query_governance": "ego_ops", "operation": "pzds/arknights-list", "operation_verified": true }
   ],
   "community_attempts": [
     { "source": "local-arknights-snapshot", "status": "success", "result_count": 7 }

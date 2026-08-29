@@ -136,6 +136,8 @@ npm run unlink:skills
 
 **Transparent and reviewable.** Every recommendation should explain why an account is worth checking and why it might be a bad buy. Missing screenshots, missing resources, unclear verification, and binding risk are visible manual-check items.
 
+**One lifecycle, evidence-published capabilities.** All four game skills provide reusable scoring, run-only profiles, raw run artifacts, deterministic finalization, request provenance, self-improvement sidecars, and a delivery-hash gate. A parser alone does not make a platform route supported: normal runs require the support matrix and external `ego-ops` knowledge to agree that an operation is verified; everything else fails closed.
+
 **Self-evolving harness.** Every run leaves a diagnosable artifact: platform attempts, timings, failure text, output, user feedback, and evaluator results. The optimizer handles troubleshooting and target-file routing; the evaluator enforces the quality gate. Low scores, blocking issues, or `redo_required: true` must loop back into redo before the skill is used for real recommendations.
 
 **Safety boundaries first.** This pack only supports pre-purchase judgment. It does not bypass platform limits, run high-frequency scraping, or automate trades. Evidence and rules can evolve, but rule changes should be explainable, verifiable, and traceable.
@@ -168,16 +170,26 @@ Generated skills start with low confidence until their community evidence, scori
 
 ## Maintenance
 
+Current platform-query capabilities:
+
+| Game | PXB7 list/detail | PZDS list/detail | Normal-run behavior |
+| --- | --- | --- | --- |
+| Arknights | `verified` / `verified` | `verified` / `verified` | Governed by `ego-ops` and executed by `ego-browser`. |
+| Zenless Zone Zero | `unsupported` / `unsupported` | `unsupported` / `unsupported` | Use user-supplied links, screenshots, or text; two detail parsers are maintainer-only exploration candidates. |
+| Wuthering Waves | `unsupported` / `unsupported` | `unsupported` / `unsupported` | Record the coverage gap; do not switch to another web tool. |
+| Neverness to Everness | `unsupported` / `unsupported` | `unsupported` / `unsupported` | Record the coverage gap; do not fabricate platform coverage. |
+
 These commands are for repository maintainers and CI-style verification:
 
 ```bash
 npm run list:skills
 npm run verify:skills
 npm run verify:frontmatter
-npm run opencli:adapters:check
-node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install
+npm run verify:query-stack
+npm run verify:operation-support
+npm run verify:game-finalizers
 node skills/game-account-preflight/scripts/preflight.mjs --json
-node skills/game-account-preflight/scripts/preflight.mjs --json --opencli-adapters
+npm run query:ego -- --operation generic/semantic-search --url https://www.pzds.com/gameList --expected 请选择要购买的游戏 --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-run.json --json
@@ -185,7 +197,7 @@ node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-repor
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
 ```
 
-`game-account-toolkit` carries repo-managed Pxb7/PZDS OpenCLI adapters under `skills/game-account-toolkit/opencli-adapters/`. Commands are grouped by game, for example `pxb7/zzz-detail` and `pzds/zzz-detail` for Zenless Zone Zero. They are never installed silently. Use the check/install commands above to sync them into `~/.opencli`; pass `--force` only after reviewing an existing different local adapter.
+All dynamic queries are governed by `ego-ops`: it defines the task card, loads one site operation, revalidates access, and sets observable success criteria. `ego-browser` then executes the read-only work in one isolated task space. The repository manifest stores parser and execution metadata only; it never stores login material or complete private responses. `exploration_only` does not mean supported: the browser starts in a normal run only when both the manifest and external operation knowledge are verified. Maintainers may opt into controlled exploration with `--allow-exploration`, but promotion still requires knowledge writeback, a matrix update, offline validation, and a live smoke check.
 
 Community evidence can refresh in two ways:
 

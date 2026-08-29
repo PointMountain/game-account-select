@@ -7,7 +7,7 @@ The selector should leave behind durable learning without silently rewriting bus
 ```yaml
 knowledge_update_candidate:
   id: string
-  type: platform_pattern|community_evidence|valuation_rule|risk_rule|adapter_gap|optimizer_fixture|evaluator_gate|output_format
+  type: platform_pattern|community_evidence|valuation_rule|risk_rule|operation_gap|optimizer_fixture|evaluator_gate|output_format
   confidence: low|medium|high
   evidence:
     - string
@@ -32,8 +32,8 @@ knowledge_update_candidate:
 
 | Observation | Target | Notes |
 | --- | --- | --- |
-| Platform URL shape, wrong route, blocked state, useful adapter command | `game-account-toolkit/references/platform-access-policy.md` or adapter notes | Only record verified facts, with dates when useful |
-| Repeated missing list/detail adapter | `game-account-skill-optimizer/references/optimization-knowledge.md` and possibly OpenCLI adapter workflow | Do not implement adapter unless explicitly requested and verified |
+| Platform URL shape, wrong route, blocked state, useful operation checkpoint | ego-ops target site operation plus `platform-access-policy.md` | Only record facts verified on the current page |
+| Repeated missing list/detail operation | `game-account-skill-optimizer/references/optimization-knowledge.md` and ego-ops operation workflow | Write back only after a successful, stable, redacted run |
 | Current meta, team consensus, dupe/signature value | Target game `references/community-evidence.md` first | Rule changes need confirmation and fixtures |
 | Stable scoring rule or trap | Target game `references/valuation-rules.md` plus domain knowledge and changelog | Add positive and negative validation cases |
 | User-visible wording problem | `game-account-select/SKILL.md` or `selection-state-machine.md` | Usually autopatch-safe |

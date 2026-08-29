@@ -144,7 +144,7 @@ coverage_plan:
       type: platform_listing|platform_detail|community_evidence|user_input
       source: string
       priority: required|preferred|supplemental
-      start_path: ego_browser_semantic|ego_browser_direct|ego_browser_visual|verified_adapter|natural_navigation|user_material|search
+      start_path: ego_ops_verified_operation|unsupported_fail_closed|local_verified_snapshot|user_material
       success_signal: string
       fallback_order: string[]
       wait_budget_ms: number
@@ -156,7 +156,7 @@ coverage_plan:
 coverage_gap:
   source: string
   task_id: string
-  reason: timeout|empty_result|blocked|login_required|verification|wrong_game|adapter_missing|field_missing|not_checked
+  reason: timeout|empty_result|blocked|login_required|verification|wrong_game|unsupported_operation|operation_missing|operation_drift|field_missing|not_checked
   evidence: string
   fallback_used: string | null
   confidence_effect: string
@@ -225,8 +225,15 @@ platform_attempt:
   ego_task_space_id: number|string|null
   ego_task_space_name: string|null
   browser_targets: string[] # task-space tab target ids only
+  query_governance: ego_ops|not_required
+  knowledge_status: verified_operation_available|exploration_required|operation_drift|generic_readonly_operation|null
+  list_operation_status: verified_operation_available|operation_missing|operation_drift|not_required|null
+  detail_operation_status: verified_operation_available|operation_missing|operation_drift|not_required|null
+  operation: string|null
+  operation_reference: string|null
+  operation_verified: boolean
   observation_method: semantic_snapshot|direct_dom|browser_fetch|visual|null
-  verification_method: semantic_readback|url_and_count_crosscheck|screenshot|adapter_crosscheck|user_confirmation|null
+  verification_method: semantic_readback|url_and_count_crosscheck|screenshot|ego_ops_checkpoint|user_confirmation|null
   started_at: string | null
   duration_ms: number | null
   wait_budget_ms: number | null
@@ -268,7 +275,7 @@ community_attempt:
 
 knowledge_update_candidate:
   id: string
-  type: platform_pattern|community_evidence|valuation_rule|risk_rule|adapter_gap|optimizer_fixture|evaluator_gate|output_format
+  type: platform_pattern|community_evidence|valuation_rule|risk_rule|ego_ops_operation_gap|optimizer_fixture|evaluator_gate|output_format
   confidence: low|medium|high
   evidence: string[]
   observed_in:
@@ -325,7 +332,7 @@ score:
 ## 字段原则
 
 - 原始文本保留用于追溯，但推荐时必须引用结构化字段。
-- `published_at` 与 `platform_verified_at` 是互相独立的来源事实；一个存在不能推导另一个。adapter 可保留站点原始字段名，但进入标准化挂牌和推荐结果时必须映射为这两个字段。
+- `published_at` 与 `platform_verified_at` 是互相独立的来源事实；一个存在不能推导另一个。ego-ops operation 可保留站点原始字段名，但进入标准化挂牌和推荐结果时必须映射为这两个字段。
 - 平台未披露相应时间时保留 `null`，用户可见结果显示“未披露”。`extracted_at`、run artifact 的 `started_at` / `finished_at`、OCR 或截图时间不得回填成上架或验号时间。
 - 真实筛选必须先生成 `success_criteria` 和 `coverage_plan`；没有覆盖计划的结果只能视为临时分析，不能声称完成主动筛选。
 - 缺失字段不能当作好消息，应降低数据完整度分。
@@ -342,7 +349,7 @@ score:
 - ego-browser 查询必须记录 `query_session_id`、`browser_transport`、task space id/name、标签 target、观察方式和验证方式。筛选结束后调用 `completeTaskSpace`，并把 `ego_task_space_closures`、`ego_task_spaces_remaining` 和 `process_audit_after` 写入 cleanup report；只关闭本轮明确记录的空间。
 - 平台或社区来源未完成时必须写入 `coverage_gaps`，并把置信度影响同步到最终推荐限制。
 - 可复用观察先写入 `knowledge_update_candidates`。除非用户确认或本轮目标明确要求应用优化，否则候选不得直接改写游戏估值规则。
-- `verified_existing` 只代表本轮再次验证了运行前已有的 adapter、fallback 或字段，不计入本轮 `applied`；只有本轮实际修改持久文件并跑过 `validation_commands` 才能标记 `applied`。
+- `verified_existing` 只代表本轮再次验证了运行前已有的 ego-ops operation、fallback 或字段，不计入本轮 `applied`；只有本轮实际修改持久文件并跑过 `validation_commands` 才能标记 `applied`。
 - `provenance_reconciliation` 从其它画像 artifact 恢复候选时，必须附 `validation.status: passed`、`method: canonical_rescore`、当前 `profile_digest`、验证命令/时间和覆盖全部目标的 `rescored_listing_ids`；否则 finalizer/evaluator 必须打回。
 - `selection_profile` 只属于本轮。`profile_isolation.durable_updates_from_profile` 必须为空；预算、权重、区服/风险偏好和用户硬条件不得作为永久默认值或 valuation reference。平台字段、别名、脱敏 fixture、证据日期和稳定客观事实可成为 durable 候选。
 - 不同游戏的 `game_specific` 由对应游戏 skill 定义。

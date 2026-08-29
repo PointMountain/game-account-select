@@ -1,0 +1,42 @@
+{
+  "run_id": "zenless-zone-zero-finalizer-contract",
+  "target_skill": "skills/game-account-zenless-zone-zero",
+  "game": "绝区零",
+  "user_request": "评估用户提供的绝区零账号材料",
+  "request_provenance": {
+    "raw_user_request": "评估用户提供的绝区零账号材料",
+    "raw_user_request_sha256": "36ffa53f543f77befe54e141adb6cb56ec88b96f2634e29b74e310481e673a18",
+    "profile_input": "评估用户提供的绝区零账号材料",
+    "profile_input_sha256": "36ffa53f543f77befe54e141adb6cb56ec88b96f2634e29b74e310481e673a18"
+  },
+  "selection_profile": {
+    "source_text": "评估用户提供的绝区零账号材料",
+    "budget": { "target": null, "primary_min": null, "primary_max": null, "flex_min": null, "flex_max": null },
+    "objective": "balanced",
+    "priorities": { "rarity": 50, "combat": 50, "progression": 50, "resources": 50, "skins": 0, "price_efficiency": 50 },
+    "must_have": [],
+    "exclusions": [],
+    "server_preferences": [],
+    "hard_conditions": [],
+    "risk_tolerance": "medium",
+    "platforms": ["user_provided"],
+    "assumptions": [],
+    "clarification_required": [],
+    "confirmation_required": false,
+    "persistence_scope": "run_only"
+  },
+  "profile_isolation": { "persistence_scope": "run_only", "durable_updates_from_profile": [] },
+  "success_criteria": { "minimum_source_coverage": { "platforms": ["user_provided"], "community_sources": [] } },
+  "coverage_plan": {
+    "source_tasks": [{ "id": "user-material", "type": "user_material", "source": "user_provided", "priority": "required", "success_signal": "one structured listing" }],
+    "completeness_gates": { "url_required_for_all_tiers": true }
+  },
+  "platform_attempts": [{ "platform": "user_provided", "status": "success", "result_count": 1, "duration_ms": 0, "browser_used": false, "knowledge_status": "user_supplied_evidence" }],
+  "community_attempts": [],
+  "coverage_gaps": [],
+  "knowledge_update_candidates": [],
+  "evaluations": [{
+    "listing": { "id": "zzz-fixture-001", "platform": "user_provided", "url": "https://example.invalid/zzz-fixture-001", "price": 900, "server": "官服", "published_at": "2026-08-29", "platform_verified_at": null },
+    "zenless_zone_zero_score": { "final_score": 86, "confidence": "medium", "highlights": ["independent team cores"], "concerns": [], "missing_fields": ["PSN binding confirmation"] }
+  }]
+}

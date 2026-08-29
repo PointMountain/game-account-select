@@ -53,6 +53,8 @@ argument-hint: "[游戏] [预算] [偏好]"
 - `references/knowledge-ledger.md`
 - `references/selection-state-machine.md`
 - `../game-account-toolkit/references/ego-browser-workflow.md`
+- `../game-account-toolkit/references/ego-ops-query-contract.md`
+- `../game-account-toolkit/references/operation-support-matrix.json`
 - `../game-account-toolkit/references/skill-io-contract.md`
 
 按状态机执行，不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。每次真实查询都必须执行状态机里的 `POST_RUN_OPTIMIZE` 收尾阶段：先生成 raw run artifact，运行 `game-account-skill-optimizer`，再运行 `game-account-skill-evaluator --from-report=<run-artifact>`，根据门禁结果补查、降级、改写推荐或打回重做。
@@ -94,7 +96,9 @@ node skills/game-account-select/scripts/create-run-artifact.mjs --game "明日�
 
 ## 平台优先级
 
-平台顺序以 `game-account-toolkit/references/platform-priority.json` 为准。用户没有指定平台时，优先把中国账号交易平台按低频、可解释方式纳入候选来源：
+平台顺序以 `game-account-toolkit/references/platform-priority.json` 为准，实际可执行能力以 `operation-support-matrix.json` 为准。优先级不等于支持声明：某个 game/platform/list-or-detail 标为 `unsupported` 时，只记录覆盖缺口，不得切换其它浏览器实现。只有 `ego-ops` 受控探索通过 `ego-browser` 实证并回写 operation 后，才能升级为 `verified`。
+
+用户没有指定平台时，按以下顺序规划候选来源；执行时逐项受支持矩阵约束：
 
 1. 用户提供的链接、截图或指定平台。
 2. 螃蟹账号代售 `https://www.pxb7.com/`。
@@ -138,7 +142,7 @@ node skills/game-account-select/scripts/create-run-artifact.mjs --game "明日�
 
 每次筛选完成后，应把本次运行摘要交给 `game-account-skill-optimizer`，至少包括：
 
-- 平台尝试、查询词、耗时、等待预算、结果数、失败文本、列表/详情 adapter 可用性、降级路径。
+- 平台尝试、查询词、耗时、等待预算、结果数、失败文本、列表/详情 ego-ops operation 状态、降级路径。
 - 社区证据尝试、工具、等待预算、失败文本、正文/字幕/评论是否可读、降级路径。
 - 主推荐、价格浮动备选、风险备选和排除账号，全部保留 URL、价格、上架时间、平台验号时间、分层、降级原因；平台没有公开相应时间时保留 `null` 并在用户文案写“未披露”。
 - 启用自动价格扩展时，额外保留带 `expansion_direction: lower|higher` 的 `budget_breakthrough_listings`、`near_match_listings` 和 `budget_comparison`；比较硬条件补齐、实战、养成、资源、皮肤及风险，而不是只比较数量或总分。

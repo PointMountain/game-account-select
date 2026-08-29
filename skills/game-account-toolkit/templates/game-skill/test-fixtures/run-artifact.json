@@ -1,0 +1,42 @@
+{
+  "run_id": "{{slug}}-finalizer-contract",
+  "target_skill": "skills/game-account-{{slug}}",
+  "game": "{{game_name}}",
+  "user_request": "评估用户提供的 {{game_name}} 账号材料",
+  "request_provenance": {
+    "raw_user_request": "评估用户提供的 {{game_name}} 账号材料",
+    "raw_user_request_sha256": "{{user_request_sha256}}",
+    "profile_input": "评估用户提供的 {{game_name}} 账号材料",
+    "profile_input_sha256": "{{user_request_sha256}}"
+  },
+  "selection_profile": {
+    "source_text": "评估用户提供的 {{game_name}} 账号材料",
+    "budget": { "target": null, "primary_min": null, "primary_max": null, "flex_min": null, "flex_max": null },
+    "objective": "balanced",
+    "priorities": { "rarity": 50, "combat": 50, "progression": 50, "resources": 50, "skins": 0, "price_efficiency": 50 },
+    "must_have": [],
+    "exclusions": [],
+    "server_preferences": [],
+    "hard_conditions": [],
+    "risk_tolerance": "medium",
+    "platforms": ["user_provided"],
+    "assumptions": [],
+    "clarification_required": [],
+    "confirmation_required": false,
+    "persistence_scope": "run_only"
+  },
+  "profile_isolation": { "persistence_scope": "run_only", "durable_updates_from_profile": [] },
+  "success_criteria": { "minimum_source_coverage": { "platforms": ["user_provided"], "community_sources": [] } },
+  "coverage_plan": {
+    "source_tasks": [{ "id": "user-material", "type": "user_material", "source": "user_provided", "priority": "required", "success_signal": "one structured listing" }],
+    "completeness_gates": { "url_required_for_all_tiers": true }
+  },
+  "platform_attempts": [{ "platform": "user_provided", "status": "success", "result_count": 1, "duration_ms": 0, "browser_used": false, "knowledge_status": "user_supplied_evidence" }],
+  "community_attempts": [],
+  "coverage_gaps": [],
+  "knowledge_update_candidates": [],
+  "evaluations": [{
+    "listing": { "id": "{{slug}}-fixture-001", "platform": "user_provided", "url": "https://example.invalid/{{slug}}-fixture-001", "price": 500, "server": "official", "published_at": "{{date}}", "platform_verified_at": null },
+    "score": { "final_score": 80, "confidence": "medium", "highlights": ["named core assets"], "concerns": [], "missing_fields": ["third-party binding confirmation"] }
+  }]
+}

@@ -108,6 +108,37 @@ selection_profile:
 </skill_generation_request>
 ```
 
+## Raw run artifact 与交付门禁
+
+所有真实筛选/估值在输出用户可见文本前必须保存 raw run artifact。四个游戏 skill 共用以下最低字段：
+
+```yaml
+schema_version: "3.0"
+target_skill: skills/game-account-<slug>
+selection_profile:
+  persistence_scope: run_only
+request_provenance:
+  raw_user_request: string
+  raw_user_request_sha256: string
+  profile_input: string
+  profile_input_sha256: string
+coverage_plan: object
+platform_attempts: array
+coverage_gaps: array
+knowledge_update_candidates: array
+self_improve:
+  status: quality_gate_pending|complete|needs_revision
+quality_gate:
+  evaluator_passed: boolean
+  redo_required: boolean
+delivery_contract:
+  mode: verbatim_required
+  final_response_sha256: string
+  rendered_listing_ids: string[]
+```
+
+`delivery_contract.final_response_sha256` 必须等于最终 Markdown 的 SHA-256。`redo_required: true` 时只能补证、修复或明确降级，不能把该 report 当作通过结果。
+
 ## 标准输出标签
 
 ### `<game_account_evaluation>`

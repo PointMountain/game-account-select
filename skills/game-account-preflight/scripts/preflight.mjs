@@ -11,7 +11,6 @@ const wantsJson = args.has('--json');
 const strict = args.has('--strict');
 const unattended = args.has('--unattended');
 const needsBrowser = args.has('--browser') || unattended;
-const checkAdapters = args.has('--opencli-adapters') || args.has('--adapters');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoSkillsRoot = path.resolve(__dirname, '..', '..');
 
@@ -35,33 +34,6 @@ function checkGameAccountSkill(skillName) {
   return { ok: Boolean(found), found };
 }
 
-function checkOpencliAdapters() {
-  const script = path.join(repoSkillsRoot, 'game-account-toolkit', 'scripts', 'install-opencli-adapters.mjs');
-  if (!fs.existsSync(script)) {
-    return {
-      ok: false,
-      found: null,
-      detail: null,
-      action: 'Install game-account-toolkit with repo-managed OpenCLI adapter support.'
-    };
-  }
-
-  const run = spawnSync('node', [script, '--check', '--json'], { encoding: 'utf8' });
-  let detail = null;
-  try {
-    detail = JSON.parse(run.stdout || '{}');
-  } catch {
-    detail = { parse_error: (run.stderr || run.stdout || '').trim() };
-  }
-
-  return {
-    ok: run.status === 0 && detail?.ok === true,
-    found: detail?.opencli_home ?? null,
-    detail,
-    action: 'Run node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install, then verify with opencli validate pxb7/zzz-detail and pzds/zzz-detail.'
-  };
-}
-
 const checks = [];
 const nodeMajor = Number.parseInt(process.versions.node.split('.')[0], 10);
 checks.push({
@@ -82,29 +54,6 @@ for (const command of ['git', 'gh']) {
     found: result.found,
     required_for: command === 'git' ? 'repository workflow' : 'pull requests and CI checks',
     action: result.ok ? 'none' : `Install ${command} and authenticate if needed.`
-  });
-}
-
-const opencli = commandExists('opencli', ['--version']);
-checks.push({
-  name: 'opencli',
-  required: false,
-  ok: opencli.ok,
-  found: opencli.found,
-  required_for: 'structured community/platform search',
-  action: opencli.ok ? 'none' : 'Install opencli or provide community evidence manually.'
-});
-
-if (checkAdapters) {
-  const adapters = checkOpencliAdapters();
-  checks.push({
-    name: 'repo-managed OpenCLI adapters',
-    required: false,
-    ok: adapters.ok,
-    found: adapters.found,
-    required_for: 'shared pxb7/zzz-detail and pzds/zzz-detail account detail extraction',
-    action: adapters.ok ? 'none' : adapters.action,
-    detail: adapters.detail
   });
 }
 
@@ -134,12 +83,22 @@ const browser = resolveBrowserRoute({
 });
 
 if (needsBrowser) {
+  const egoOpsSkill = checkGameAccountSkill('ego-ops');
+  checks.push({
+    name: 'ego-ops skill',
+    required: true,
+    ok: egoOpsSkill.ok,
+    found: egoOpsSkill.found,
+    required_for: 'query task cards, progressive site-operation knowledge, authorization boundaries, verification, and success-only knowledge writeback',
+    action: egoOpsSkill.ok ? 'none' : 'Install or link ego-ops before dynamic platform or community queries.'
+  });
   checks.push({
     name: 'ego-browser route',
     required: true,
     ok: browser.browserAccessOk,
     found: browser.route.selected_transport,
     detail: {
+      query_governance: 'ego_ops',
       runtime_validation: browser.route.runtime_validation,
       task_space_required: browser.route.task_space_required,
       cleanup_policy: browser.route.cleanup_policy,
@@ -157,7 +116,13 @@ const result = {
   needs_browser: needsBrowser,
   unattended,
   browser_route: browser.route,
-  checks_opencli_adapters: checkAdapters,
+  query_governance: 'ego_ops',
+  ego_ops_knowledge_policy: {
+    local_experience: 'read_if_present',
+    site_operation: 'progressive_read_one_site_one_operation',
+    live_revalidation: 'required',
+    writeback: 'success_only',
+  },
   checks,
   missing_required: requiredFailures.map((check) => check.name),
   missing_optional: optionalFailures.map((check) => check.name),

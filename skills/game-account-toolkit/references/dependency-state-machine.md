@@ -10,6 +10,7 @@
 START
   -> CHECK_NODE
   -> FREEZE_BROWSER_ROUTE
+  -> LOAD_EGO_OPS_TASK_CARD
   -> CHECK_OPTIONAL_TOOLS
   -> READY
   -> FIRST_BROWSER_OPERATION
@@ -30,6 +31,9 @@ START
 ```yaml
 browser_route:
   selected_transport: ego_browser
+  query_governance: ego_ops
+  operation_knowledge: progressive_read
+  knowledge_writeback: success_only
   runtime_validation: first_browser_operation
   task_space_required: true
   cleanup_policy: complete_task_space
@@ -38,7 +42,6 @@ browser_route:
 
 ## CHECK_OPTIONAL_TOOLS
 
-- OpenCLI adapter：结构化字段交叉验证和重复路径加速，不是浏览器 fallback。
 - OCR：识别平台验号图中的角色、资源和绑定状态。
 - 本地样本库：保存脱敏且人工确认过的挂牌字段。
 
@@ -46,12 +49,13 @@ browser_route:
 
 ## FIRST_BROWSER_OPERATION
 
-加载 `ego-browser/SKILL.md`，然后直接运行与用户目标相关的首个 `ego-browser nodejs` heredoc：
+先加载 `ego-ops/SKILL.md`、本机经验、目标站点 index 与 operation，建立只读任务卡；再加载 `ego-browser/SKILL.md`，然后通过仓库 runner 运行首个已验证 operation：
 
-1. `useOrCreateTaskSpace(<goal-name>)`。
-2. `openOrReuseTab(<url>, { wait: true, timeout: <seconds> })`。
-3. 用 `snapshotText()` 或 `pageInfo()` 验证页面。
-4. 用 `cliLog()` 输出 task space id 和验证结果。
+```bash
+npm run query:ego -- --operation <platform>/<game>-list --input '<json>' --task-space <goal-name> --json
+```
+
+runner 负责 `useOrCreateTaskSpace`、目标 URL、页面身份与 expected signals 校验，并输出 task space id 和结构化结果。缺失 verified matrix cell 时不启动浏览器，直接进入 `DEGRADED_MODE`。
 
 判定：
 
@@ -64,11 +68,12 @@ browser_route:
 
 ```yaml
 capabilities:
+  ego_ops: true
   ego_browser: true
   semantic_snapshot: true
   browser_context_fetch: true
   visual_interaction: true
-  opencli_adapter: true|false
+  operation_knowledge: verified_operation_available|exploration_required
   ocr: true|false
   sample_store: true|false
 task_space:
@@ -86,9 +91,9 @@ limitations:
 ## DEGRADED_MODE
 
 - 语义树不完整：切换到一次 `js()` IIFE 或视觉工作流。
-- 页内请求失败：保留已加载可见行，标记 `partial`，再用页面元数据、已验证 adapter 或用户材料交叉验证。
+- 页内请求失败：保留已加载可见行并标记 `partial`；正常筛选只允许重验同一个 verified operation 或改用用户材料，不启动探索路径。
 - 无 OCR：只分析文本字段，图片资产列人工确认。
-- 动态页面被阻断：使用公开官方来源、Wiki/攻略站或用户提供链接/截图/文本，并降低置信度。
+- 动态页面被阻断：记录 coverage gap，使用已有本地证据或用户提供链接/截图/文本，并降低置信度。
 
 ## COMPLETE_TASK_SPACE
 

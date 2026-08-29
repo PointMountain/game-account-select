@@ -5,6 +5,12 @@
   "game": "zenless-zone-zero",
   "target_skill": "skills/game-account-zenless-zone-zero",
   "user_request": "2000元左右，虚狩齐全，对应辅助齐全，有一定抽数备战3.0虚狩；还要异放队三小只、直伤电队希希芙+席德+耀嘉音。人工复盘后确认耀嘉音0+0可用，虚狩2+1优先级高于耀嘉音1+1，非虚狩0+1通常优先于1+0，三小只最好都有专武且至少南宫羽要有专武；2000不够则继续提高额度找低价符合项。",
+  "request_provenance": {
+    "raw_user_request": "2000元左右，虚狩齐全，对应辅助齐全，有一定抽数备战3.0虚狩；还要异放队三小只、直伤电队希希芙+席德+耀嘉音。人工复盘后确认耀嘉音0+0可用，虚狩2+1优先级高于耀嘉音1+1，非虚狩0+1通常优先于1+0，三小只最好都有专武且至少南宫羽要有专武；2000不够则继续提高额度找低价符合项。",
+    "raw_user_request_sha256": "caa998413ecadf3050d0cc17ee1fa1c8686db4d325657eeadf19b40bf2e70503",
+    "profile_input": "2000元左右，虚狩齐全，对应辅助齐全，有一定抽数备战3.0虚狩；还要异放队三小只、直伤电队希希芙+席德+耀嘉音。人工复盘后确认耀嘉音0+0可用，虚狩2+1优先级高于耀嘉音1+1，非虚狩0+1通常优先于1+0，三小只最好都有专武且至少南宫羽要有专武；2000不够则继续提高额度找低价符合项。",
+    "profile_input_sha256": "caa998413ecadf3050d0cc17ee1fa1c8686db4d325657eeadf19b40bf2e70503"
+  },
   "budget": {
     "target_cny": 2000,
     "max": 2000,
@@ -13,12 +19,12 @@
   },
   "capabilities": {
     "pxb7": {
-      "list_adapter_available": false,
-      "detail_adapter_available": true
+      "list_operation_status": "unsupported",
+      "detail_operation_status": "unsupported"
     },
     "pzds": {
-      "list_adapter_available": false,
-      "detail_adapter_available": true
+      "list_operation_status": "unsupported",
+      "detail_operation_status": "unsupported"
     }
   },
   "success_criteria": {
@@ -51,8 +57,8 @@
     },
     "completion_conditions": [
       "lowest strict hard-condition match found",
-      "pxb7 and pzds attempted with verified route or explicit zero-result evidence",
-      "detail adapter preserves agentStatuses and sWEngineNames",
+      "platform support gaps are explicit and no unverified route is claimed",
+      "user-supplied evidence preserves agentStatuses and sWEngineNames",
       "all recommendation tiers retain URLs"
     ]
   },
@@ -64,11 +70,9 @@
         "type": "platform_listing",
         "source": "pxb7",
         "priority": "required",
-        "start_path": "natural_navigation",
-        "success_signal": "shortlist low-price candidates and verify details through pxb7/zzz-detail",
+        "start_path": "user_material",
+        "success_signal": "normalize the user-reviewed PXB listing evidence without claiming a browser operation",
         "fallback_order": [
-          "verified_adapter",
-          "browser_dom",
           "user_material"
         ],
         "wait_budget_ms": 15000,
@@ -85,11 +89,9 @@
         "type": "platform_listing",
         "source": "pzds",
         "priority": "required",
-        "start_path": "natural_navigation",
-        "success_signal": "confirm goodsList/275 route and check whether strict candidates exist",
+        "start_path": "support_matrix",
+        "success_signal": "record PZDS ZZZ as unsupported and request user material when needed",
         "fallback_order": [
-          "pzds_health",
-          "browser_dom",
           "user_material"
         ],
         "wait_budget_ms": 15000,
@@ -138,43 +140,39 @@
   "platform_attempts": [
     {
       "platform": "pxb7",
-      "source": "pxb7 list API plus verified detail adapter",
-      "query": "gameId=10312 pageIndex=1-180 pageSize=16; low-price hard-condition shortlist",
+      "source": "user-provided PXB listing evidence",
+      "query": "user-reviewed listing links and structured asset facts",
       "status": "success",
-      "result_count": 29,
-      "list_adapter_available": false,
-      "detail_adapter_available": true,
-      "adapter_available": true,
-      "adapter_verified": true,
-      "adapter_command": "opencli pxb7 zzz-detail <url> -f json",
-      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
-      "asset_status_source": "asset_card_dom",
+      "result_count": 8,
+      "browser_used": false,
+      "list_operation_status": "unsupported",
+      "detail_operation_status": "unsupported",
+      "operation": null,
+      "knowledge_status": "unsupported",
+      "operation_verified": false,
+      "asset_status_source": "user_provided_structured_artifact",
       "asset_status_verified": true,
-      "fallback_used": "list_api_data_array_then_detail_adapter",
-      "evidence": "PXB list endpoint returned product arrays under data[]; 2880 rows scanned with role-name prefilter, then strict candidates verified through pxb7/zzz-detail. Title-only signature-engine words were not used as the sole prefilter.",
+      "fallback_used": "user_material",
+      "evidence": "The fixture preserves listings and structured asset facts supplied by the user; it makes no current platform-operation claim.",
       "duration_ms": 0,
-      "wait_budget_ms": 15000,
-      "query_session_id": "gas-zzz-pxb7-fixture",
-      "browser_targets": []
+      "wait_budget_ms": 0
     },
     {
       "platform": "pzds",
-      "source": "pzds list and health check",
-      "query": "https://www.pzds.com/goodsList/275 first-page review plus health endpoint",
-      "status": "success",
+      "source": "operation support matrix",
+      "query": "zenless-zone-zero/pzds/list+detail",
+      "status": "unsupported",
       "result_count": 0,
-      "list_adapter_available": false,
-      "detail_adapter_available": true,
-      "adapter_available": true,
-      "adapter_verified": true,
-      "adapter_command": "opencli pzds zzz-detail <id> -f json",
-      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
-      "fallback_used": "verified_list_route_plus_pzds_health",
-      "evidence": "PZDS ZZZ goodsList/275 and pzds:health were reachable; first page did not expose a strict low-price match, so PXB detail-verified inventory produced the recommendation.",
+      "browser_used": false,
+      "list_operation_status": "unsupported",
+      "detail_operation_status": "unsupported",
+      "operation": null,
+      "knowledge_status": "unsupported",
+      "operation_verified": false,
+      "fallback_used": "user_material",
+      "evidence": "No verified PZDS ZZZ operation is published; this fixture records the gap instead of claiming coverage.",
       "duration_ms": 0,
-      "wait_budget_ms": 15000,
-      "query_session_id": "gas-zzz-pzds-fixture",
-      "browser_targets": []
+      "wait_budget_ms": 0
     }
   ],
   "community_attempts": [
@@ -576,19 +574,8 @@
   ],
   "missing_fields": [
     "Live seller screenshots should be rechecked immediately before payment.",
-    "PZDS first-page coverage produced no strict low-price match; PXB had the matching inventory in this run.",
+    "PZDS ZZZ platform operations are unsupported; request current user material before treating that platform as covered.",
     "Liuyin is a comparison bonus if present, not a blocker for this reviewed JHYXJ3297 run."
   ],
-  "final_response": "主推 PXB JHYXJ3297，1399元；三虚狩2+1、三小只专武齐、约136抽，耀嘉音0+0可用。JHYXJ9111降为备选：耀嘉音1+1但整体性价比不如JHYXJ3297。付款前复核实时截图、资源、垫池和交付链路。",
-  "cleanup_reports": [
-    {
-      "command": "npm run query:cleanup -- --session gas-zzz-pxb7-fixture --session gas-zzz-pzds-fixture --json",
-      "closed_sessions": [
-        "gas-zzz-pxb7-fixture",
-        "gas-zzz-pzds-fixture"
-      ],
-      "closed_targets": [],
-      "process_audit_after": []
-    }
-  ]
+  "final_response": "主推 PXB JHYXJ3297，1399元；三虚狩2+1、三小只专武齐、约136抽，耀嘉音0+0可用。JHYXJ9111降为备选：耀嘉音1+1但整体性价比不如JHYXJ3297。以上来自用户提供的历史材料，不代表当前平台实证；付款前复核实时截图、资源、垫池和交付链路。"
 }

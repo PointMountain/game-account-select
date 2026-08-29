@@ -11,13 +11,14 @@
       "duration_ms": 8400,
       "wait_budget_ms": 15000,
       "result_count": 1,
-      "adapter_available": true,
-      "adapter_verified": true,
-      "detail_adapter_available": true,
-      "detail_adapter_verified": true,
-      "adapter_command": "opencli pxb7 zzz-detail https://www.pxb7.com/product/2187082765844721999/1 -f json",
-      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
-      "evidence": "verified detail adapter returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-asset-status",
+      "operation": "pxb7/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-detail.md",
+      "operation_verified": true,
+      "evidence": "verified detail operation returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
     },
     {
       "platform": "pzds",
@@ -26,19 +27,21 @@
       "duration_ms": 9100,
       "wait_budget_ms": 15000,
       "result_count": 1,
-      "adapter_available": true,
-      "adapter_verified": true,
-      "detail_adapter_available": true,
-      "detail_adapter_verified": true,
-      "adapter_command": "opencli pzds zzz-detail QLA18X -f json",
-      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
-      "evidence": "verified detail adapter returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-asset-status",
+      "operation": "pzds/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
+      "operation_verified": true,
+      "evidence": "verified detail operation returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
     }
   ],
   "community_attempts": [
     {
       "source": "bilibili",
-      "tool": "opencli subtitle",
+      "tool": "ego_ops_verified_operation",
+      "operation": "generic/semantic-search",
       "query": "绝区零 三虚狩 配队 柚叶 琉音 千夏",
       "status": "success",
       "duration_ms": 8200,
@@ -70,7 +73,15 @@
   "backup_listings": [],
   "excluded_listings": [],
   "missing_fields": [],
-  "final_response": "推荐 QLA18X，备选 JHYXJ0699；已用 pxb7/pzds zzz-detail adapter 读取三虚狩。",
+  "cleanup_reports": [
+    {
+      "ok": true,
+      "query_session_id": "zzz-asset-status",
+      "ego_task_spaces_remaining": [],
+      "process_audit_after": []
+    }
+  ],
+  "final_response": "推荐 QLA18X，备选 JHYXJ0699；已用 pxb7/pzds zzz-detail operation 读取三虚狩。",
   "user_feedback": [
     "螃蟹详情页下面有商品图片，角色右上角数字 x+y 可以直接预览，之后 skill 查询要一起看一下"
   ]

@@ -1,5 +1,11 @@
 # 明日方舟 skill changelog
 
+## 2026-08-30
+
+- 将 PXB7/PZDS 列表与详情统一迁移到 `ego-ops` 治理、`ego-browser` 执行的 operation runner；四个 verified operation 均完成同一 task space 的真实 list→detail smoke，并以独立 cleanup 证明空间关闭且无残留进程。旧查询实现与适配器全部移除。
+- 接入仓库级 operation support matrix：只有 manifest 与外部 operation 知识同时验证的能力才进入正常筛选，失效或未支持组合默认 fail closed。
+- 保留明日方舟专用评分与确定性交付语义，同时纳入四游戏统一的 run artifact、provenance、self-improve 与质量门禁契约。
+
 ## 2026-08-12
 
 - 修复复合画像误补问：收藏、战力、练度与资源并列要求自动冻结为 `custom`；仅当用户明确表示没想好主目标时才产生 `objective_conflict`。
@@ -11,7 +17,7 @@
 
 - 修复“不要陈年仓库号”被当成干员排除词的问题：账号新度进入 run-only `soft_preferences.account_recency` 与人工验号项，干员名匹配增加单字精确边界，避免“陈”等短名反向命中整句。
 - 将 PZDS 多批列表改为单次累积扫描，并在 `platform_attempts[].list_attempts` 保留策略、逻辑批次数、耗时、结果数与 partial 状态，避免第 2/3 批重复导航造成 78 秒慢路径。
-- self-improve 知识状态拆成本轮 `applied`、`verified_existing` 与 pending；已有 adapter 能力不再冒充本轮新增优化。
+- self-improve 知识状态拆成本轮 `applied`、`verified_existing` 与 pending；已有 operation 能力不再冒充本轮新增优化。
 - optimizer 新增 `selector-unscoped-freeform-exclusion` 与 `selection-reconciliation-unvalidated`：手工跨画像补候选若没有 canonical rescore、匹配 digest 与重评分 ID，finalizer/evaluator 会打回，不再因改写 `/tmp` JSON 得到假完成。
 
 ## 2026-08-03
@@ -19,7 +25,7 @@
 - 完整画像展示后自动冻结，不再要求用户先选择“严格预算/允许突破”；关键预算或目标缺失、真实目标冲突时才补问。
 - 预算默认作为优先搜索区间：预算附近没有硬条件完整项时，螃蟹与盼之自动向更低价和更高价逐档扩展，两侧分别在首个满足价档停止；用户明确要求严格预算时禁用。
 - 盼之详情把“游戏资产 → 干员”图墙作为正式后备证据源：合并 `metadataModel.resources` 与 DOM 卡片的名称、精二角标、资源编号和图片 URL，防止出现“精二数量读到、具体干员全丢失”。
-- 盼之逐卡证据改为与 `operatorNames` 对齐的浅层 `operatorImageUrls`，在保留名字到图片对应关系的同时通过 OpenCLI strict-memory 的 12 字段/浅层行结构门禁。
+- 盼之逐卡证据改为与 `operatorNames` 对齐的浅层 `operatorImageUrls`，在保留名字到图片对应关系的同时通过 operation 输出的浅层字段门禁。
 - 浏览器收尾新增 macOS Chrome 窗口基线：在精确 target 清理之外，只关闭本轮新建且全部标签均为查询页/空白页的独立窗口，保留运行前窗口和混合用户窗口。
 
 ## 2026-08-02
@@ -39,16 +45,16 @@
 - “队伍/阵容成熟、成型、完整”和“练度/养成”现在会进入实战与养成权重；皮肤维度改为按公开时装总数递减计分，避免 40 套以上全部错误满分。
 - 联动完成度不再盲信 Pxb7 单一计数字段：合并六星、精二/精一和联动名单后与 PRTS 25 人名册逐名核对，取可复核名单数与平台声明数的较大值，并显式保留 `count_mismatch`、在册与缺失名单。
 
-- Pxb7 详情 adapter 新增 `elite1OperatorNames`、`operatorProgression`、`progressionEvidence` 和 `verificationImageUrls`，把公开验号图与逐干员精二/精一证据纳入运行记录。
+- PXB7 详情 operation 新增 `elite1OperatorNames`、`operatorProgression`、`progressionEvidence` 和 `verificationImageUrls`，把公开验号图与逐干员精二/精一证据纳入运行记录。
 - 修正未知专精/模组的隐含加分：`null` 现在贡献 0 增量；新回归用例确保精二基础可用度与完整专精/模组证据保持区分。
-- 修复 Pxb7 列表跨页时 OpenCLI 1.8.0 重复声明内部 `request` 的问题；一次浏览器 IIFE 现在可稳定返回最多 60 条唯一候选，并在推荐中保留原始资源和估算抽数。
+- 修复 PXB7 列表跨页的内部请求变量冲突；一次 ego-browser IIFE 现在可稳定返回最多 60 条唯一候选，并在推荐中保留原始资源和估算抽数。
 
 - 根据真实筛选反馈，修复“限定/六星数量可能掩盖推图能力”的缺陷：加入社区推荐档位、常驻图价值、对应练度、六类职能覆盖和跨画像 `push_readiness` 罚分。
 - 通过浏览器自动化补充七周年综合榜、常驻图榜和 2026-07-29 超大杯榜证据；只沉淀多来源一致框架，不把单一榜单名次当绝对真理。
 - 新增未养成限定数量陷阱、输出型超大杯职能缺口和成熟小阵容反例回归。
 - 将固定“限定优先/千元/官服低风险”口径改为 run-only 动态 `selection_profile`；同一基础维度可按收藏、战力、资源或自定义画像重新排序。
 - 新增自然语言画像解析、权重归一化、画像确认 digest、独立维度评分和同批候选换榜回归。
-- 增加 Pxb7 明日方舟列表/详情事实 adapter；adapter 不承担估值。
+- 增加 PXB7 明日方舟列表/详情事实 operation；operation 不承担估值。
 - 纠正斥罪/维什戴尔获取类型，新增机器可读 `operator-value-map.json`，并把获取类型、实战、收藏与养成依赖分离。
 - 将 self-improve 限定为稳定事实/别名/脱敏 fixture/证据候选；会话预算、权重、区服和硬条件禁止沉淀。
 

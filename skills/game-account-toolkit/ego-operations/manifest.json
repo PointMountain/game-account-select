@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "query_governance": "ego_ops",
+  "executor": "ego_browser",
+  "operations": [
+    {
+      "id": "pxb7/arknights-list",
+      "game": "arknights",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "list",
+      "availability": "verified",
+      "risk": "low",
+      "entry": "https://www.pxb7.com/buy/10053/1?keyword=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F&searchType=%E8%87%AA%E7%84%B6%E6%90%9C%E7%B4%A2",
+      "expected_signals": ["明日方舟"],
+      "success": "returns unique listing ids, prices, source URLs, and structured list facts"
+    },
+    {
+      "id": "pxb7/arknights-detail",
+      "game": "arknights",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "detail",
+      "availability": "verified",
+      "risk": "low",
+      "expected_signals": ["明日方舟", "商品"],
+      "success": "returns one matching listing with price, assets, risk facts, and source URL"
+    },
+    {
+      "id": "pzds/arknights-list",
+      "game": "arknights",
+      "site": "pzds",
+      "domain": "www.pzds.com",
+      "mode": "list",
+      "availability": "verified",
+      "risk": "low",
+      "entry": "https://www.pzds.com/goodsList/84/6/headerSearch?queryFrom=search&searchType=GAME_NAME",
+      "expected_signals": ["明日方舟"],
+      "success": "returns unique listing ids, prices, source URLs, and structured list facts"
+    },
+    {
+      "id": "pzds/arknights-detail",
+      "game": "arknights",
+      "site": "pzds",
+      "domain": "www.pzds.com",
+      "mode": "detail",
+      "availability": "verified",
+      "risk": "low",
+      "expected_signals": ["明日方舟", "账号"],
+      "success": "returns one matching listing with price, assets, risk facts, and source URL"
+    },
+    {
+      "id": "pxb7/zzz-detail",
+      "game": "zenless-zone-zero",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "detail",
+      "availability": "exploration_only",
+      "risk": "low",
+      "expected_signals": ["绝区零", "商品"],
+      "success": "returns one matching listing with price, binding state, named assets, and source URL"
+    },
+    {
+      "id": "pzds/zzz-detail",
+      "game": "zenless-zone-zero",
+      "site": "pzds",
+      "domain": "www.pzds.com",
+      "mode": "detail",
+      "availability": "exploration_only",
+      "risk": "low",
+      "expected_signals": ["绝区零", "账号"],
+      "success": "returns one matching listing with price, binding state, named assets, and source URL"
+    },
+    {
+      "id": "generic/semantic-search",
+      "game": null,
+      "site": "dynamic",
+      "domain": "user-supplied",
+      "mode": "search",
+      "availability": "generic_readonly",
+      "risk": "low",
+      "expected_signals": [],
+      "success": "returns page identity, a privacy-safe semantic digest, and unique visible links from the requested page"
+    }
+  ]
+}

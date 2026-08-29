@@ -1,0 +1,36 @@
+{
+  "run_id": "operation-support-nested-cross-platform",
+  "target_skill": "skills/game-account-arknights",
+  "game": "明日方舟",
+  "user_request": "验证嵌套 detail operation 必须按真实平台失败",
+  "request_provenance": {
+    "raw_user_request": "验证嵌套 detail operation 必须按真实平台失败",
+    "raw_user_request_sha256": "3853d6089e3fd56b26bddf37d44fd11cb1fde793bba54b30ed2d734a171775ca",
+    "profile_input": "验证嵌套 detail operation 必须按真实平台失败",
+    "profile_input_sha256": "3853d6089e3fd56b26bddf37d44fd11cb1fde793bba54b30ed2d734a171775ca"
+  },
+  "success_criteria": { "minimum_source_coverage": { "platforms": ["pxb7"], "community_sources": [] } },
+  "coverage_plan": { "source_tasks": [{ "id": "pxb7-list-detail", "source": "pxb7", "type": "platform_listing" }] },
+  "platform_attempts": [{
+    "platform": "pxb7",
+    "status": "success",
+    "result_count": 1,
+    "browser_used": true,
+    "operation": "pxb7/arknights-list",
+    "operations": ["pxb7/arknights-list", "pxb7/arknights-detail"],
+    "operation_verified": true,
+    "list_attempts": [{
+      "status": "success",
+      "operation": "pxb7/arknights-list",
+      "result_count": 1
+    }],
+    "detail_attempts": [{
+      "status": "success",
+      "listing_id": "nested-cross-platform",
+      "operation": "pzds/arknights-detail"
+    }],
+    "ego_task_space_id": 92,
+    "ego_task_space_name": "operation-support-nested-cross-platform"
+  }],
+  "cleanup_reports": [{ "ok": true, "ego_task_spaces_remaining": [] }]
+}

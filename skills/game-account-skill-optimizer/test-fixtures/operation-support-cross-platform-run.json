@@ -1,0 +1,26 @@
+{
+  "run_id": "operation-support-cross-platform",
+  "target_skill": "skills/game-account-arknights",
+  "game": "明日方舟",
+  "user_request": "验证跨平台 operation 必须失败",
+  "request_provenance": {
+    "raw_user_request": "验证跨平台 operation 必须失败",
+    "raw_user_request_sha256": "b8679049af4bc42adab8460af47195c9e92b1b883e829ec237d6d8f969866bb9",
+    "profile_input": "验证跨平台 operation 必须失败",
+    "profile_input_sha256": "b8679049af4bc42adab8460af47195c9e92b1b883e829ec237d6d8f969866bb9"
+  },
+  "success_criteria": { "minimum_source_coverage": { "platforms": ["pzds"], "community_sources": [] } },
+  "coverage_plan": { "source_tasks": [{ "id": "pzds-list", "source": "pzds", "type": "platform_listing" }] },
+  "platform_attempts": [{
+    "platform": "pzds",
+    "mode": "list",
+    "status": "success",
+    "result_count": 1,
+    "browser_used": true,
+    "operation": "pxb7/arknights-list",
+    "operation_verified": true,
+    "ego_task_space_id": 91,
+    "ego_task_space_name": "operation-support-cross-platform"
+  }],
+  "cleanup_reports": [{ "ok": true, "ego_task_spaces_remaining": [] }]
+}
