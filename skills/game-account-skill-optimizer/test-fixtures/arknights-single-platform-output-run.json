@@ -23,8 +23,8 @@
     "completeness_gates": { "platforms_required": ["pxb7", "pzds"], "platform_shortlists_required": true }
   },
   "platform_attempts": [
-    { "platform": "pxb7", "status": "success", "result_count": 12, "query_session_id": "gas-arknights-dual-output-gate", "adapter_available": true, "adapter_verified": true },
-    { "platform": "pzds", "status": "success", "result_count": 10, "query_session_id": "gas-arknights-dual-output-gate", "adapter_available": true, "adapter_verified": true }
+    { "platform": "pxb7", "status": "success", "result_count": 12, "query_session_id": "gas-arknights-dual-output-gate", "query_governance": "ego_ops", "operation": "pxb7/arknights-list", "operation_verified": true },
+    { "platform": "pzds", "status": "success", "result_count": 10, "query_session_id": "gas-arknights-dual-output-gate", "query_governance": "ego_ops", "operation": "pzds/arknights-list", "operation_verified": true }
   ],
   "platform_shortlists": {
     "pxb7": {

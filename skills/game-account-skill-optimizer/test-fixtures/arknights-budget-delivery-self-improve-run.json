@@ -36,8 +36,9 @@
       "status": "success",
       "result_count": 165,
       "query_session_id": "gas-arknights-regression",
-      "adapter_available": true,
-      "adapter_verified": true,
+      "query_governance": "ego_ops",
+      "operation": "pxb7/arknights-list",
+      "operation_verified": true,
       "budget_expansion": { "enabled": true, "directions": ["lower", "higher"], "stop_reasons_by_direction": { "lower": "price_floor", "higher": "first_exact_band" } }
     },
     {
@@ -45,8 +46,9 @@
       "status": "partial",
       "result_count": 20,
       "query_session_id": "gas-arknights-regression",
-      "adapter_available": true,
-      "adapter_verified": true,
+      "query_governance": "ego_ops",
+      "operation": "pzds/arknights-list",
+      "operation_verified": true,
       "budget_expansion": { "enabled": true, "directions": ["lower", "higher"], "stop_reasons_by_direction": { "lower": "no_exact", "higher": "no_exact" } }
     }
   ],

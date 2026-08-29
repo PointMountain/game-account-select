@@ -1,5 +1,11 @@
 # Game Account Skill Optimizer Changelog
 
+## 2026-08-30
+
+- 增加 operation support matrix 一致性诊断：平台尝试只有命中 `verified` game/platform/mode operation 才能声称成功或 partial，否则触发高优先级 capability mismatch。
+- 将“存在解析器”和“已发布能力”分离，`unsupported` 覆盖缺口不再被误报为空结果，`exploration_only` 也不能冒充正常筛选证据。
+- 四个游戏 skill 统一接入可复用评分、raw-artifact finalizer、provenance、self-improve、delivery contract 与回归门禁。
+
 ## 2026-08-12
 
 - 增加 `019fdd86` 结构化回归样例：预算内已有 ¥1999/¥1800 接近项、最终却只展示 ¥2999–¥3499 突破项时，必须触发 `output-in-budget-near-match-not-rendered` 与预算零满足披露门禁。
@@ -33,9 +39,9 @@
 - 增加 ZZZ 邮箱未实名出售与社区证据刷新窗口回归样例。
 - 优化器现在能识别“邮箱未实名出售应作为低找回风险加分项”和“真实买号证据 30 天窗口过长”两类问题。
 - 增加社区证据缺口、社区工具降级、等待预算、备选链接和预算浮动备选的优化规则。
-- 增加 OpenCLI adapter 缺口诊断：高价值平台没有现成站点命令时，建议按 `opencli-adapter-author` 生成并验证私有 adapter，而不是长期依赖一次性 DOM 抽取。
-- 增加 OpenCLI adapter 复用诊断：pxb7/pzds 详情 adapter 通过 `browser verify --strict-memory` 后，优化器应建议优先复用 `opencli <site> detail`，且不再误报 adapter 缺口。
-- 增加 ZZZ 详情页资产角标诊断：verified pxb7/pzds zzz-detail adapter 推荐结果必须保留 `agentStatuses`，避免只靠标题猜影画和专属音擎。
+- 增加 ego-ops operation 缺口诊断：高价值平台没有已验证经验时，只做低频只读探索，实时成功后再沉淀 operation。
+- 增加 ego-ops operation 复用诊断：PXB7/PZDS 详情 operation 验证后，优化器应建议渐进读取并实时复验，且不再误报整个平台缺口。
+- 增加 ZZZ 详情页资产角标诊断：verified PXB7/PZDS zzz-detail operation 推荐结果必须保留 `agentStatuses`，避免只靠标题猜影画和专属音擎。
 - 增加 ZZZ 专武名称清单诊断：当角色角标只有 `x` 时，verified pxb7/pzds zzz-detail 结果必须保留 `sWEngineNames`，供本地专武表交叉确认。
 - 增加硬条件预算扩展诊断：预算内无合格账号时，应扩大到价格浮动层并返回最低满足价。
 - 增加多队完整性诊断：例如 ZZZ 三虚狩要求三支独立队伍，不能把共享辅助重复计入多个核心。
@@ -51,7 +57,7 @@
 
 - 增加 ego-browser task space 清理诊断：执行记录缺少 `query_session_id` / task space 身份、缺少 `cleanup_reports`，或清理后仍有本轮 task space / 查询进程时，输出 `runtime-browser-session-cleanup-missing`。
 - 工具层新增 `query:cleanup`，用于关闭查询 session/target 并审计残留进程；选择器状态机要求最终答复前运行清理。
-- 平台访问策略补充 PXB/PZDS 查询操作：列表预筛复用一个受控 session，详情只对短名单运行 verified adapter，避免多开 Chrome 分组和空窗口。
+- 平台访问策略补充 PXB/PZDS 查询操作：列表预筛复用一个受控 task space，详情只对短名单运行 verified operation，避免遗留空 task space。
 
 ## 2026-06-19
 

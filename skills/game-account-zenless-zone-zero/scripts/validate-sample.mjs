@@ -687,8 +687,20 @@ export function scoreListing(listing) {
         : 'partial alignment';
   const confidence = missingPenalty >= 15 || riskPenalty >= 25 ? 'low' : missingPenalty >= 7 || riskPenalty >= 10 ? 'medium' : 'high';
 
+  const assetQualityScore = agentScore + engineScore + teamScore + progressionScore + comfortScore;
   return {
     id: listing.id,
+    asset_quality_score: assetQualityScore,
+    asset_score: assetQualityScore,
+    engine_score: engineScore,
+    team_score: teamScore,
+    resource_score: resourceScore,
+    progression_score: progressionScore,
+    price_fit_score: priceFitScore,
+    profile_score: rawScore,
+    risk_penalty: riskPenalty,
+    missing_data_penalty: missingPenalty,
+    confidence_penalty: missingPenalty,
     final_score: finalScore,
     community_comparison: communityComparison,
     confidence,
@@ -706,6 +718,7 @@ for (const [index, result] of results.entries()) {
   console.log(`   confidence: ${result.confidence}`);
   console.log(`   components: ${JSON.stringify(result.components)}`);
   console.log(`   missing: ${result.missing_fields.join(', ') || 'none'}`);
+  if (result.asset_score !== result.asset_quality_score) throw new Error(`Expected asset_score compatibility alias for ${result.id}`);
 }
 
 if (results.some((result) => !result.id || Number.isNaN(result.final_score))) throw new Error('Invalid ZZZ validation result');

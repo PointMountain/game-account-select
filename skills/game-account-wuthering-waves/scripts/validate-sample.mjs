@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { evaluateListings } from '../../game-account-toolkit/scripts/evaluate-listings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturePath = path.join(__dirname, '..', 'test-fixtures', 'wuthering-waves-validation-sample.json');
@@ -64,7 +65,7 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function scoreListing(listing) {
+export function scoreListing(listing) {
   const assets = listing.game_assets ?? {};
   const characters = assets.characters ?? [];
   const weapons = assets.weapons_or_equipment ?? [];
@@ -248,6 +249,18 @@ function scoreListing(listing) {
     id: listing.id,
     title: listing.title,
     price: listing.price,
+    asset_quality_score: limitedScore + teamArchetypeScore + teamScore + weaponScore,
+    asset_score: limitedScore + teamArchetypeScore + teamScore + weaponScore,
+    team_score: teamArchetypeScore + teamScore,
+    resource_score: resourceScore,
+    price_fit_score: priceFitScore,
+    profile_score: teamAdjustedRawScore,
+    risk_penalty: riskPenalty,
+    missing_data_penalty: missingPenalty,
+    confidence_penalty: missingPenalty,
+    rule_update_suggestion: missingFields.includes('community coverage for named new assets')
+      ? 'Refresh current-version community evidence for uncovered named assets.'
+      : null,
     final_score: finalScore,
     components: {
       limited_score: limitedScore,
@@ -267,6 +280,7 @@ function scoreListing(listing) {
   };
 }
 
+export function runValidation() {
 const results = fixture.listings.map(scoreListing).sort((a, b) => b.final_score - a.final_score);
 
 for (const [index, result] of results.entries()) {
@@ -292,6 +306,21 @@ const trap = results.find((result) => result.id === 'standard-dupes-trap');
 if (!trap || !trap.community_comparison.includes('conflicts with community valuation')) {
   throw new Error('Expected standard-dupes-trap to conflict with community valuation');
 }
+if (trap.asset_quality_score <= 0 || trap.asset_quality_score <= trap.final_score) {
+  throw new Error('Expected standard-dupes-trap to preserve positive intrinsic asset value independently from penalties');
+}
+const normalizedTrap = evaluateListings({
+  game: 'wuthering-waves',
+  scoreKey: 'wuthering_waves_score',
+  scoreListing,
+  inputValue: fixture.listings.find((listing) => listing.id === 'standard-dupes-trap'),
+})[0].wuthering_waves_score;
+if (Object.keys(normalizedTrap.base_dimensions).some((key) => /risk|missing/i.test(key))) {
+  throw new Error('Expected shared evaluator base_dimensions to exclude risk and missing-data penalties');
+}
+if (normalizedTrap.asset_quality_score <= normalizedTrap.final_score || normalizedTrap.risk_penalty <= 0) {
+  throw new Error('Expected shared evaluator to preserve intrinsic asset quality and independent penalties');
+}
 
 const completeTeam = results.find((result) => result.id === 'team-archetype-complete');
 const isolatedCarry = results.find((result) => result.id === 'isolated-high-chain-carry');
@@ -314,3 +343,7 @@ if (!realRun.missing_fields.includes('resource screenshot confirmation') || !rea
 }
 
 console.log(`\nValidation passed: ${fixture.expected_top_id} outranks raw-count/standard-dupe accounts.`);
+return results;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) runValidation();

@@ -87,6 +87,25 @@ function listReferenceFiles(root) {
     .map((entry) => entry.name);
 }
 
+function listFilesRecursively(root, relative = '') {
+  const current = path.join(root, relative);
+  if (!fs.existsSync(current)) return [];
+  return fs.readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+    const child = path.join(relative, entry.name);
+    if (entry.isDirectory()) return listFilesRecursively(root, child);
+    return [child.split(path.sep).join('/')];
+  });
+}
+
+function activeSkillText(root) {
+  const historicalOrFixture = /(?:^|\/)(?:test-fixtures|evals)(?:\/|$)|(?:^|\/)references\/changelog\.md$/;
+  return listFilesRecursively(root)
+    .filter((relative) => !historicalOrFixture.test(relative))
+    .filter((relative) => /\.(?:md|mjs|js|json)$/.test(relative))
+    .map((relative) => `${relative}\n${readFileIfExists(path.join(root, relative))}`)
+    .join('\n');
+}
+
 function durableSelectionPreferenceLeaks(files) {
   const linePatterns = [
     /\b(?:default_budget|budget_default|default_server|server_default|default_objective|objective_default)\b/i,
@@ -185,18 +204,23 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   const repoWideFixture = path.join(fixtureDir, 'zenless-zone-zero-run.json');
   const zzzEmailRefreshFixture = path.join(fixtureDir, 'zenless-zone-zero-email-refresh-run.json');
   const zzzCommunityPerformanceFixture = path.join(fixtureDir, 'zenless-zone-zero-community-performance-run.json');
-  const zzzOpencliAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-opencli-adapter-run.json');
-  const zzzSplitAdapterFixture = path.join(fixtureDir, 'zenless-zone-zero-split-adapter-capability-run.json');
+  const zzzVerifiedOperationFixture = path.join(fixtureDir, 'zenless-zone-zero-verified-operation-run.json');
+  const zzzSplitOperationFixture = path.join(fixtureDir, 'zenless-zone-zero-split-operation-capability-run.json');
   const zzzAssetStatusFixture = path.join(fixtureDir, 'zenless-zone-zero-asset-status-run.json');
   const zzzPzdsRouteMismatchFixture = path.join(fixtureDir, 'zenless-zone-zero-pzds-route-mismatch-run.json');
   const zzzLowestStrictCleanFixture = path.join(fixtureDir, 'zenless-zone-zero-lowest-strict-clean-run.json');
   const browserSessionCleanupFixture = path.join(fixtureDir, 'browser-session-cleanup-run.json');
+  const cleanupMissingOkFixture = path.join(fixtureDir, 'cleanup-report-missing-ok-run.json');
   const selectorCoverageLedgerFixture = path.join(fixtureDir, 'selector-coverage-ledger-run.json');
   const selectorSessionPreferenceLeakFixture = path.join(fixtureDir, 'selector-session-preference-leak-run.json');
   const listingTimeOmissionFixture = path.join(fixtureDir, 'listing-time-omission-run.json');
   const arknightsSinglePlatformOutputFixture = path.join(fixtureDir, 'arknights-single-platform-output-run.json');
   const arknightsPostRunPresentationFixture = path.join(fixtureDir, 'arknights-post-run-presentation-regression.json');
   const arknightsBudgetDeliveryFixture = path.join(fixtureDir, 'arknights-budget-delivery-self-improve-run.json');
+  const operationCrossPlatformFixture = path.join(fixtureDir, 'operation-support-cross-platform-run.json');
+  const operationNestedCrossPlatformFixture = path.join(fixtureDir, 'operation-support-nested-cross-platform-run.json');
+  const operationCrossModeFixture = path.join(fixtureDir, 'operation-support-cross-mode-run.json');
+  const operationUnknownGameFixture = path.join(fixtureDir, 'operation-support-unknown-game-run.json');
   const redoFixture = path.join(fixtureDir, 'quality-gate-redo-run.json');
 
   const expectedWutheringFindings = [
@@ -273,7 +297,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const requiredFindingIds = [
       'runtime-slow-platform-path',
       'runtime-missing-wait-budget',
-      'platform-opencli-adapter-gap',
+      'platform-ego-ops-operation-gap',
       'evidence-refresh-window-too-long',
       'evidence-community-tool-fallback-missing',
       'output-listing-links-missing',
@@ -286,54 +310,73 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const preservesCommunityEvidence = /bilibili|youtube|xiaohongshu|subtitle|小红书|B站|YouTube/i.test(evidence);
     const preservesYoutubeEvidence = /youtube|YouTube/i.test(evidence);
     const preservesLinkEvidence = /recommendations:QL9CHD|excluded_listings:JHYXJ3302/.test(evidence);
-    const preservesAdapterGapEvidence = /pxb7|pzds|no opencli adapter|ego_browser/i.test(evidence);
-    if (missingFindingIds.length === 0 && preservesCommunityEvidence && preservesYoutubeEvidence && preservesLinkEvidence && preservesAdapterGapEvidence) addScore(6);
+    const preservesOperationGapEvidence = /pxb7|pzds|exploration_required|operation_missing|ego_browser/i.test(evidence);
+    if (missingFindingIds.length === 0 && preservesCommunityEvidence && preservesYoutubeEvidence && preservesLinkEvidence && preservesOperationGapEvidence) addScore(6);
     else {
       if (missingFindingIds.length) issue(`Optimizer missed ZZZ community/performance findings: ${missingFindingIds.join(', ')}`);
       if (!preservesCommunityEvidence) issue('Optimizer did not preserve community-source failure evidence');
       if (!preservesYoutubeEvidence) issue('Optimizer did not preserve YouTube community-source evidence');
       if (!preservesLinkEvidence) issue('Optimizer did not preserve missing listing-link evidence');
-      if (!preservesAdapterGapEvidence) issue('Optimizer did not preserve OpenCLI adapter-gap evidence');
+      if (!preservesOperationGapEvidence) issue('Optimizer did not preserve ego-ops operation-gap evidence');
     }
   } else {
     issue('Missing ZZZ community/performance optimizer fixture');
   }
 
-  if (fs.existsSync(zzzOpencliAdapterFixture)) {
-    const zzzOpencliAdapterReport = runFixture(zzzOpencliAdapterFixture);
-    const findingIds = new Set((zzzOpencliAdapterReport?.findings ?? []).map((finding) => finding.id));
-    const evidence = (zzzOpencliAdapterReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
-    const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
-    const avoidsGapFinding = !findingIds.has('platform-opencli-adapter-gap');
-    const preservesVerifyEvidence = /pxb7\/(?:detail|zzz-detail)|pzds\/(?:detail|zzz-detail)|--strict-memory/i.test(evidence);
-    if (hasReuseFinding && avoidsGapFinding && preservesVerifyEvidence) addScore(4);
+  if (fs.existsSync(zzzVerifiedOperationFixture)) {
+    const zzzVerifiedOperationReport = runFixture(zzzVerifiedOperationFixture);
+    const findingIds = new Set((zzzVerifiedOperationReport?.findings ?? []).map((finding) => finding.id));
+    const evidence = (zzzVerifiedOperationReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
+    const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
+    const avoidsReuseFinding = !findingIds.has('platform-ego-ops-operation-reuse');
+    const preservesUnsupportedClaim = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    if (hasMismatchFinding && avoidsReuseFinding && preservesUnsupportedClaim) addScore(4);
     else {
-      if (!hasReuseFinding) issue('Optimizer did not recognize verified OpenCLI adapters as reusable');
-      if (!avoidsGapFinding) issue('Optimizer still reported an adapter gap for verified OpenCLI adapters');
-      if (!preservesVerifyEvidence) issue('Optimizer did not preserve verified adapter command evidence');
+      if (!hasMismatchFinding) issue('Optimizer did not reject ZZZ operations that are absent from the verified support matrix');
+      if (!avoidsReuseFinding) issue('Optimizer treated an unsupported ZZZ operation claim as reusable');
+      if (!preservesUnsupportedClaim) issue('Optimizer did not preserve the unsupported ZZZ operation claim evidence');
     }
   } else {
-    issue('Missing ZZZ OpenCLI adapter optimizer fixture');
+    issue('Missing ZZZ unsupported-operation-claim optimizer fixture');
   }
 
-  if (fs.existsSync(zzzSplitAdapterFixture)) {
-    const zzzSplitAdapterReport = runFixture(zzzSplitAdapterFixture);
-    const findings = zzzSplitAdapterReport?.findings ?? [];
+  for (const [label, fixturePath, evidencePattern] of [
+    ['cross-platform', operationCrossPlatformFixture, /expects pzds\/arknights-list, claimed pxb7\/arknights-list/],
+    ['nested-cross-platform', operationNestedCrossPlatformFixture, /detail_attempts\[0\].*expects pxb7\/arknights-detail, claimed pzds\/arknights-detail/],
+    ['cross-mode', operationCrossModeFixture, /attempt mode=detail, operation=pxb7\/arknights-list claims mode=list/],
+    ['unknown-game', operationUnknownGameFixture, /game=unknown has no support-matrix entry/],
+  ]) {
+    if (!fs.existsSync(fixturePath)) {
+      issue(`Missing operation support ${label} fixture`);
+      continue;
+    }
+    const report = runFixture(fixturePath);
+    const mismatch = report?.findings?.find((finding) => finding.id === 'platform-operation-support-claim-mismatch');
+    const evidence = (mismatch?.evidence ?? []).join('\n');
+    if (mismatch && evidencePattern.test(evidence)) addScore(2);
+    else issue(`Optimizer did not fail closed for ${label} operation support claim`);
+  }
+
+  if (fs.existsSync(zzzSplitOperationFixture)) {
+    const zzzSplitOperationReport = runFixture(zzzSplitOperationFixture);
+    const findings = zzzSplitOperationReport?.findings ?? [];
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
-    const hasGapFinding = findingIds.has('platform-opencli-adapter-gap');
-    const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
-    const gapIsListSpecific = /list_adapter_available=false|ego_browser_for_list/i.test(evidence);
-    const reusePreservesDetailCommands = /pxb7 zzz-detail|pzds zzz-detail|pxb7\/zzz-detail|pzds\/zzz-detail/i.test(evidence);
-    if (hasGapFinding && hasReuseFinding && gapIsListSpecific && reusePreservesDetailCommands) addScore(4);
+    const hasGapFinding = findingIds.has('platform-ego-ops-operation-gap');
+    const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
+    const avoidsReuseFinding = !findingIds.has('platform-ego-ops-operation-reuse');
+    const gapIsListSpecific = /list_operation_status=operation_missing|ego_ops_exploration_for_list/i.test(evidence);
+    const preservesDetailClaims = /pxb7\/zzz-detail|pzds\/zzz-detail/i.test(evidence);
+    if (hasGapFinding && hasMismatchFinding && avoidsReuseFinding && gapIsListSpecific && preservesDetailClaims) addScore(4);
     else {
-      if (!hasGapFinding) issue('Optimizer did not report missing list adapter capability');
-      if (!hasReuseFinding) issue('Optimizer did not preserve verified detail adapter reuse');
-      if (!gapIsListSpecific) issue('Optimizer did not distinguish list adapter gaps from detail adapter reuse');
-      if (!reusePreservesDetailCommands) issue('Optimizer did not preserve verified detail adapter commands');
+      if (!hasGapFinding) issue('Optimizer did not report missing list operation capability');
+      if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ detail-operation claims');
+      if (!avoidsReuseFinding) issue('Optimizer treated unsupported ZZZ detail-operation claims as reusable');
+      if (!gapIsListSpecific) issue('Optimizer did not distinguish list-operation gaps from detail-operation reuse');
+      if (!preservesDetailClaims) issue('Optimizer did not preserve the claimed ZZZ detail operations');
     }
   } else {
-    issue('Missing ZZZ split adapter capability optimizer fixture');
+    issue('Missing ZZZ split operation-capability optimizer fixture');
   }
 
   if (fs.existsSync(zzzAssetStatusFixture)) {
@@ -341,12 +384,14 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findings = zzzAssetStatusReport?.findings ?? [];
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
-    const hasAssetStatusFinding = findingIds.has('platform-agent-status-asset-cards-missing');
-    const preservesAssetCardEvidence = /agentStatuses|asset-card|角标|pxb7 zzz-detail|pzds zzz-detail/i.test(evidence);
-    if (hasAssetStatusFinding && preservesAssetCardEvidence) addScore(4);
+    const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
+    const avoidsAssetStatusFinding = !findingIds.has('platform-agent-status-asset-cards-missing');
+    const preservesUnsupportedOperationEvidence = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    if (hasMismatchFinding && avoidsAssetStatusFinding && preservesUnsupportedOperationEvidence) addScore(4);
     else {
-      if (!hasAssetStatusFinding) issue('Optimizer did not require ZZZ pxb7/pzds asset-card agentStatuses');
-      if (!preservesAssetCardEvidence) issue('Optimizer did not preserve asset-card status evidence');
+      if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ asset-card operation claims');
+      if (!avoidsAssetStatusFinding) issue('Optimizer ran asset-card completeness checks on an unsupported ZZZ operation');
+      if (!preservesUnsupportedOperationEvidence) issue('Optimizer did not preserve unsupported ZZZ asset-card operation evidence');
     }
   } else {
     issue('Missing ZZZ asset-status optimizer fixture');
@@ -358,12 +403,14 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findings = zzzSignatureNameReport?.findings ?? [];
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
-    const hasSignatureNameFinding = findingIds.has('platform-signature-engine-name-list-missing');
-    const preservesSignatureNameEvidence = /sWEngineNames|S-rank W-Engine|专武|x-only|single-number|signature W-Engine/i.test(evidence);
-    if (hasSignatureNameFinding && preservesSignatureNameEvidence) addScore(4);
+    const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
+    const avoidsSignatureNameFinding = !findingIds.has('platform-signature-engine-name-list-missing');
+    const preservesUnsupportedOperationEvidence = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    if (hasMismatchFinding && avoidsSignatureNameFinding && preservesUnsupportedOperationEvidence) addScore(4);
     else {
-      if (!hasSignatureNameFinding) issue('Optimizer did not require S-rank W-Engine names for x-only ZZZ asset badges');
-      if (!preservesSignatureNameEvidence) issue('Optimizer did not preserve signature-engine name-list evidence');
+      if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ signature-engine operation claims');
+      if (!avoidsSignatureNameFinding) issue('Optimizer ran signature-engine completeness checks on an unsupported ZZZ operation');
+      if (!preservesUnsupportedOperationEvidence) issue('Optimizer did not preserve unsupported ZZZ signature-engine operation evidence');
     }
   } else {
     issue('Missing ZZZ signature-engine-name optimizer fixture');
@@ -409,11 +456,21 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const preservesCleanupEvidence = /query_session_id|cleanup_report|cleanup_reports|ego-browser nodejs|run-with-timeout|process|ego task space remained|ego_task_spaces_remaining/i.test(evidence);
     if (hasCleanupFinding && preservesCleanupEvidence) addScore(4);
     else {
-      if (!hasCleanupFinding) issue('Optimizer did not catch missing browser/OpenCLI query cleanup');
+      if (!hasCleanupFinding) issue('Optimizer did not catch missing ego-browser query cleanup');
       if (!preservesCleanupEvidence) issue('Optimizer did not preserve browser session cleanup evidence');
     }
   } else {
     issue('Missing browser-session cleanup optimizer fixture');
+  }
+
+  if (fs.existsSync(cleanupMissingOkFixture)) {
+    const cleanupReport = runFixture(cleanupMissingOkFixture);
+    const finding = cleanupReport?.findings?.find((item) => item.id === 'runtime-browser-session-cleanup-missing');
+    const evidence = (finding?.evidence ?? []).join('\n');
+    if (finding && /cleanup_report ok=undefined/.test(evidence)) addScore(2);
+    else issue('Optimizer did not fail closed when cleanup_report.ok was missing');
+  } else {
+    issue('Missing cleanup-report missing-ok optimizer fixture');
   }
 
   if (fs.existsSync(selectorCoverageLedgerFixture)) {
@@ -465,12 +522,17 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
   if (fs.existsSync(arknightsSinglePlatformOutputFixture)) {
     const dualPlatformReport = runFixture(arknightsSinglePlatformOutputFixture);
     const dualPlatformFinding = dualPlatformReport?.findings?.find((finding) => finding.id === 'output-dual-platform-shortlists-missing');
+    const reuseFinding = dualPlatformReport?.findings?.find((finding) => finding.id === 'platform-ego-ops-operation-reuse');
     const evidence = (dualPlatformFinding?.evidence ?? []).join('\n');
     const preservesMissingPlatformEvidence = /pzds|platform_shortlists|display_candidates/i.test(evidence);
-    if (dualPlatformFinding && preservesMissingPlatformEvidence) addScore(4);
+    const reuseEvidence = (reuseFinding?.evidence ?? []).join('\n');
+    const preservesVerifiedOperations = /pxb7\/arknights-list|pzds\/arknights-list/i.test(reuseEvidence);
+    if (dualPlatformFinding && preservesMissingPlatformEvidence && reuseFinding && preservesVerifiedOperations) addScore(4);
     else {
       if (!dualPlatformFinding) issue('Optimizer did not reject an Arknights result that only displayed one platform');
       if (!preservesMissingPlatformEvidence) issue('Optimizer did not preserve the missing PZDS shortlist evidence');
+      if (!reuseFinding) issue('Optimizer did not recognize support-matrix-verified Arknights operations as reusable');
+      if (!preservesVerifiedOperations) issue('Optimizer did not preserve verified Arknights operation evidence');
     }
   } else {
     issue('Missing Arknights single-platform output optimizer fixture');
@@ -631,6 +693,62 @@ function evaluateSkill(skillInput, thresholdValue = threshold, options = {}) {
       } else {
         addIssue('Missing scripts/validate-sample.mjs');
       }
+
+      const skillName = path.basename(root);
+      const isArknights = skillName === 'game-account-arknights';
+      const evaluatorScript = isArknights ? 'scripts/score-listings.mjs' : 'scripts/evaluate-listing.mjs';
+      const finalizerScript = isArknights ? 'scripts/finalize-selection-run.mjs' : 'scripts/finalize-evaluation-run.mjs';
+      const finalizerValidationScript = isArknights ? 'scripts/validate-selection-output.mjs' : 'scripts/validate-finalizer.mjs';
+      const contractText = activeSkillText(root);
+
+      if (exists(evaluatorScript)) addScore(2);
+      else addIssue(`Missing reusable game evaluator: ${evaluatorScript}`, true, 'Expose a fixture-independent listing evaluator instead of keeping scoring inside validate-sample.mjs.');
+
+      if (exists(finalizerScript)) addScore(2);
+      else addIssue(`Missing deterministic run finalizer: ${finalizerScript}`, true, 'Add a raw-artifact finalizer that emits the report, sidecars, self-improve state, quality gate, and delivery contract.');
+
+      if (exists(finalizerValidationScript)) addScore(2);
+      else addIssue(`Missing finalizer regression: ${finalizerValidationScript}`);
+
+      const sharedFinalizerText = isArknights
+        ? ''
+        : readFileIfExists(path.resolve(repoRoot, 'skills/game-account-toolkit/scripts/finalize-game-evaluation.mjs'));
+      const finalizerText = `${readFileIfExists(path.join(root, finalizerScript))}\n${sharedFinalizerText}`;
+      const requiredFinalizerSignals = [
+        'delivery_contract',
+        'final_response_sha256',
+        'self_improve',
+        'quality_gate',
+        '--from-report',
+        'knowledge_update_candidates',
+      ];
+      const missingFinalizerSignals = requiredFinalizerSignals.filter((signal) => !finalizerText.includes(signal));
+      if (missingFinalizerSignals.length === 0) addScore(2);
+      else addIssue(`Finalizer lacks contract signals: ${missingFinalizerSignals.join(', ')}`);
+
+      const requiredLifecycleSignals = [
+        'selection_profile',
+        'run_only',
+        'platform_attempts',
+        'request_provenance',
+        'coverage_gaps',
+        'knowledge_update_candidates',
+        'ego-ops',
+        'ego-browser',
+      ];
+      const missingLifecycleSignals = requiredLifecycleSignals.filter((signal) => !contractText.includes(signal));
+      if (missingLifecycleSignals.length === 0) addScore(2);
+      else addIssue(`Game skill lacks unified lifecycle signals: ${missingLifecycleSignals.join(', ')}`);
+
+      const forbiddenQueryDependencies = [
+        ['web', 'access'].join('-'),
+        ['chrome', 'use'].join('-'),
+        ['open', 'cli'].join(''),
+      ];
+      const activeForbidden = forbiddenQueryDependencies.filter((signal) => contractText.toLowerCase().includes(signal));
+      if (activeForbidden.length === 0) addScore(2);
+      else addIssue(`Active game-skill query path still references forbidden dependencies: ${activeForbidden.join(', ')}`);
+
       if (path.basename(root) === 'game-account-zenless-zone-zero') {
         const knowledge = knowledgeFile ? read(`references/${knowledgeFile}`) : '';
         const fixtureText = readFileIfExists(path.join(root, 'test-fixtures', 'zenless-zone-zero-validation-sample.json'));
@@ -696,6 +814,8 @@ function evaluateSkill(skillInput, thresholdValue = threshold, options = {}) {
       else addIssue('Selector lacks knowledge ledger reference');
       if (containsAny(selectorText, ['success_criteria', 'coverage_plan', 'coverage_gaps', 'knowledge_update_candidates'])) addScore(4);
       else addIssue('Selector lacks first-class success criteria, coverage, and knowledge-update fields');
+      if (containsAny(selectorText, ['operation-support-matrix.json', 'support matrix']) && containsAny(selectorText, ['ego-ops', 'ego_ops']) && selectorText.includes('ego-browser')) addScore(2);
+      else addIssue('Selector must gate live queries through the ego-ops operation support matrix and ego-browser');
       if (exists('scripts/create-run-artifact.mjs')) addScore(2);
       else addIssue('Selector lacks a run artifact scaffold script', false);
       break;
@@ -804,6 +924,8 @@ function evaluateSkill(skillInput, thresholdValue = threshold, options = {}) {
       else addIssue('Generator does not require evaluator quality gate');
       if (containsAny(generatorText, ['community-evidence.md', 'valuation-rules.md', 'validate-sample.mjs'])) addScore(14);
       else addIssue('Generator workflow lacks required generated skill files');
+      if (containsAny(generatorText, ['evaluate-listing.mjs', 'finalize-evaluation-run.mjs', 'validate-finalizer.mjs', 'run-artifact'])) addScore(2);
+      else addIssue('Generator does not scaffold the unified evaluator/finalizer lifecycle');
       addScore(20);
       break;
     }
@@ -844,15 +966,19 @@ function evaluateSkill(skillInput, thresholdValue = threshold, options = {}) {
         'platform-access-policy.md',
         'skill-io-contract.md',
         'shared-listing-schema.md',
-        'platform-priority.json'
+        'platform-priority.json',
+        'ego-ops-query-contract.md',
+        'operation-support-matrix.json'
       ];
       const missingReferences = requiredReferences.filter((name) => !exists(`references/${name}`));
       if (missingReferences.length === 0) addScore(28);
       else addIssue(`Toolkit missing references: ${missingReferences.join(', ')}`);
       if (exists('scripts/check-deps.mjs')) addScore(10);
       else addIssue('Missing scripts/check-deps.mjs');
-      if (exists('scripts/install-opencli-adapters.mjs') && exists('opencli-adapters/manifest.json')) addScore(4);
-      else addIssue('Toolkit lacks repo-managed OpenCLI adapter installer or manifest', false);
+      if (exists('scripts/run-ego-operation.mjs') && exists('ego-operations/manifest.json')) addScore(4);
+      else addIssue('Toolkit lacks the ego-ops operation runner or operation manifest');
+      if (exists('scripts/validate-operation-support-matrix.mjs') && exists('scripts/finalize-game-evaluation.mjs') && exists('scripts/evaluate-listings.mjs')) addScore(2);
+      else addIssue('Toolkit lacks support-matrix validation or shared game lifecycle runtimes');
       const toolkitText = `${skillContent}\n${requiredReferences.map((name) => readFileIfExists(path.join(root, 'references', name))).join('\n')}`;
       if (containsAny(toolkitText, ['pxb7', 'pzds', '螃蟹', '盼之'])) addScore(12);
       else addIssue('Toolkit lacks mainstream platform priority coverage');

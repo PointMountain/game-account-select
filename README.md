@@ -136,6 +136,8 @@ npm run unlink:skills
 
 **过程透明，可复查。** 每个推荐都应该说明“为什么值得看”和“为什么可能不该买”。缺截图、缺资源、缺验号、绑定不清、平台保障不足，都应作为可见的人工确认点。
 
+**统一生命周期，能力按实证发布。** 四个游戏 skill 都具备可复用评分器、run-only 画像、原始 run artifact、确定性 finalizer、请求溯源、自我改进 sidecar 和交付哈希门禁；但平台查询能力不会因为“存在解析器”就被宣称可用。正常流程只调用 support matrix 与外部 `ego-ops` 知识同时验证过的 operation，其他组合一律 fail closed。
+
 **Harness 自我进化。** 每次运行都留下可诊断 artifact：平台尝试、耗时、失败文本、输出、用户反馈和 evaluator 结果。优化器负责 Troubleshooting 和定位目标文件，评估器负责质量门禁；低分、阻塞问题或 `redo_required: true` 必须打回重做，不能继续用于真实推荐。
 
 **安全边界优先。** 只做购买前决策辅助，不绕过平台限制，不做高频抓取，不自动交易。社区证据和估值规则可以迭代，但规则变化必须可解释、可验证、可回溯。
@@ -168,16 +170,26 @@ node /tmp/game-account-generator-test/skills/game-account-test-frontier/scripts/
 
 ## 维护验证
 
+当前平台查询能力：
+
+| 游戏 | PXB7 list/detail | PZDS list/detail | 正常流程行为 |
+| --- | --- | --- | --- |
+| 明日方舟 | `verified` / `verified` | `verified` / `verified` | 可由 `ego-ops` 治理、`ego-browser` 执行。 |
+| 绝区零 | `unsupported` / `unsupported` | `unsupported` / `unsupported` | 使用用户提供的链接、截图或文本；两个详情解析器仅供维护者受控探索。 |
+| 鸣潮 | `unsupported` / `unsupported` | `unsupported` / `unsupported` | 记录覆盖缺口，不切换到其他网页软件。 |
+| 异环 | `unsupported` / `unsupported` | `unsupported` / `unsupported` | 记录覆盖缺口，不伪造平台覆盖。 |
+
 下面命令面向仓库维护者和 CI 风格验证：
 
 ```bash
 npm run list:skills
 npm run verify:skills
 npm run verify:frontmatter
-npm run opencli:adapters:check
-node skills/game-account-toolkit/scripts/install-opencli-adapters.mjs --install
+npm run verify:query-stack
+npm run verify:operation-support
+npm run verify:game-finalizers
 node skills/game-account-preflight/scripts/preflight.mjs --json
-node skills/game-account-preflight/scripts/preflight.mjs --json --opencli-adapters
+npm run query:ego -- --operation generic/semantic-search --url https://www.pzds.com/gameList --expected 请选择要购买的游戏 --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-run.json --json
@@ -185,7 +197,7 @@ node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-repor
 node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
 ```
 
-`game-account-toolkit` carries repo-managed Pxb7/PZDS OpenCLI adapters under `skills/game-account-toolkit/opencli-adapters/`. Commands are grouped by game, for example `pxb7/zzz-detail` and `pzds/zzz-detail` for Zenless Zone Zero. They are not installed silently. Use the check/install commands above to sync them into `~/.opencli`; existing different local adapters require `--force` before overwrite.
+所有动态查询统一由 `ego-ops` 建立任务卡、加载站点 operation、复核权限和定义成功标准，再由 `ego-browser` 在一个隔离 task space 中执行。仓库的 `ego-operations/manifest.json` 只保存解析与执行目录，不保存登录材料或完整业务响应；其中 `exploration_only` 不代表正常支持，只有 `verified` 且对应外部 operation 知识有效时才会启动浏览器。维护者可用 `--allow-exploration` 显式进行受控探索，但必须完成知识回写、矩阵升级、离线验证与真实 smoke 后才能发布。
 
 社区证据有两种刷新方式：
 

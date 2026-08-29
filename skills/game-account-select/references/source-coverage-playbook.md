@@ -14,7 +14,7 @@ coverage_plan:
       type: platform_listing|platform_detail|community_evidence|user_input
       source: pxb7
       priority: required|preferred|supplemental
-      start_path: verified_adapter|natural_navigation|browser_dom|user_material|search
+      start_path: ego_ops_verified_operation|user_material|maintainer_exploration
       success_signal: string
       fallback_order: string[]
       wait_budget_ms: number
@@ -45,7 +45,7 @@ Do not count a platform as covered when:
 
 - Only a wrong-game route was opened.
 - A list page loaded but no listing fields were read.
-- A detail adapter exists but list discovery was never attempted and the user expected active discovery.
+- A detail operation exists but list discovery was never attempted and the user expected active discovery.
 - A detail page was inferred from title text without URL or source identifier.
 
 For proactive Arknights discovery, the user-visible result must contain separate `platform_shortlists.pxb7` and `platform_shortlists.pzds` sections. A cross-platform `best_value_listing` may come from either platform. If one platform has no detail-verified qualifying account, preserve that platform section with clearly labeled near matches/list-only candidates plus a coverage gap; never omit the section or fabricate a qualifying row.
@@ -55,13 +55,14 @@ For proactive Arknights discovery, the user-visible result must contain separate
 Use this order unless user input gives a better starting point:
 
 1. User links, screenshots, or pasted listings.
-2. Verified OpenCLI adapter for known detail pages.
-3. Platform list page with natural navigation or one browser session.
-4. Shortlist detail confirmation through verified adapter.
-5. Browser DOM fallback for one failed adapter path.
-6. User material fallback when the page is blocked or fields are hidden.
+2. Ego-ops verified operation for known list/detail pages.
+3. Shortlist detail confirmation only when the matching detail capability is also verified.
+4. Visual verification for one failed semantic/DOM path inside that same verified operation.
+5. User material fallback when the capability is unsupported, stale, blocked, or fields are hidden.
 
-For PXB/PZDS, prefer "one list session plus detail adapters for a shortlist" over opening many detail pages.
+`maintainer_exploration` is not a selector fallback. It requires an explicit `--allow-exploration` maintenance run and cannot supply a real recommendation until the operation knowledge, manifest, support matrix, offline regressions, and live smoke are all promoted together.
+
+For PXB/PZDS, prefer one list session plus detail operations for a shortlist over opening many detail pages.
 
 ## Community coverage defaults
 
@@ -95,7 +96,7 @@ Each incomplete source task becomes a `coverage_gap`:
 coverage_gap:
   source: string
   task_id: string
-  reason: timeout|empty_result|blocked|login_required|verification|wrong_game|adapter_missing|field_missing|not_checked
+  reason: timeout|empty_result|blocked|login_required|verification|wrong_game|operation_missing|operation_drift|field_missing|not_checked
   evidence: string
   fallback_used: string | null
   confidence_effect: string
@@ -108,7 +109,7 @@ Use gaps to decide whether to:
 - Loop back to `COLLECT_COMMUNITY_EVIDENCE`.
 - Lower confidence and continue.
 - Ask the user for links, screenshots, or pasted text.
-- Propose adapter or rule updates after the run.
+- Propose success-only ego-ops operation writeback or rule updates after the run.
 
 ## Ranking safeguards
 

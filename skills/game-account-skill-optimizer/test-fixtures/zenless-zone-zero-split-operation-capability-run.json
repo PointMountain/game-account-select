@@ -1,0 +1,90 @@
+{
+  "game": "Zenless Zone Zero",
+  "target_skill": "game-account-select",
+  "user_request": "千元内三虚狩账号，平台列表页低频筛选后抽详情",
+  "budget_max": 1000,
+  "platform_attempts": [
+    {
+      "platform": "pxb7",
+      "query": "绝区零 三虚狩 列表页",
+      "status": "success",
+      "duration_ms": 9000,
+      "wait_budget_ms": 15000,
+      "result_count": 20,
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-split-operation",
+      "list_operation_status": "operation_missing",
+      "detail_operation_status": "verified_operation_available",
+      "operation": "pxb7/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-detail.md",
+      "operation_verified": true,
+      "fallback_used": "ego_ops_exploration_for_list",
+      "evidence": "列表页仍需 ego-ops 只读探索；详情页已复用 verified pxb7/zzz-detail operation 抽取 binding/resources/voidHunters"
+    },
+    {
+      "platform": "pzds",
+      "query": "仪玄 星见雅 叶瞬光 列表页",
+      "status": "success",
+      "duration_ms": 8500,
+      "wait_budget_ms": 15000,
+      "result_count": 10,
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-split-operation",
+      "list_operation_status": "operation_missing",
+      "detail_operation_status": "verified_operation_available",
+      "operation": "pzds/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
+      "operation_verified": true,
+      "fallback_used": "ego_ops_exploration_for_list",
+      "evidence": "列表页仍需 ego-ops 只读探索；详情页已复用 verified pzds/zzz-detail operation 抽取 binding/resources/voidHunters"
+    }
+  ],
+  "community_attempts": [
+    {
+      "source": "bilibili",
+      "tool": "ego_ops_verified_operation",
+      "operation": "generic/semantic-search",
+      "query": "绝区零 三虚狩 配队 柚叶 琉音 千夏",
+      "status": "success",
+      "duration_ms": 3000,
+      "wait_budget_ms": 15000,
+      "result_count": 8
+    }
+  ],
+  "recommendations": [
+    {
+      "listing_id": "JHYXJ2853",
+      "platform": "pxb7",
+      "url": "https://www.pxb7.com/product/2186225899602137215/1",
+      "price": 699,
+      "recommendation_tier": "primary",
+      "reason": "详情 operation 确认三虚狩和绑定字段"
+    }
+  ],
+  "backup_listings": [
+    {
+      "listing_id": "QL9CHD",
+      "platform": "pzds",
+      "url": "https://www.pzds.com/goodsDetails/QL9CHD/6",
+      "price": 799,
+      "recommendation_tier": "risk_backup",
+      "reason": "详情 operation 确认三虚狩，列表页仍需 ego-ops 探索"
+    }
+  ],
+  "excluded_listings": [],
+  "missing_fields": [],
+  "cleanup_reports": [
+    {
+      "ok": true,
+      "query_session_id": "zzz-split-operation",
+      "ego_task_spaces_remaining": [],
+      "process_audit_after": []
+    }
+  ],
+  "final_response": "已复用 pxb7/zzz-detail 和 pzds/zzz-detail operation；列表页仍需 ego-ops 低频探索。",
+  "user_feedback": []
+}

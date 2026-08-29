@@ -99,6 +99,10 @@ assert.equal(artifact.request_provenance.raw_user_request, '限定联动多，10
 assert.equal(artifact.request_provenance.profile_input_origin, 'raw_user_request');
 assert.equal(artifact.request_provenance.derived_input_changed, false);
 assert.match(artifact.request_provenance.raw_user_request_sha256, /^[a-f0-9]{64}$/);
+const arknightsPlatformTasks = artifact.coverage_plan.source_tasks.filter((task) => task.type === 'platform_listing');
+assert.deepEqual(arknightsPlatformTasks.map((task) => task.operation).sort(), ['pxb7/arknights-list', 'pzds/arknights-list']);
+assert.ok(arknightsPlatformTasks.every((task) => task.start_path === 'ego_ops_verified_operation'));
+assert.ok(arknightsPlatformTasks.every((task) => !task.fallback_order.some((item) => /exploration|visual|direct/i.test(item))));
 
 const derivedProfileRun = spawnSync(process.execPath, [
   artifactScript,
@@ -123,6 +127,9 @@ const routedRun = spawnSync(process.execPath, [
     mode: 'unattended',
     status: 'ready',
     selected_transport: 'ego_browser',
+    query_governance: 'ego_ops',
+    operation_knowledge: 'progressive_read',
+    knowledge_writeback: 'success_only',
     runtime_validation: 'first_browser_operation',
     task_space_required: true,
     cleanup_policy: 'complete_task_space',
@@ -136,6 +143,11 @@ const routedRun = spawnSync(process.execPath, [
 assert.equal(routedRun.status, 0, routedRun.stderr);
 const routedArtifact = JSON.parse(routedRun.stdout);
 assert.equal(routedArtifact.browser_route.selected_transport, 'ego_browser');
+assert.equal(routedArtifact.browser_route.query_governance, 'ego_ops');
+assert.equal(routedArtifact.browser_route.operation_knowledge, 'progressive_read');
+assert.equal(routedArtifact.browser_route.knowledge_writeback, 'success_only');
+assert.equal(routedArtifact.query_governance.layer, 'ego_ops');
+assert.equal(routedArtifact.query_governance.executor, 'ego_browser');
 assert.equal(routedArtifact.browser_route.runtime_validation, 'first_browser_operation');
 assert.equal(routedArtifact.browser_route.unattended_safe, true);
 assert.equal(routedArtifact.browser_route.task_space_required, true);
@@ -184,5 +196,20 @@ const mentionedPlatformArtifact = JSON.parse(mentionedPlatformRun.stdout);
 assert.deepEqual(mentionedPlatformArtifact.selection_profile.platforms, ['pxb7', 'pzds'], 'mentioning one platform must not shrink required default coverage');
 assert.deepEqual(overrideArtifact.selection_profile.clarification_required, []);
 assert.equal(overrideArtifact.profile_confirmation.status, 'confirmed');
+
+const unsupportedGameRun = spawnSync(process.execPath, [
+  artifactScript,
+  '--game', '绝区零',
+  '--user-request', '1000元左右，战力优先，只查螃蟹',
+  '--platforms', 'pxb7',
+  '--json',
+], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
+assert.equal(unsupportedGameRun.status, 0, unsupportedGameRun.stderr);
+const unsupportedArtifact = JSON.parse(unsupportedGameRun.stdout);
+const unsupportedTask = unsupportedArtifact.coverage_plan.source_tasks.find((task) => task.id === 'platform-pxb7-list');
+assert.equal(unsupportedTask.start_path, 'unsupported_fail_closed');
+assert.equal(unsupportedTask.operation, null);
+assert.deepEqual(unsupportedTask.fallback_order, ['user_material']);
+assert.ok(unsupportedArtifact.coverage_gaps.some((gap) => gap.task_id === 'platform-pxb7-list' && gap.reason === 'unsupported_operation'));
 
 console.log('Validation passed: run artifacts freeze a run-only selection profile without durable preference updates.');

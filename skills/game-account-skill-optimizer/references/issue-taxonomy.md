@@ -100,7 +100,7 @@ updated_at: 2026-08-12
 
 用户目标市场的主流平台没有被纳入搜索顺序。
 
-当前中国账号交易平台优先级以 `game-account-toolkit/references/platform-priority.json` 为准。核心含义：
+当前中国账号交易平台顺序以 `platform-priority.json` 为准，真实可执行 capability 以 `operation-support-matrix.json` 为准。核心含义：
 
 - 用户指定平台或链接优先。
 - 螃蟹账号代售：`https://www.pxb7.com/`
@@ -113,12 +113,13 @@ updated_at: 2026-08-12
 
 - 更新平台访问策略和主筛选状态机。
 - 不要声明已覆盖没有实际读取的平台。
+- 矩阵为 `unsupported` 时必须 fail closed；只允许 ego-ops 受控探索，验证并回写 operation 后才可改为 `verified`。
 - 真实主动筛选必须先有 `coverage_plan.source_tasks`。如果运行记录已经包含平台尝试、社区尝试或推荐结果，但没有覆盖计划，输出 `selector-source-coverage-plan-missing`；目标文件包括 `game-account-select` 架构、覆盖手册、状态机、共享 schema 和 evaluator rubric。
-- 若平台经常复用、浏览器可见且当前 `opencli list` 没有对应站点命令，应生成 `platform-opencli-adapter-gap` finding，建议按 OpenCLI adapter 流程建立私有 adapter。
-- Adapter 实现不是默认自动补丁；必须完成站点侦察、endpoint 验证、字段核对和 `opencli browser verify <site>/<command>` 后，才能把该 adapter 当作可靠平台来源。
-- 若已存在并验证通过，应生成 `platform-opencli-adapter-reuse` finding，提醒下次优先复用 adapter 命令，而不是继续临时 DOM 抽取。
-- 列表页和详情页能力要分开判断：只有详情 adapter 可用时，不应把整个平台标成“无 adapter”；应对详情输出复用建议，对列表页缺口单独记录。
-- 对绝区零的螃蟹/盼之详情，已验证 adapter 还应输出角色资产角标 `agentStatuses`；如果推荐只保留 `voidHunters` 或标题文本，应生成 `platform-agent-status-asset-cards-missing` finding。
+- 若平台经常复用但 ego-ops 没有对应知识，应生成 `platform-ego-ops-operation-gap` finding；本轮只做 ego-browser 只读探索，成功后再写入 operation。
+- Operation 写入不是默认自动补丁；必须完成任务卡、站点侦察、当前页检查点和成功信号验证，并通过 ego-ops knowledge validator，才能当作可靠平台来源。
+- 若 operation 已存在并验证通过，应生成 `platform-ego-ops-operation-reuse` finding，提醒下次渐进读取并实时复验，而不是重复临时探索。
+- 列表页和详情页能力要分开判断：只有详情 operation 可用时，不应把整个平台标成“无经验”；应对详情输出复用建议，对列表缺口单独记录。
+- 对绝区零的螃蟹/盼之详情，已验证 operation 还应输出角色资产角标 `agentStatuses`；如果推荐只保留 `voidHunters` 或标题文本，应生成 `platform-agent-status-asset-cards-missing` finding。
 
 ### pzds_route_mismatch
 
@@ -136,42 +137,43 @@ updated_at: 2026-08-12
 - 绝区零列表从 `https://www.pzds.com/gameList` 自然导航，或使用已由浏览器确认标题/筛选项为绝区零的 `https://www.pzds.com/goodsList/275`。
 - 错路由不得计为 PZDS 覆盖；如果正确列表为空，记录为空结果并降级到已知详情样本、用户链接、截图或复制文本。
 
-### adapter_gap
+### ego_ops_operation_gap
 
-目标网站没有可复用 OpenCLI adapter，导致每次都重复写临时 ego-browser DOM 抽取、手动解析或截图降级。
-
-常见信号：
-
-- `adapter_available: false` 或 `opencli_adapter_available: false`
-- `list_adapter_available: false` 且列表页需要反复通过 ego-browser DOM 读取
-- `detail_adapter_available: false` 且详情页需要反复通过 ego-browser DOM 读取
-- 运行记录包含 `no opencli adapter`、`missing adapter`、`没有适配器`
-- `fallback_used: ego_browser_semantic` / `ego_browser_direct` / `ego_browser_visual` 且同平台会反复用于账号筛选
-
-建议：
-
-- 先用 `opencli list -f yaml` 和 `opencli <site> -h` 确认确实没有现成站点命令。
-- 对浏览器可见、数据来自 HTTP/JSON/HTML、无需绕过验证码/风控/付费墙的平台，调用 `opencli-adapter-author` workflow：`opencli browser analyze <url>`、`opencli browser init <site>/<command>`、字段解码、`opencli browser verify <site>/<command> --write-fixture`。
-- 把 endpoint、字段映射、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`；若 adapter 已脱敏且可复用，再同步到 `game-account-toolkit/opencli-adapters`，下次筛选优先复用 adapter。
-- 若数据只在不可稳定访问的交互、图片、验证码或付费内容里，停止 adapter 化，降级为用户提供链接、截图或复制文本。
-
-### adapter_reuse
-
-目标网站已有通过 OpenCLI verify 的 adapter，后续筛选应优先使用结构化命令，并把验证命令写入运行记录。
+目标网站没有可复用 ego-ops operation，导致每次都重复探索页面状态和动作。
 
 常见信号：
 
-- `adapter_available: true` 或 `opencli_adapter_available: true`
-- `detail_adapter_available: true`
-- `adapter_verified: true`
-- `adapter_command` 类似 `opencli pxb7 zzz-detail <url> -f json`
-- `verify_command` 类似 `opencli browser <session> verify pxb7/zzz-detail --strict-memory`
+- `knowledge_status: exploration_required`
+- `list_operation_status: operation_missing` 且列表页需要反复探索
+- `detail_operation_status: operation_missing` 或 `operation_drift`
+- 运行记录包含 `operation_missing`、`operation_drift` 或“缺少已验证经验”
+- 正常筛选 artifact 出现 `fallback_used: ego_ops_readonly_exploration`；这是维护者探索路径误入真实推荐的阻断信号
 
 建议：
 
-- 输出 `platform-opencli-adapter-reuse` finding，并把 `adapter_command` 与 `verify_command` 放入 evidence。
-- 不再输出 `platform-opencli-adapter-gap`，除非 adapter 验证失败或能力不足。
-- 若 adapter 输出字段缺失、fixture mismatch 或网页肉眼值不一致，修 adapter；不要用游戏估值规则掩盖解析错误。
+- 渐进读取 ego-ops 全局站点索引、站点索引和目标 operation，确认知识确实缺失。
+- 仅在维护者显式模式创建只读 task card，在单一 ego-browser task space 内探索并复验当前页面；探索结果不得进入本轮真实推荐。
+- 只有实时成功后才写入稳定 steps/checkpoints/success_signals/evidence；不得保存 cookie、token、账号标识或页面私密内容。
+- 知识回写、矩阵升级、离线回归和 live smoke 全部完成后，下一轮正常筛选才可把该 operation 视为 verified。
+- 若数据只在不可稳定访问的交互、图片、验证码或付费内容里，停止写入，改为请求用户提供链接、截图或复制文本。
+
+### ego_ops_operation_reuse
+
+目标网站已有通过验证的 ego-ops operation，后续筛选应优先复用经验，并在当前页面重新验证。
+
+常见信号：
+
+- `knowledge_status: verified_operation_available`
+- `detail_operation_status: verified_operation_available`
+- `operation_verified: true`
+- `operation` 必须存在于当前 support matrix 的 `verified` capability 中，例如 `pxb7/arknights-list`
+- `operation_reference` 指向对应 ego-ops operation 文档
+
+建议：
+
+- 输出 `platform-ego-ops-operation-reuse` finding，并把 `operation` 与 `operation_reference` 放入 evidence。
+- 不再输出整个平台 operation 缺口；若只有 list 或 detail 缺失，则只报告该具体能力。
+- 若 operation 输出字段缺失或网页当前值不一致，标记 `operation_drift` 并重新探索；不要用游戏估值规则掩盖解析错误。
 
 ### asset_status_extraction
 
@@ -179,14 +181,14 @@ updated_at: 2026-08-12
 
 常见信号：
 
-- 绝区零账号来自 `pxb7/zzz-detail` 或 `pzds/zzz-detail` verified adapter。
+- 绝区零账号来自未来已在 support matrix 发布为 `verified` 的详情 operation；当前两个 ZZZ 详情解析器仅为 `exploration_only`，不满足此条件。
 - 运行记录包含 `voidHunters`、S 代理人总数、标题“几命”，但推荐/备选缺少 `agentStatuses` 或 `game_assets.agent_statuses`。
 - `agentStatuses` 存在但多为 `x` 单数字，推荐却声称“带专武/专武齐全”，同时缺少 `sWEngineNames`、`game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name`。
 - 用户要求“全部虚狩和对应辅助/专武”，但输出没有说明资产卡角标来源。
 
 建议：
 
-- 修复或复用 OpenCLI detail adapter，让它滚动到资产卡片区域并输出浅层 `agentStatuses`，同时读取 S 级音擎名称清单 `sWEngineNames`。
+- 只有 detail capability 已为 `verified` 时，才修复或复用 ego-ops detail operation 输出浅层 `agentStatuses` 与 `sWEngineNames`；当前未支持时先记录 capability gap 并使用用户材料。
 - 在 `shared-listing-schema.md`、`selection-state-machine.md` 和对应游戏 `valuation-rules.md` 中要求保留该字段。
 - `x+y` 表示该角色有 `y` 个对应专属音擎；只有 `x` 时必须用本地专武表和 S 音擎名称交叉确认，不能只看总 S 音擎数。
 - 不能读取角标或 S 音擎名称时，把账号降级为 `source_status: partial` 并列为人工确认。
@@ -278,7 +280,7 @@ updated_at: 2026-08-12
 
 - 调用 `game-account-community-updater` 或按社区调研协议刷新证据。全球同步进度游戏应把 YouTube 作为 B站之外的独立长视频来源。
 - 在刷新前不要把单次观察升级为硬规则。
-- 对 opencli 超时、正文不可读、登录墙或空卡片，改用浏览器 DOM、页面 metadata、Jina/WebFetch/curl、官方公告、Wiki/攻略站或用户截图/文本，并记录 `fallback_used`。
+- 对 ego-ops 读取超时、正文不可读、登录墙或空卡片，在同一 ego-browser task space 内按语义读取、直接读取、视觉读取顺序降级；仍失败则请求用户提供材料并记录 `fallback_used`。
 - 如果运行记录已有 `coverage_gaps`、`user_feedback`、`rule_update_suggestions` 或执行失败，但 `knowledge_update_candidates` 为空，输出 `selector-knowledge-ledger-candidates-missing`。这些观察应先进入知识沉淀候选，再由用户确认、fixture 和 evaluator 决定是否写入规则。
 
 ### risk

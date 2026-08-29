@@ -79,6 +79,20 @@ function readPlatformPriority() {
   return parsed.required_default_coverage ?? ['pxb7', 'pzds'];
 }
 
+function readOperationSupport(game) {
+  const matrixPath = path.resolve(repoRoot, 'skills/game-account-toolkit/references/operation-support-matrix.json');
+  if (!fs.existsSync(matrixPath)) return { game_key: null, platforms: {} };
+  const matrix = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+  const text = String(game).toLowerCase();
+  const gameKey = [
+    [/arknights|明日方舟/, 'arknights'],
+    [/zenless|zzz|绝区零/, 'zenless-zone-zero'],
+    [/wuthering|鸣潮/, 'wuthering-waves'],
+    [/neverness|异环/, 'neverness-to-everness'],
+  ].find(([pattern]) => pattern.test(text))?.[1] ?? null;
+  return { game_key: gameKey, platforms: gameKey ? matrix.games?.[gameKey] ?? {} : {} };
+}
+
 function nowStamp() {
   return new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, 'Z');
 }
@@ -90,6 +104,9 @@ function parseBrowserRoute(value) {
       mode: null,
       status: 'pending_preflight',
       selected_transport: null,
+      query_governance: null,
+      operation_knowledge: null,
+      knowledge_writeback: null,
       runtime_validation: null,
       task_space_required: null,
       cleanup_policy: null,
@@ -130,6 +147,9 @@ function parseBrowserRoute(value) {
     mode: parsed.mode,
     status: parsed.status ?? 'ready',
     selected_transport: parsed.selected_transport ?? null,
+    query_governance: parsed.query_governance ?? (parsed.selected_transport === 'ego_browser' ? 'ego_ops' : 'not_required'),
+    operation_knowledge: parsed.operation_knowledge ?? (parsed.selected_transport === 'ego_browser' ? 'progressive_read' : 'not_required'),
+    knowledge_writeback: parsed.knowledge_writeback ?? (parsed.selected_transport === 'ego_browser' ? 'success_only' : 'none'),
     runtime_validation: parsed.runtime_validation ?? 'first_browser_operation',
     task_space_required: parsed.task_space_required ?? parsed.selected_transport === 'ego_browser',
     cleanup_policy: parsed.cleanup_policy ?? (parsed.selected_transport === 'ego_browser' ? 'complete_task_space' : 'none'),
@@ -221,28 +241,36 @@ const profileDigest = crypto.createHash('sha256').update(JSON.stringify(selectio
 const profileStatus = selectionProfile.clarification_required.length
   ? 'needs_clarification'
   : 'confirmed';
+const operationSupport = readOperationSupport(game);
 
-const platformTasks = requiredPlatforms.map((platform) => ({
-  id: `platform-${platform}-list`,
-  type: 'platform_listing',
-  source: platform,
-  priority: 'required',
-  start_path: platform === 'user_provided' ? 'user_material' : 'natural_navigation',
-  success_signal: 'read traceable listing cards with url/source id, price, title, server/risk hints, and candidate count',
-  fallback_order: ['ego_browser_semantic', 'ego_browser_direct', 'ego_browser_visual', 'verified_adapter', 'user_material'],
-  wait_budget_ms: 15000,
-  required_fields: ['url', 'title', 'price', 'platform', 'source_status'],
-  confidence_cap_if_missing: 'medium'
-}));
+const platformTasks = requiredPlatforms.map((platform) => {
+  const capability = operationSupport.platforms?.[platform]?.list;
+  const verified = capability?.status === 'verified' && Boolean(capability.operation);
+  return {
+    id: `platform-${platform}-list`,
+    type: 'platform_listing',
+    source: platform,
+    priority: 'required',
+    start_path: platform === 'user_provided' ? 'user_material' : verified ? 'ego_ops_verified_operation' : 'unsupported_fail_closed',
+    operation: verified ? capability.operation : null,
+    support_status: platform === 'user_provided' ? 'user_material' : capability?.status ?? 'unsupported',
+    success_signal: 'read traceable listing cards with url/source id, price, title, server/risk hints, and candidate count',
+    fallback_order: verified ? ['verified_operation_recheck', 'user_material'] : ['user_material'],
+    wait_budget_ms: 15000,
+    required_fields: ['url', 'title', 'price', 'platform', 'source_status'],
+    confidence_cap_if_missing: 'medium'
+  };
+});
 
 const communityTasks = communitySources.map((source) => ({
   id: `community-${source}-meta`,
   type: 'community_evidence',
   source,
   priority: source === 'youtube' ? 'preferred' : 'required',
-  start_path: 'search',
+  start_path: 'local_verified_snapshot',
+  support_status: 'live_operation_required_before_query',
   success_signal: 'capture reviewable source URL plus meta/team/signature/risk notes relevant to candidate assets',
-  fallback_order: ['ego_browser_semantic', 'ego_browser_direct', 'ego_browser_visual', 'page_metadata', 'guide_site', 'official_source', 'user_material'],
+  fallback_order: ['local_verified_snapshot', 'user_material'],
   wait_budget_ms: 15000,
   required_fields: ['url', 'title', 'evidence_note', 'status'],
   confidence_cap_if_missing: source === 'youtube' ? 'medium' : 'low'
@@ -278,6 +306,14 @@ const artifact = {
     rule: 'Budget, objective weights, server preferences, risk tolerance, and user hard conditions stay in this run artifact.',
   },
   browser_route: browserRoute,
+  query_governance: {
+    layer: 'ego_ops',
+    executor: 'ego_browser',
+    local_experience: 'read_if_present',
+    operation_knowledge: 'progressive_read_one_site_one_operation',
+    live_revalidation: 'required',
+    writeback: 'success_only',
+  },
   budget: {
     currency: 'CNY',
     target: selectionProfile.budget.target,
@@ -351,7 +387,17 @@ const artifact = {
       'stop and downgrade when login, verification, wrong-game route, or platform safety boundary blocks access'
     ]
   },
-  coverage_gaps: [],
+  coverage_gaps: [
+    ...platformTasks.filter((task) => task.start_path === 'unsupported_fail_closed').map((task) => ({
+      source: task.source,
+      task_id: task.id,
+      reason: 'unsupported_operation',
+      evidence: `support matrix has no verified ${operationSupport.game_key ?? 'unknown'}/${task.source}/list operation`,
+      fallback_used: 'user_material',
+      confidence_effect: 'live platform discovery is unavailable and must not be claimed',
+      user_visible_note: `${task.source} 当前没有经过验证的 ego-ops operation，已关闭该实时查询路径`,
+    })),
+  ],
   platform_attempts: [],
   community_attempts: [],
   recommendations: [],

@@ -106,8 +106,28 @@ const artifactPath = path.resolve(input);
 const reportPath = path.resolve(readArg('--report-out', sidecarPath(artifactPath, 'md')));
 const optimizerPath = path.resolve(readArg('--optimizer-out', sidecarPath(artifactPath, 'optimizer.json')));
 const evaluatorPath = path.resolve(readArg('--evaluator-out', sidecarPath(artifactPath, 'evaluator.json')));
+const outputPaths = [artifactPath, reportPath, optimizerPath, evaluatorPath];
+if (new Set(outputPaths).size !== outputPaths.length) {
+  console.error('Artifact, report, optimizer, and evaluator paths must be distinct');
+  process.exit(1);
+}
 const perPlatform = Math.max(1, Math.min(Number(readArg('--per-platform', 5)) || 5, 15));
 const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+const requestProvenance = artifact.request_provenance;
+const inputIssues = [
+  ...(artifact.game !== 'Arknights' && artifact.game !== '明日方舟' ? ['game must identify Arknights'] : []),
+  ...(artifact.target_skill !== 'skills/game-account-arknights' ? ['target_skill must equal skills/game-account-arknights'] : []),
+  ...(!artifact.user_request ? ['user_request is required'] : []),
+  ...(!requestProvenance || typeof requestProvenance !== 'object' ? ['request_provenance is required'] : []),
+  ...(requestProvenance && String(requestProvenance.raw_user_request ?? '') !== String(artifact.user_request ?? '') ? ['raw_user_request must equal user_request'] : []),
+  ...(requestProvenance && requestProvenance.raw_user_request_sha256 !== sha256(requestProvenance.raw_user_request ?? '') ? ['raw_user_request_sha256 is invalid'] : []),
+  ...(requestProvenance && !String(requestProvenance.profile_input ?? '') ? ['profile_input is required'] : []),
+  ...(requestProvenance && requestProvenance.profile_input_sha256 !== sha256(requestProvenance.profile_input ?? '') ? ['profile_input_sha256 is invalid'] : []),
+];
+if (inputIssues.length) {
+  console.error(`Invalid Arknights artifact identity/provenance: ${inputIssues.join('; ')}`);
+  process.exit(1);
+}
 const platforms = Array.isArray(artifact?.success_criteria?.minimum_source_coverage?.platforms)
   ? artifact.success_criteria.minimum_source_coverage.platforms
   : ['pxb7', 'pzds'];
@@ -119,7 +139,7 @@ const availableCounts = Object.fromEntries(platforms.map((platform) => {
 const underfilled = platforms.filter((platform) => renderedCounts[platform] < Math.min(perPlatform, availableCounts[platform]));
 const candidateShortages = platforms.filter((platform) => availableCounts[platform] < perPlatform);
 
-artifact.schema_version = '2.1';
+artifact.schema_version = '3.0';
 artifact.presentation = {
   format: 'markdown_tables',
   table_output_required: true,

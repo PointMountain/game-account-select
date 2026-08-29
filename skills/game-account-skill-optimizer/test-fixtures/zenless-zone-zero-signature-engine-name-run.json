@@ -11,19 +11,21 @@
       "duration_ms": 8700,
       "wait_budget_ms": 15000,
       "result_count": 1,
-      "adapter_available": true,
-      "adapter_verified": true,
-      "detail_adapter_available": true,
-      "detail_adapter_verified": true,
-      "adapter_command": "opencli pxb7 zzz-detail https://www.pxb7.com/product/2188320633570023405/1 -f json",
-      "verify_command": "opencli browser zzz-verify verify pxb7/zzz-detail --strict-memory",
-      "evidence": "verified detail adapter returned agentStatuses, but the run did not retain S-rank W-Engine names for x-only badges"
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-signature-engine",
+      "operation": "pxb7/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-detail.md",
+      "operation_verified": true,
+      "evidence": "verified detail operation returned agentStatuses, but the run did not retain S-rank W-Engine names for x-only badges"
     }
   ],
   "community_attempts": [
     {
       "source": "bilibili",
-      "tool": "opencli subtitle",
+      "tool": "ego_ops_verified_operation",
+      "operation": "generic/semantic-search",
       "query": "绝区零 三虚狩 专武 买号",
       "status": "success",
       "duration_ms": 7200,
@@ -52,6 +54,14 @@
   "backup_listings": [],
   "excluded_listings": [],
   "missing_fields": [],
+  "cleanup_reports": [
+    {
+      "ok": true,
+      "query_session_id": "zzz-signature-engine",
+      "ego_task_spaces_remaining": [],
+      "process_audit_after": []
+    }
+  ],
   "final_response": "推荐 JHYXJ8008，三虚狩和对应专武齐全。",
   "user_feedback": [
     "即使有专武角色右上角数字不一定带y，需要同步校验页面中的 S级武器是否有和角色对应的专武"

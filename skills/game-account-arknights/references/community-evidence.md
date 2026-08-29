@@ -15,7 +15,7 @@ source_coverage:
   bilibili_story_map_tier: video_metadata_and_comments_read
   bilibili_august_super_cup: video_metadata_cover_and_comments_read
   bilibili_account_trade: article_body_read_in_prior_snapshot
-  pxb7_market: live_list_and_detail_adapter_verified
+  pxb7_market: live_list_and_detail_operation_verified
   community_confidence: medium
 ```
 

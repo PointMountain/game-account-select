@@ -1,6 +1,6 @@
 ---
 name: game-account-{{slug}}
-description: {{game_name}} 账号估值和筛选规则，关注命名核心资产、资源、进度和账号安全风险。
+description: {{description_yaml}}
 argument-hint: "[listing json or account description]"
 ---
 
@@ -8,11 +8,13 @@ argument-hint: "[listing json or account description]"
 
 ## 作用
 
-对 {{game_name}} 账号进行游戏资产估值。该 skill 只负责 {{game_name}} 内部价值判断，不负责平台访问、交易撮合或卖家沟通。
+对 {{game_name}} 账号进行游戏资产估值。该 skill 只负责游戏内部价值判断；平台访问由 selector/toolkit 按 operation support matrix 调用已验证 `ego-ops` operation，并由 `ego-browser` 执行。
+
+用户预算、区服、目标和权重只能进入当次 `selection_profile`，`persistence_scope: run_only`。原始请求另存为 `request_provenance`，不得被派生画像覆盖。
 
 ## 执行前准备
 
-先调用 `game-account-preflight`，并读取 `game-account-toolkit/references/skill-io-contract.md`。
+先调用 `game-account-preflight`，并读取 `game-account-toolkit/references/skill-io-contract.md`、`game-skill-standard.md` 和 `operation-support-matrix.json`。
 
 ## 必须读取
 
@@ -25,10 +27,18 @@ argument-hint: "[listing json or account description]"
 
 接受 `<account_listing>` 或卖家描述/OCR 文本。若没有传入 `<community_evidence>`，读取本地社区证据快照。
 
+## 执行
+
+1. 查询前检查 support matrix；默认 platform route 为 unsupported，未验证前 fail closed。
+2. 用 `scripts/evaluate-listing.mjs --input <listing.json>` 调用公共评分入口；`validate-sample.mjs` 只做回归。
+3. 真实运行保存 `coverage_plan`、`platform_attempts`、`coverage_gaps`、`knowledge_update_candidates` 与 evaluation。
+4. 用 `scripts/finalize-evaluation-run.mjs --input <run-artifact.json>` 生成确定性 report、optimizer/evaluator sidecar、`self_improve`、`quality_gate` 和带 `final_response_sha256` 的 `delivery_contract`。
+5. `redo_required` 时继续补证、修复或降级，不得交付为通过结果。
+
 ## 输出
 
 必须输出 `<game_account_evaluation>`，并包含 final_score、confidence、community_comparison、highlights、concerns、missing_fields、rule_update_suggestion。
 
 ## 自我优化
 
-如用户指出资产权重或风险判断错误，先输出 `<rule_update_suggestion>`。只有用户确认后才修改 references 文件并追加 changelog。
+如用户指出资产权重或风险判断错误，先写入 `knowledge_update_candidates`。只有用户确认且样例、finalizer 与 evaluator 全部通过后才修改 references 文件并追加 changelog。最终答复原样使用通过交付门禁的 report。

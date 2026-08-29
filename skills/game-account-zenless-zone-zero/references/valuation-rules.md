@@ -92,7 +92,7 @@ preferred_team_slots:
 - 共享辅助陷阱：三位虚狩都在，但关键辅助总数不足，例如只有琉音、耀嘉音、照、千夏中的两三位，不能按三队完整评分。
 - 旧口径陷阱：星见雅 + 柚叶 + 月城柳、叶瞬光 + 照 + 千夏、仪玄 + 卢西娅 + 橘福福等组合不能自动按当前三支虚狩队完整处理；必须优先按上表核对雅队、叶队和仪玄队。
 - 平台标题只写 S 数量、黄数或“三虚狩”但没有列出队友时，`confidence` 最高为 `medium`，必须要求卖家补角色页截图。
-- 螃蟹/盼之详情 adapter 能返回 `agentStatuses` 时，三虚狩影画以该字段为准；专属音擎优先用 `x+y`，角标只有 `x` 时必须再用 `sWEngineNames` 和 `references/signature-engines.json` 交叉确认。若 adapter 未返回 `agentStatuses` 或 S 音擎名称清单但页面应有资产卡片，`confidence` 最高为 `medium`。
+- 螃蟹/盼之详情 operation 能返回 `agentStatuses` 时，三虚狩影画以该字段为准；专属音擎优先用 `x+y`，角标只有 `x` 时必须再用 `sWEngineNames` 和 `references/signature-engines.json` 交叉确认。若 operation 未返回 `agentStatuses` 或 S 音擎名称清单但页面应有资产卡片，`confidence` 最高为 `medium`。
 - 柚叶是星见雅队硬优先信号；雅队优先按 `雅 + 柚叶 + 南宫羽/莱卡恩/苍角` 判断。没有柚叶时，不得默认星见雅队完整。
 - 叶瞬光队优先按 `叶瞬光 + 照 + 耀嘉音/琉音` 判断；只有照 + 千夏时按旧口径/下位可玩处理，不算当前三虚狩完整队。
 - 仪玄队优先按 `仪玄 + 卢西娅 + 橘福福/琉音` 判断；只有仪玄本体或只有泛用支援不算完整。

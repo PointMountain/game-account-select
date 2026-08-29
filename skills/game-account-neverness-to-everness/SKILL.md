@@ -8,12 +8,15 @@ argument-hint: "[listing json or account description]"
 
 ## 作用
 
-对Neverness to Everness（异环）账号进行游戏资产估值。该 skill 只负责Neverness to Everness（异环）内部价值判断，不负责平台访问。
+对 Neverness to Everness（异环）账号进行游戏资产估值。该 skill 只负责游戏内价值判断；平台数据由 `game-account-select` 经 `game-account-toolkit` 的已验证 `ego-ops` operation 获取，并由 `ego-browser` 在单一 task space 中执行。
+
+预算、区服、目标、权重、风险容忍度和硬条件只进入当次 `selection_profile` / run artifact，`persistence_scope` 必须为 `run_only`，不得固化为长期估值规则。
 
 ## 必须读取
 
 - `../game-account-toolkit/references/skill-io-contract.md`
 - `../game-account-toolkit/references/game-skill-standard.md`
+- `../game-account-toolkit/references/operation-support-matrix.json`
 - `references/valuation-rules.md`
 - `references/asset-knowledge.md`
 - `references/community-evidence.md`
@@ -32,6 +35,20 @@ argument-hint: "[listing json or account description]"
 - 环石、异晶、质实骰子、三重钥匙等资源
 - 主角性别或主角相关限制
 - TAP 绑定、完美账号/B服等账号类型风险
+
+## 执行流程
+
+1. 将原始请求与派生画像分开记录到 `request_provenance` 和 run-only `selection_profile`。
+2. 查询前读取 operation support matrix。异环平台 route 未列入矩阵时必须标为 unsupported，只能评估用户提供或其它明确可追溯的材料；不得暗示已完成实时平台覆盖。
+3. 运行可复用评分入口：
+
+   ```bash
+   node skills/game-account-neverness-to-everness/scripts/evaluate-listing.mjs --input <listing.json> --out <evaluation.json>
+   ```
+
+4. `scripts/validate-sample.mjs` 只做离线 trap 回归。
+5. 真实评估的 raw run artifact 至少包含 `coverage_plan`、`platform_attempts`、`coverage_gaps`、`knowledge_update_candidates` 与 evaluation。
+6. 使用 `scripts/finalize-evaluation-run.mjs` 生成确定性 Markdown、optimizer/evaluator sidecar、`self_improve`、`quality_gate` 和带 `final_response_sha256` 的 `delivery_contract`。任何非 info finding 或 `redo_required` 都不得交付为已完成结果。
 
 ## 输出
 
@@ -54,4 +71,4 @@ neverness_to_everness_score:
 
 ## 自我优化
 
-Neverness to Everness（异环）规则随游戏版本和市场成熟度变化较快。任何角色、弧盘、觉醒权重更新都必须先提出建议，用户确认后再修改 references 文件。
+Neverness to Everness（异环）规则随游戏版本和市场成熟度变化较快。任何角色、弧盘、觉醒权重更新必须先进入 `knowledge_update_candidates`，通过样例、finalizer 和 evaluator 后才能应用；估值变化仍需用户确认。运行画像不得沉淀。最终答复必须原样交付通过门禁的 report。

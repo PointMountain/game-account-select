@@ -10,6 +10,13 @@ import { buildListQueryPlan } from './list-query-plan.mjs';
 import { rankListings } from './score-listings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fixtureMode = process.env.GAME_ACCOUNT_FIXTURE_MODE === '1';
+const egoOperationScript = fixtureMode && process.env.GAME_ACCOUNT_TEST_OPERATION_RUNNER
+  ? path.resolve(process.env.GAME_ACCOUNT_TEST_OPERATION_RUNNER)
+  : path.resolve(__dirname, '../../game-account-toolkit/scripts/run-ego-operation.mjs');
+const cleanupScript = fixtureMode && process.env.GAME_ACCOUNT_TEST_CLEANUP_RUNNER
+  ? path.resolve(process.env.GAME_ACCOUNT_TEST_CLEANUP_RUNNER)
+  : path.resolve(__dirname, '../../game-account-toolkit/scripts/cleanup-query-session.mjs');
 const operatorKnowledge = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'operator-value-map.json'), 'utf8'));
 const collabRoster = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'collab-roster.json'), 'utf8'));
 const limitedRoster = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'limited-roster.json'), 'utf8'));
@@ -54,6 +61,10 @@ function rowsFrom(value) {
   return [];
 }
 
+function unique(values) {
+  return [...new Set(values.filter((value) => value !== null && value !== undefined && value !== ''))];
+}
+
 function run(command, commandArgs, timeout = 90000) {
   const startedAt = Date.now();
   const result = spawnSync(command, commandArgs, {
@@ -73,8 +84,54 @@ function run(command, commandArgs, timeout = 90000) {
   };
 }
 
-function runOwnedOpencli(commandArgs, timeout = 90000) {
-  return run('opencli', commandArgs, timeout);
+function runEgoOperation(taskSpace, platform, operation, options = {}, timeout = 90000) {
+  const operationId = `${platform}/${operation}`;
+  const commandArgs = [
+    egoOperationScript,
+    '--operation', operationId,
+    '--task-space', taskSpace,
+    '--task-space-disposition', 'keep',
+    '--json',
+    ...(options.input ? ['--input', String(options.input)] : []),
+    ...(options.minPrice != null ? ['--min-price', String(options.minPrice)] : []),
+    ...(options.maxPrice != null ? ['--max-price', String(options.maxPrice)] : []),
+    ...(options.limit != null ? ['--limit', String(options.limit)] : []),
+    ...(options.page != null ? ['--page', String(options.page)] : []),
+    ...(options.sort ? ['--sort', String(options.sort)] : []),
+  ];
+  const execution = run(process.execPath, commandArgs, timeout);
+  let report = null;
+  try { report = parseJsonOutput(execution.stdout); } catch {}
+  return {
+    ...execution,
+    ok: execution.ok && report?.ok === true,
+    stdout: report?.data == null ? '' : JSON.stringify(report.data),
+    query_governance: 'ego_ops',
+    browser_transport: 'ego_browser',
+    operation: operationId,
+    operation_report: report,
+    error_text: execution.ok && report?.ok !== true
+      ? ((Array.isArray(report?.reasons) && report.reasons.length)
+          ? report.reasons.join(', ')
+          : `operation_failed: ${JSON.stringify(report ?? { stdout: execution.stdout.slice(0, 1000) })}`)
+      : execution.stderr,
+  };
+}
+
+function operationProvenance(commandResult) {
+  const report = commandResult?.operation_report;
+  return {
+    operation: commandResult?.operation ?? report?.operation ?? null,
+    knowledge_status: report?.ego_ops?.knowledge_status ?? null,
+    operation_reference: report?.ego_ops?.operation_reference ?? null,
+    knowledge_sha256: report?.ego_ops?.knowledge_sha256 ?? null,
+    manifest_availability: report?.ego_ops?.manifest_availability ?? null,
+    checkpoint_count: report?.ego_ops?.checkpoint_count ?? null,
+    ego_task_space_id: report?.task_space_id ?? null,
+    ego_task_space_name: report?.task_space_name ?? null,
+    matched_signals: report?.evidence?.matched_signals ?? [],
+    operation_reasons: report?.reasons ?? [],
+  };
 }
 
 function normalizeServer(server) {
@@ -349,7 +406,7 @@ const expansionDetailCount = Math.max(1, Math.min(Number(readArg('--expansion-de
 const pinnedUrls = readArgs('--pinned-url');
 const reportOut = readArg('--report-out');
 if (!request || !outPath) {
-  console.error('Usage: node run-dual-platform-selection.mjs --request <raw-user-text> --out <artifact.json> [--profile-request <derived-runtime-profile-text>] [--profile-confirmed] [--pinned-url <live-listing-url>] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 5] [--display-per-platform 5] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
+  console.error('Usage: node run-dual-platform-selection.mjs --request <raw-user-text> --out <artifact.json> [--profile-request <derived-runtime-profile-text>] [--profile-confirmed] [--task-space <name|id>] [--pinned-url <live-listing-url>] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 5] [--display-per-platform 5] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
   process.exit(2);
 }
 
@@ -368,7 +425,80 @@ if (resolvedClarifications.length) {
 profile.clarification_required = [];
 profile.platforms = [...new Set([...REQUIRED_PLATFORMS, ...profile.platforms])];
 profile.confirmation_required = false;
-const runId = `gas-arknights-dual-${new Date().toISOString().replace(/[-:.]/g, '')}`;
+const runId = readArg('--task-space', `gas-arknights-dual-${new Date().toISOString().replace(/[-:.]/g, '')}`);
+let cleanupCompleted = false;
+let cleanupInProgress = false;
+let cleanupReportCache = null;
+function cleanupQueryTaskSpace() {
+  if (cleanupCompleted) return cleanupReportCache;
+  if (cleanupInProgress) return { ok: false, error: 'cleanup_already_in_progress', ego_task_spaces_remaining: [String(runId)] };
+  cleanupInProgress = true;
+  const execution = run(process.execPath, [cleanupScript, '--task-space', runId, '--json'], 30000);
+  let report = null;
+  let parseError = null;
+  try { report = parseJsonOutput(execution.stdout); } catch (error) { parseError = error instanceof Error ? error.message : String(error); }
+  const ok = execution.ok && report?.ok === true;
+  cleanupReportCache = {
+    ...(report ?? {}),
+    ok,
+    requested_task_space: String(runId),
+    error: ok ? null : (parseError ?? report?.error ?? execution.stderr ?? 'cleanup command failed'),
+    execution: { ok: execution.ok, status: execution.status, duration_ms: execution.duration_ms },
+  };
+  cleanupCompleted = ok;
+  cleanupInProgress = false;
+  return cleanupReportCache;
+}
+
+function runPzdsHealthCheck(taskSpace) {
+  const commandResult = runEgoOperation(taskSpace, 'pzds', 'arknights-list', { limit: 1, page: 1 }, 90000);
+  stopForBrowserHandoff(commandResult, 'PZDS health check');
+  const report = commandResult.operation_report;
+  const matched = new Set(report?.evidence?.matched_signals ?? []);
+  const signalsOk = matched.size > 0 && report?.ego_ops?.knowledge_status === 'verified_operation_available';
+  const titleOk = /盼之/.test(String(report?.page?.title ?? ''));
+  return {
+    ok: commandResult.ok && signalsOk && titleOk,
+    operation: commandResult.operation,
+    ...operationProvenance(commandResult),
+    url: report?.page?.url ?? null,
+    title: report?.page?.title ?? null,
+    matched_signals: [...matched],
+    reasons: [
+      ...(report?.reasons ?? []),
+      ...(!signalsOk ? ['required_health_signals_missing'] : []),
+      ...(!titleOk ? ['pzds_title_mismatch'] : []),
+    ],
+    duration_ms: commandResult.duration_ms,
+  };
+}
+
+let emergencyHandling = false;
+function emergencyCleanup(error) {
+  if (emergencyHandling) return;
+  emergencyHandling = true;
+  const cleanup = cleanupQueryTaskSpace();
+  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  if (cleanup?.ok !== true) console.error(`ego-browser task-space cleanup failed: ${JSON.stringify(cleanup)}`);
+  process.exit(1);
+}
+process.on('uncaughtException', emergencyCleanup);
+process.on('unhandledRejection', emergencyCleanup);
+
+function exitAfterQueryCleanup(message, code = 1) {
+  const cleanup = cleanupQueryTaskSpace();
+  console.error(message);
+  if (cleanup?.ok !== true) console.error(`ego-browser task-space cleanup failed: ${JSON.stringify(cleanup?.ego_task_spaces_remaining ?? [])}`);
+  process.exit(code);
+}
+
+function stopForBrowserHandoff(commandResult, context) {
+  const report = commandResult?.operation_report;
+  const reasons = Array.isArray(report?.reasons) ? report.reasons : [];
+  if (report?.needs_user_action === true || reasons.includes('browser_control_handoff')) {
+    exitAfterQueryCleanup(`${context} stopped because browser control was handed to the user`);
+  }
+}
 const digest = crypto.createHash('sha256').update(JSON.stringify(profile)).digest('hex');
 const evidenceDate = communityEvidenceText.match(/updated_at:\s*(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
 const evidenceAgeDays = evidenceDate == null
@@ -381,31 +511,25 @@ for (const platform of REQUIRED_PLATFORMS) {
   const queryPlan = buildListQueryPlan({ platform, limit, batchCount, displayCount, detailCount });
   for (let planIndex = 0; planIndex < queryPlan.length; planIndex += 1) {
     const plan = queryPlan[planIndex];
-    const commandResult = runOwnedOpencli([
-      platform, 'arknights-list',
-      '--minPrice', String(profile.budget.flex_min ?? profile.budget.primary_min ?? 0),
-      '--maxPrice', String(profile.budget.flex_max ?? profile.budget.primary_max ?? 0),
-      '--limit', String(plan.limit),
-      '--page', String(plan.page),
-      '--site-session', 'ephemeral',
-      '--keep-tab', 'false',
-      '-f', 'json',
-    ]);
+    const commandResult = runEgoOperation(runId, platform, 'arknights-list', {
+      minPrice: profile.budget.flex_min ?? profile.budget.primary_min ?? 0,
+      maxPrice: profile.budget.flex_max ?? profile.budget.primary_max ?? 0,
+      limit: plan.limit,
+      page: plan.page,
+    });
+    stopForBrowserHandoff(commandResult, `${platform} list batch ${planIndex + 1}`);
     let listCommand = { ...commandResult, platform, batch: planIndex + 1, query_plan: plan };
     listCommands.push(listCommand);
     if (!listCommand.ok && platform === 'pzds' && planIndex === 0) {
       const boundedListCommand = listCommand;
-      const fallbackResult = runOwnedOpencli([
-        platform, 'arknights-list',
-        '--minPrice', '0',
-        '--maxPrice', '0',
-        '--limit', String(plan.limit),
-        '--page', '1',
-        '--sort', 'priceDesc',
-        '--site-session', 'ephemeral',
-        '--keep-tab', 'false',
-        '-f', 'json',
-      ]);
+      const fallbackResult = runEgoOperation(runId, platform, 'arknights-list', {
+        minPrice: 0,
+        maxPrice: 0,
+        limit: plan.limit,
+        page: 1,
+        sort: 'priceDesc',
+      });
+      stopForBrowserHandoff(fallbackResult, `${platform} list fallback`);
       listCommand = {
         ...fallbackResult,
         platform,
@@ -419,8 +543,7 @@ for (const platform of REQUIRED_PLATFORMS) {
     }
     if (!listCommand.ok) {
       if (planIndex === 0) {
-        console.error(`${platform} list failed: ${listCommand.stderr || listCommand.stdout || 'unknown error'}`);
-        process.exit(1);
+        exitAfterQueryCleanup(`${platform} list failed: ${listCommand.error_text || listCommand.stderr || listCommand.stdout || 'unknown error'}`);
       }
       break;
     }
@@ -441,7 +564,8 @@ for (const url of pinnedUrls) {
     pinnedSeedAttempts.push({ url, platform: null, status: 'unsupported_url', error_text: 'URL does not belong to a required platform' });
     continue;
   }
-  const commandResult = runOwnedOpencli([platform, 'arknights-detail', url, '--site-session', 'ephemeral', '--keep-tab', 'false', '-f', 'json']);
+  const commandResult = runEgoOperation(runId, platform, 'arknights-detail', { input: url });
+  stopForBrowserHandoff(commandResult, `${platform} pinned detail`);
   let row = null;
   let errorText = null;
   if (commandResult.ok) {
@@ -465,6 +589,7 @@ for (const url of pinnedUrls) {
     status: row ? 'success' : 'error',
     duration_ms: commandResult.duration_ms,
     error_text: row ? null : errorText,
+    ...operationProvenance(commandResult),
   });
 }
 const listRows = [...listRowsById.values()];
@@ -474,12 +599,10 @@ const pzdsPaginationPartial = listRows
 const platformCandidateCounts = Object.fromEntries(REQUIRED_PLATFORMS.map((platform) => [platform, listRows.filter((row) => row.__platform === platform).length]));
 const emptyPlatforms = REQUIRED_PLATFORMS.filter((platform) => platformCandidateCounts[platform] === 0);
 if (emptyPlatforms.length) {
-  console.error(`Dual-platform coverage incomplete; no candidates from: ${emptyPlatforms.join(', ')}`);
-  process.exit(1);
+  exitAfterQueryCleanup(`Dual-platform coverage incomplete; no candidates from: ${emptyPlatforms.join(', ')}`);
 }
 if (listRows.length < 10) {
-  console.error(`Expected at least 10 candidates, received ${listRows.length}`);
-  process.exit(1);
+  exitAfterQueryCleanup(`Expected at least 10 candidates, received ${listRows.length}`);
 }
 
 const preliminary = rankListings(listRows.map((row) => normalizeRow(row, false, row.__platform)), profile);
@@ -505,7 +628,8 @@ const detailCandidates = REQUIRED_PLATFORMS.flatMap((platform) => [...preliminar
   .sort(detailSorter)
   .slice(0, detailCount));
 for (const candidate of detailCandidates) {
-  const detailCommand = runOwnedOpencli([candidate.platform, 'arknights-detail', candidate.url, '--site-session', 'ephemeral', '--keep-tab', 'false', '-f', 'json']);
+  const detailCommand = runEgoOperation(runId, candidate.platform, 'arknights-detail', { input: candidate.url });
+  stopForBrowserHandoff(detailCommand, `${candidate.platform} shortlist detail ${candidate.listing_id}`);
   let detailRow = null;
   let detailError = null;
   if (detailCommand.ok) {
@@ -525,6 +649,7 @@ for (const candidate of detailCandidates) {
     status: detailRow ? 'success' : 'error',
     duration_ms: detailCommand.duration_ms,
     error_text: detailRow ? null : (detailError || detailCommand.stderr || detailCommand.stdout || 'detail command failed').trim().slice(0, 500),
+    ...operationProvenance(detailCommand),
   });
 }
 
@@ -587,16 +712,13 @@ if (eligibleInBudget.length === 0 && profile.budget_expansion?.enabled && Number
     const expansionRows = [];
     const bandAttempts = [];
     for (const platform of REQUIRED_PLATFORMS) {
-      const listCommand = runOwnedOpencli([
-        platform, 'arknights-list',
-        '--minPrice', String(minPrice),
-        '--maxPrice', String(maxPrice),
-        '--limit', String(limit),
-        '--page', '1',
-        '--site-session', 'ephemeral',
-        '--keep-tab', 'false',
-        '-f', 'json',
-      ]);
+      const listCommand = runEgoOperation(runId, platform, 'arknights-list', {
+        minPrice,
+        maxPrice,
+        limit,
+        page: 1,
+      });
+      stopForBrowserHandoff(listCommand, `${platform} ${direction} expansion list band ${band + 1}`);
       const platformRows = listCommand.ok ? rowsFrom(parseJsonOutput(listCommand.stdout)) : [];
       const expansionAttempt = {
         platform,
@@ -610,13 +732,14 @@ if (eligibleInBudget.length === 0 && profile.budget_expansion?.enabled && Number
         result_count: platformRows.length,
         exact_detail_verified_count: 0,
         error_text: listCommand.ok ? null : (listCommand.stderr || listCommand.stdout || `${platform} expansion list failed`).trim().slice(0, 500),
+        ...operationProvenance(listCommand),
       };
       expansionAttempts.push(expansionAttempt);
       bandAttempts.push(expansionAttempt);
       expansionRows.push(...platformRows.map((row) => ({ ...row, __platform: platform })));
     }
     if (!expansionRows.length && bandAttempts.some((attempt) => attempt.status === 'error')) {
-      expansionStopReasons[direction] = 'expansion_adapter_failed';
+      expansionStopReasons[direction] = 'expansion_operation_failed';
       break;
     }
 
@@ -634,7 +757,8 @@ if (eligibleInBudget.length === 0 && profile.budget_expansion?.enabled && Number
       .slice(0, expansionDetailCount));
     const expansionDetailsById = new Map();
     for (const candidate of expansionCandidates) {
-      const detailCommand = runOwnedOpencli([candidate.platform, 'arknights-detail', candidate.url, '--site-session', 'ephemeral', '--keep-tab', 'false', '-f', 'json']);
+      const detailCommand = runEgoOperation(runId, candidate.platform, 'arknights-detail', { input: candidate.url });
+      stopForBrowserHandoff(detailCommand, `${candidate.platform} ${direction} expansion detail ${candidate.listing_id}`);
       let detailRow = null;
       let detailError = null;
       if (detailCommand.ok) {
@@ -659,6 +783,7 @@ if (eligibleInBudget.length === 0 && profile.budget_expansion?.enabled && Number
         status: detailRow ? 'success' : 'error',
         duration_ms: detailCommand.duration_ms,
         error_text: detailRow ? null : (detailError || detailCommand.stderr || detailCommand.stdout || 'detail command failed').trim().slice(0, 500),
+        ...operationProvenance(detailCommand),
       });
     }
 
@@ -803,6 +928,11 @@ const bestValueListing = rankings
 
 const pzdsAssetGridListings = rankings.filter((listing) => listing.platform === 'pzds'
   && Number(listing.game_assets?.platform_facts?.status?.operatorDomCount ?? 0) > 0);
+const pzdsHealthFirst = runPzdsHealthCheck(runId);
+const pzdsHealthCheck = pzdsHealthFirst.ok
+  ? { ...pzdsHealthFirst, attempts: 1 }
+  : { ...runPzdsHealthCheck(runId), attempts: 2, first_attempt: pzdsHealthFirst };
+const queryCleanupReport = cleanupQueryTaskSpace();
 
 const artifact = {
   run_id: runId,
@@ -851,11 +981,11 @@ const artifact = {
     intent_summary: request,
     source_tasks: [
       ...REQUIRED_PLATFORMS.flatMap((platform) => [
-        { id: `platform-${platform}-list`, type: 'platform_listing', source: platform, priority: 'required', start_path: 'verified_adapter', success_signal: 'current rows with traceable ids and prices', fallback_order: ['ego_browser_semantic', 'ego_browser_direct', 'ego_browser_visual', 'user_material'], wait_budget_ms: 90000, required_fields: ['listingId', 'priceCny', 'url', 'publishedAt'], confidence_cap_if_missing: 'low' },
-        { id: `platform-${platform}-detail-shortlist`, type: 'platform_detail', source: platform, priority: 'required', start_path: 'verified_adapter', success_signal: `detail facts and verification-image evidence for top ${detailCount} preliminary candidates`, fallback_order: ['final_platform_verification'], wait_budget_ms: detailCount * 90000, required_fields: ['priceCny', 'operatorNames', 'elite2OperatorNames', 'operatorImageUrls|verificationImageUrls', 'riskFacts'], confidence_cap_if_missing: 'medium' },
+        { id: `platform-${platform}-list`, type: 'platform_listing', source: platform, priority: 'required', start_path: 'ego_ops_verified_operation', operation: `${platform}/arknights-list`, success_signal: 'current rows with traceable ids and prices', fallback_order: ['verified_operation_recheck', 'user_material'], wait_budget_ms: 90000, required_fields: ['listingId', 'priceCny', 'url', 'publishedAt'], confidence_cap_if_missing: 'low' },
+        { id: `platform-${platform}-detail-shortlist`, type: 'platform_detail', source: platform, priority: 'required', start_path: 'ego_ops_verified_operation', operation: `${platform}/arknights-detail`, success_signal: `detail facts and verification-image evidence for top ${detailCount} preliminary candidates`, fallback_order: ['verified_operation_recheck', 'final_platform_verification'], wait_budget_ms: detailCount * 90000, required_fields: ['priceCny', 'operatorNames', 'elite2OperatorNames', 'operatorImageUrls|verificationImageUrls', 'riskFacts'], confidence_cap_if_missing: 'medium' },
       ]),
       { id: 'community-current-snapshot', type: 'community_evidence', source: 'hypergryph+prts+bilibili', priority: 'required', start_path: 'verified_local_snapshot', success_signal: 'snapshot updated today with reviewable URLs', fallback_order: ['refresh'], wait_budget_ms: 15000, required_fields: ['updated_at', 'sources', 'limitations'], confidence_cap_if_missing: 'medium' },
-      ...(profile.budget_expansion?.enabled ? REQUIRED_PLATFORMS.map((platform) => ({ id: `platform-${platform}-budget-breakthrough`, type: 'platform_listing', source: platform, priority: 'required', start_path: 'verified_adapter', success_signal: 'first lower and first higher price bands containing a detail-verified hard-condition-complete listing, or an explicit per-direction stop reason', fallback_order: ['stop_with_no_exact_match'], wait_budget_ms: expansionBandCount * 90000, required_fields: ['listingId', 'priceCny', 'url', 'hard_filter_passed'], confidence_cap_if_missing: 'medium' })) : []),
+      ...(profile.budget_expansion?.enabled ? REQUIRED_PLATFORMS.map((platform) => ({ id: `platform-${platform}-budget-breakthrough`, type: 'platform_listing', source: platform, priority: 'required', start_path: 'ego_ops_verified_operation', operation: `${platform}/arknights-list`, success_signal: 'first lower and first higher price bands containing a detail-verified hard-condition-complete listing, or an explicit per-direction stop reason', fallback_order: ['verified_operation_recheck', 'stop_with_no_exact_match'], wait_budget_ms: expansionBandCount * 90000, required_fields: ['listingId', 'priceCny', 'url', 'hard_filter_passed'], confidence_cap_if_missing: 'medium' })) : []),
     ],
     completeness_gates: { platforms_required: REQUIRED_PLATFORMS, platform_shortlists_required: true, platform_candidate_required: true, detail_required_for_top_n_per_platform: detailCount, min_display_candidates_per_platform: displayCount, table_output_required: true, self_improve_closeout_required: true, url_required_for_all_tiers: true },
     stop_rules: [`stop after ${limit * batchCount} requested candidate rows`, 'do not retry failed detail more than once'],
@@ -863,32 +993,20 @@ const artifact = {
   coverage_gaps: [
     ...REQUIRED_PLATFORMS.flatMap((platform) => {
       const failures = detailFailures.filter((attempt) => attempt.platform === platform);
-      return failures.length ? [{ source: platform, task_id: `platform-${platform}-detail-shortlist`, reason: 'field_missing', evidence: `${failures.length} detail adapter attempts failed`, fallback_used: 'manual_verification', confidence_effect: 'failed rows remain medium/low confidence', user_visible_note: `${platform === 'pxb7' ? '螃蟹' : '盼之'}部分详情需人工复核` }] : [];
+      return failures.length ? [{ source: platform, task_id: `platform-${platform}-detail-shortlist`, reason: 'field_missing', evidence: `${failures.length} ego-ops detail operation attempts failed`, fallback_used: 'manual_verification', confidence_effect: 'failed rows remain medium/low confidence', user_visible_note: `${platform === 'pxb7' ? '螃蟹' : '盼之'}部分详情需人工复核` }] : [];
     }),
     ...REQUIRED_PLATFORMS.flatMap((platform) => listCommands.some((item) => item.platform === platform && !item.ok && item.recovered_by_fallback !== true) ? [{ source: platform, task_id: `platform-${platform}-list`, reason: 'field_missing', evidence: 'an unrecovered list batch failed after at least one successful batch', fallback_used: 'successful_batches', confidence_effect: 'candidate coverage is partial', user_visible_note: `${platform === 'pxb7' ? '螃蟹' : '盼之'}扩展分页有一批读取失败` }] : []),
     ...(pzdsPaginationPartial ? [{ source: 'pzds', task_id: 'platform-pzds-list', reason: 'rate_limited', evidence: 'PZDS loadMore failed or was rate-limited after the initial natural page data loaded', fallback_used: 'initial_rendered_goods_list', confidence_effect: 'PZDS candidate coverage is partial but returned rows remain traceable', user_visible_note: '盼之扩展分页触发限流，本轮保留自然页面已加载候选并明确标为覆盖不完整' }] : []),
+    ...(!pzdsHealthCheck.ok ? [{ source: 'pzds', task_id: 'platform-pzds-health', reason: 'blocked', evidence: `PZDS health revalidation failed after ${pzdsHealthCheck.attempts} attempt(s): ${pzdsHealthCheck.reasons.join(', ')}`, fallback_used: 'stop_after_single_reobservation', confidence_effect: 'PZDS recommendations require manual live-page confirmation', user_visible_note: '盼之列表与详情已读取，但结束前健康复验未通过，需人工确认页面当前无验证或风控阻断' }] : []),
     ...(!dualPlatformCoverage.complete ? [{ source: 'cross_platform_output', task_id: 'dual-platform-shortlists', reason: 'empty_result', evidence: `missing display candidates for ${dualPlatformCoverage.missing_platforms.join(', ')}`, fallback_used: 'do_not_claim_complete', confidence_effect: 'run is incomplete and cannot be presented as a dual-platform result', user_visible_note: '双平台候选未凑齐，本轮不得只展示单个平台后宣称完成' }] : []),
     ...(!dualPlatformCoverage.qualifying_complete ? [{ source: 'cross_platform_output', task_id: 'dual-platform-qualifying-shortlists', reason: 'empty_result', evidence: `no detail-verified qualifying account from ${dualPlatformCoverage.qualifying_missing_platforms.join(', ')}`, fallback_used: 'show_labeled_near_matches', confidence_effect: 'near matches are visible but remain non-qualifying', user_visible_note: '有平台暂未找到完全符合项，已保留明确标注的接近账号用于横向比较' }] : []),
     ...(!evidenceIsCurrent ? [{ source: 'community_snapshot', task_id: 'community-current-snapshot', reason: 'not_checked', evidence: evidenceDate ? `snapshot age is ${evidenceAgeDays} days` : 'snapshot updated_at is missing', fallback_used: 'refresh', confidence_effect: 'live recommendations are capped at medium confidence', user_visible_note: '社区证据快照需要刷新' }] : []),
-    ...(profile.budget_expansion?.enabled && eligibleInBudget.length === 0 && budgetBreakthroughListings.length === 0 ? [{ source: 'pxb7+pzds', task_id: 'dual-platform-budget-breakthrough', reason: expansionStopReason.includes('expansion_adapter_failed') ? 'blocked' : 'empty_result', evidence: `bidirectional expansion ended with ${expansionStopReason}`, fallback_used: 'in_budget_near_matches', confidence_effect: 'no exact hard-condition match was verified inside the configured search horizon', user_visible_note: '已保留预算附近最接近账号，但双平台向低价和高价扩展后仍未复核到精确满足项' }] : []),
+    ...(profile.budget_expansion?.enabled && eligibleInBudget.length === 0 && budgetBreakthroughListings.length === 0 ? [{ source: 'pxb7+pzds', task_id: 'dual-platform-budget-breakthrough', reason: expansionStopReason.includes('expansion_operation_failed') ? 'blocked' : 'empty_result', evidence: `bidirectional expansion ended with ${expansionStopReason}`, fallback_used: 'in_budget_near_matches', confidence_effect: 'no exact hard-condition match was verified inside the configured search horizon', user_visible_note: '已保留预算附近最接近账号，但双平台向低价和高价扩展后仍未复核到精确满足项' }] : []),
     { source: 'pxb7+pzds', task_id: 'operator-progression-detail', reason: 'field_missing', evidence: 'Current public reports expose E2/E1 membership and verification images but no dedicated per-operator mastery/module values', fallback_used: 'final_platform_verification', confidence_effect: 'unknown mastery/module receive zero credit and recommendations remain at most medium confidence', user_visible_note: '精二已由平台事实验证；专精和模组需在下单后的最终验号中逐项确认' },
   ],
-  platform_attempts: REQUIRED_PLATFORMS.map((platform) => ({
-    platform,
-    query: `Arknights ${profile.budget.flex_min ?? profile.budget.primary_min}-${profile.budget.flex_max ?? profile.budget.primary_max}`,
-    url: platform === 'pxb7' ? 'https://www.pxb7.com/buy/10053/1?keyword=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F' : 'https://www.pzds.com/goodsList/84/6/headerSearch?queryFrom=search&searchType=GAME_NAME',
-    query_session_id: runId,
-    browser_transport: 'none',
-    site_session: 'ephemeral',
-    browser_targets: [],
-    duration_ms: listCommands.filter((item) => item.platform === platform).reduce((sum, item) => sum + item.duration_ms, 0),
-    wait_budget_ms: 90000,
-    status: listCommands.some((item) => item.platform === platform && item.ok) ? (platform === 'pzds' && pzdsPaginationPartial ? 'partial' : 'success') : 'error',
-    result_count: platformCandidateCounts[platform],
-    adapter_available: true,
-    adapter_verified: true,
-    adapter_command: listCommands.filter((item) => item.platform === platform).map((item) => item.command).join(' && '),
-    list_attempts: listCommands.filter((item) => item.platform === platform).map((item) => ({
+  platform_attempts: REQUIRED_PLATFORMS.map((platform) => {
+    const platformListCommands = listCommands.filter((item) => item.platform === platform);
+    const listAttempts = platformListCommands.map((item) => ({
       batch: item.batch,
       page: item.query_plan?.page ?? null,
       limit: item.query_plan?.limit ?? null,
@@ -901,18 +1019,59 @@ const artifact = {
       recovered_by_fallback: item.recovered_by_fallback === true,
       fallback_used: item.fallback_used ?? null,
       error_text: item.ok ? null : (item.stderr || item.stdout || 'list command failed').trim().slice(0, 500),
-    })),
-    verify_command: `opencli browser gas-arknights-${platform}-verify verify ${platform}/arknights-list --strict-memory; opencli browser gas-arknights-${platform}-verify verify ${platform}/arknights-detail --strict-memory`,
-    detail_adapter_command: `opencli ${platform} arknights-detail <url> -f json`,
-    detail_attempts: detailAttempts.filter((attempt) => attempt.platform === platform),
-    budget_expansion: {
-      enabled: profile.budget_expansion?.enabled === true,
-      stop_reason: expansionStopReason,
-      stop_reasons_by_direction: expansionStopReasons,
-      list_attempts: expansionAttempts.filter((attempt) => attempt.platform === platform),
-      detail_attempts: expansionDetailAttempts.filter((attempt) => attempt.platform === platform),
-    },
-  })),
+      ...operationProvenance(item),
+    }));
+    const platformDetailAttempts = detailAttempts.filter((attempt) => attempt.platform === platform);
+    const platformExpansionLists = expansionAttempts.filter((attempt) => attempt.platform === platform);
+    const platformExpansionDetails = expansionDetailAttempts.filter((attempt) => attempt.platform === platform);
+    const operationAttempts = [...listAttempts, ...platformDetailAttempts, ...platformExpansionLists, ...platformExpansionDetails];
+    const operationReferences = unique(operationAttempts.map((attempt) => attempt.operation_reference));
+    const knowledgeHashes = unique(operationAttempts.map((attempt) => attempt.knowledge_sha256));
+    const taskSpaceIds = unique(operationAttempts.map((attempt) => attempt.ego_task_space_id));
+    const allKnowledgeVerified = operationAttempts.length > 0
+      && operationAttempts.every((attempt) => attempt.knowledge_status === 'verified_operation_available');
+    return {
+      platform,
+      query: `Arknights ${profile.budget.flex_min ?? profile.budget.primary_min}-${profile.budget.flex_max ?? profile.budget.primary_max}`,
+      url: platform === 'pxb7' ? 'https://www.pxb7.com/buy/10053/1?keyword=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F' : 'https://www.pzds.com/goodsList/84/6/headerSearch?queryFrom=search&searchType=GAME_NAME',
+      query_session_id: runId,
+      query_governance: 'ego_ops',
+      browser_transport: 'ego_browser',
+      browser_used: true,
+      task_space_name: runId,
+      ego_task_space_id: taskSpaceIds[0] ?? null,
+      ego_task_space_name: operationAttempts.find((attempt) => attempt.ego_task_space_name)?.ego_task_space_name ?? runId,
+      browser_targets: [],
+      duration_ms: platformListCommands.reduce((sum, item) => sum + item.duration_ms, 0),
+      wait_budget_ms: 90000,
+      status: platformListCommands.some((item) => item.ok) ? (platform === 'pzds' && pzdsPaginationPartial ? 'partial' : 'success') : 'error',
+      result_count: platformCandidateCounts[platform],
+      operation_available: true,
+      operation_verified: allKnowledgeVerified,
+      operation: `${platform}/arknights-list`,
+      operations: [`${platform}/arknights-list`, `${platform}/arknights-detail`],
+      knowledge_status: allKnowledgeVerified ? 'verified_operation_available' : 'operation_drift',
+      operation_reference: operationReferences[0] ?? null,
+      operation_references: operationReferences,
+      knowledge_sha256: knowledgeHashes[0] ?? null,
+      knowledge_sha256s: knowledgeHashes,
+      matched_signals: unique(operationAttempts.flatMap((attempt) => attempt.matched_signals ?? [])),
+      operation_reasons: unique(operationAttempts.flatMap((attempt) => attempt.operation_reasons ?? [])),
+      operation_commands: platformListCommands.map((item) => item.command),
+      list_attempts: listAttempts,
+      knowledge_validation_command: 'node <ego-ops>/scripts/validate-knowledge.mjs',
+      detail_operation_command: `npm run query:ego -- --operation ${platform}/arknights-detail --input <url> --task-space ${runId} --json`,
+      detail_attempts: platformDetailAttempts,
+      health_check: platform === 'pzds' ? pzdsHealthCheck : null,
+      budget_expansion: {
+        enabled: profile.budget_expansion?.enabled === true,
+        stop_reason: expansionStopReason,
+        stop_reasons_by_direction: expansionStopReasons,
+        list_attempts: platformExpansionLists,
+        detail_attempts: platformExpansionDetails,
+      },
+    };
+  }),
   community_attempts: [{ source: 'local_current_snapshot', tool: 'local_evidence_snapshot', query: 'current Arknights general/story-map tiers, role coverage, progression and account-trade evidence', url: 'skills/game-account-arknights/references/community-evidence.md', duration_ms: null, wait_budget_ms: 15000, status: evidenceIsCurrent ? 'success' : 'limited', result_count: evidenceIsCurrent ? 7 : 0, error_text: evidenceIsCurrent ? null : 'community evidence snapshot is stale or undated', fallback_used: evidenceIsCurrent ? null : 'refresh' }],
   candidate_count: listRows.length + expansionAttempts.reduce((sum, attempt) => sum + attempt.result_count, 0),
   detail_verified_count: allDetailedIds.size,
@@ -944,7 +1103,7 @@ const artifact = {
   experience_summary: {
     effective: ['dual-platform PXB7/PZDS list coverage', 'separate platform shortlists plus cross-platform best-value ranking', 'dynamic price filters', 'named E2/E1 operator facts', ...(pzdsAssetGridListings.length ? [`PZDS asset-grid cards supplied named operator and image evidence for ${pzdsAssetGridListings.length} detail-verified listings`] : []), 'separate published and platform-verified timestamps', 'verification-image evidence extraction', 'community meta-core matching', 'story-map role coverage', `top-${detailCount}-per-platform detail risk verification`, 'profile ranking with a cross-profile playability floor', 'explicit collaboration-completion hard condition', ...(profile.budget_expansion?.enabled ? [`bidirectional budget expansion stopped with ${expansionStopReason}`, 'nearby-budget near match versus lower/higher exact-match comparison'] : [])],
     ineffective_or_missing: ['Current public reports do not expose dedicated per-operator mastery/module values', 'platform verification time may be undisclosed even when verification method is known', ...(pzdsPaginationPartial ? ['PZDS pagination was rate-limited; initial rendered rows were retained as a partial fallback'] : []), ...(!evidenceIsCurrent ? ['community evidence snapshot is stale or undated'] : [])],
-    next_run_actions: ['reuse all four verified PXB7/PZDS Arknights adapters', 'prefer PZDS metadata resources but merge the visible asset grid when metadata names are delayed or absent', 'capture the pre-run Chrome window baseline and close only new all-query/about:blank windows', 'never present a single-platform shortlist as a completed run', 'require push_readiness and role coverage in recommendation explanations', 'give unknown mastery/module zero credit', 'inspect mastery/module and binding state during final platform verification', 'refresh evidence when snapshot exceeds 7 days'],
+    next_run_actions: ['reuse the four verified PXB7/PZDS ego-ops operations in one task space', 'prefer PZDS metadata resources but merge the visible asset grid when metadata names are delayed or absent', 'revalidate page identity and operation checkpoints before extraction', 'never present a single-platform shortlist as a completed run', 'require push_readiness and role coverage in recommendation explanations', 'give unknown mastery/module zero credit', 'inspect mastery/module and binding state during final platform verification', 'refresh evidence when snapshot exceeds 7 days'],
   },
   knowledge_update_candidates: [{
     id: 'dual-platform-arknights-progression-fields',
@@ -952,11 +1111,11 @@ const artifact = {
     confidence: 'medium',
     evidence: ['public detail text and verification images expose E2/E1 membership but not dedicated per-operator mastery/module values'],
     observed_in: { run_id: runId, listing_ids: detailAttempts.map((item) => item.listing_key), platform_attempt_ids: REQUIRED_PLATFORMS.map((platform) => `platform-${platform}-detail-shortlist`), community_attempt_ids: [] },
-    suggested_targets: REQUIRED_PLATFORMS.map((platform) => `skills/game-account-toolkit/opencli-adapters/games/arknights/clis/${platform}/arknights-detail.js`),
+    suggested_targets: REQUIRED_PLATFORMS.map((platform) => `ego-ops/references/sites/${platform}/operations/arknights-detail.md`),
     requires_user_confirmation: false,
-    validation_commands: REQUIRED_PLATFORMS.map((platform) => `opencli browser gas-arknights-${platform}-verify verify ${platform}/arknights-detail --strict-memory`),
+    validation_commands: REQUIRED_PLATFORMS.map((platform) => `npm run query:ego -- --operation ${platform}/arknights-detail --input <url> --task-space <run-id> --json`),
     apply_status: 'deferred',
-    apply_note: 'The current public platform facts do not expose dedicated per-operator mastery/module values, so no adapter change can be validated yet.',
+    apply_note: 'The current public platform facts do not expose dedicated per-operator mastery/module values, so no operation change can be validated yet.',
     source_scope: 'platform_fact',
     preference_scope: 'durable',
   }, ...(pzdsAssetGridListings.length ? [{
@@ -965,11 +1124,11 @@ const artifact = {
     confidence: 'high',
     evidence: pzdsAssetGridListings.slice(0, 10).map((listing) => `${listing.listing_id}: operatorDomCount=${listing.game_assets?.platform_facts?.status?.operatorDomCount}`),
     observed_in: { run_id: runId, listing_ids: pzdsAssetGridListings.map((listing) => listing.listing_id), platform_attempt_ids: ['platform-pzds-detail-shortlist'], community_attempt_ids: [] },
-    suggested_targets: ['skills/game-account-toolkit/opencli-adapters/games/arknights/clis/pzds/arknights-detail.js'],
+    suggested_targets: ['ego-ops/references/sites/pzds/operations/arknights-detail.md'],
     requires_user_confirmation: false,
-    validation_commands: ['opencli browser gas-arknights-pzds-verify verify pzds/arknights-detail --strict-memory'],
+    validation_commands: ['npm run query:ego -- --operation pzds/arknights-detail --input <url> --task-space <run-id> --json'],
     apply_status: 'verified_existing',
-    apply_note: 'The current adapter already merges the visible asset grid; this run re-verified the behavior but did not add it.',
+    apply_note: 'The current operation already merges the visible asset grid; this run re-verified the behavior but did not add it.',
     source_scope: 'platform_fact',
     preference_scope: 'durable',
   }] : []), ...(pzdsPaginationPartial ? [{
@@ -978,16 +1137,16 @@ const artifact = {
     confidence: 'high',
     evidence: ['PZDS list pagination failed after the natural page had already returned traceable goods rows'],
     observed_in: { run_id: runId, listing_ids: listRows.filter((row) => row.__platform === 'pzds').map((row) => row.listingId), platform_attempt_ids: ['platform-pzds-list'], community_attempt_ids: [] },
-    suggested_targets: ['skills/game-account-toolkit/opencli-adapters/games/arknights/clis/pzds/arknights-list.js', 'skills/game-account-toolkit/references/platform-access-policy.md'],
+    suggested_targets: ['ego-ops/references/sites/pzds/operations/arknights-list.md', 'skills/game-account-toolkit/references/platform-access-policy.md'],
     requires_user_confirmation: false,
-    validation_commands: ['opencli browser gas-arknights-pzds-verify verify pzds/arknights-list --strict-memory'],
+    validation_commands: ['npm run query:ego -- --operation pzds/arknights-list --task-space <run-id> --json'],
     apply_status: 'verified_existing',
-    apply_note: 'The current adapter already preserves natural-page rows when pagination is partial; this run re-verified the fallback but did not add it.',
+    apply_note: 'The current operation already preserves natural-page rows when pagination is partial; this run re-verified the fallback but did not add it.',
     source_scope: 'platform_fact',
     preference_scope: 'durable',
   }] : [])],
   rule_update_suggestions: [],
-  cleanup_reports: [],
+  cleanup_reports: [queryCleanupReport],
 };
 
 const absoluteOut = path.resolve(outPath);

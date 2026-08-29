@@ -10,7 +10,7 @@
       "status": "timeout",
       "duration_ms": 46000,
       "result_count": 0,
-      "evidence": "opencli xianyu search exceeded reasonable wait with no output"
+      "evidence": "ego-ops Xianyu readonly exploration exceeded the wait budget with no usable output"
     },
     {
       "platform": "xianyu",
@@ -34,7 +34,7 @@
       "status": "timeout",
       "duration_ms": 10000,
       "result_count": 0,
-      "evidence": "google opencli search timed out"
+      "evidence": "ego-ops semantic lookup timed out"
     },
     {
       "platform": "taoshouyou",

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-08-30",
+  "query_governance": "ego_ops",
+  "executor": "ego_browser",
+  "source_manifest": "skills/game-account-toolkit/ego-operations/manifest.json",
+  "unsupported_behavior": "fail_closed",
+  "games": {
+    "arknights": {
+      "pxb7": {
+        "list": { "status": "verified", "operation": "pxb7/arknights-list" },
+        "detail": { "status": "verified", "operation": "pxb7/arknights-detail" }
+      },
+      "pzds": {
+        "list": { "status": "verified", "operation": "pzds/arknights-list" },
+        "detail": { "status": "verified", "operation": "pzds/arknights-detail" }
+      }
+    },
+    "zenless-zone-zero": {
+      "pxb7": {
+        "list": { "status": "unsupported", "operation": null },
+        "detail": { "status": "unsupported", "operation": null }
+      },
+      "pzds": {
+        "list": { "status": "unsupported", "operation": null },
+        "detail": { "status": "unsupported", "operation": null }
+      }
+    },
+    "wuthering-waves": {
+      "pxb7": {
+        "list": { "status": "unsupported", "operation": null },
+        "detail": { "status": "unsupported", "operation": null }
+      },
+      "pzds": {
+        "list": { "status": "unsupported", "operation": null },
+        "detail": { "status": "unsupported", "operation": null }
+      }
+    },
+    "neverness-to-everness": {
+      "pxb7": {
+        "list": { "status": "unsupported", "operation": null },
+        "detail": { "status": "unsupported", "operation": null }
+      },
+      "pzds": {
+        "list": { "status": "unsupported", "operation": null },
+        "detail": { "status": "unsupported", "operation": null }
+      }
+    }
+  },
+  "exploration_only_operations": ["pxb7/zzz-detail", "pzds/zzz-detail"],
+  "non_game_operations": ["generic/semantic-search"]
+}

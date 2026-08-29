@@ -6,6 +6,7 @@
 - `source-coverage-playbook.md`
 - `knowledge-ledger.md`
 - `../game-account-toolkit/references/shared-listing-schema.md`
+- `../game-account-toolkit/references/operation-support-matrix.json`
 
 状态机的核心不是“搜到一个看起来不错的号”，而是围绕用户购买目标建立可复查证据链：成功标准、覆盖计划、候选详情、社区证据、排序解释、运行问题和知识沉淀都必须能在 artifact 中追溯。
 
@@ -94,18 +95,20 @@ success_criteria:
 
 1. 检查依赖。
 2. 读取平台访问策略。
-3. 确认可用能力：ego-browser 语义/直接数据/视觉工作流、可选 adapter、OCR、样本库。
-4. 读取 `source-coverage-playbook.md`，把可用能力映射到本轮 `coverage_plan` 的起点和降级链。
+3. 读取 operation support matrix，确认每个 game/platform/list-or-detail 是 `verified` 还是 `unsupported`。
+4. 确认可用能力：ego-ops operation 知识、ego-browser 语义/直接数据/视觉工作流、OCR、样本库。`unsupported` route 只进入 coverage gap，不能直接执行或切换实现。
+5. 读取 `source-coverage-playbook.md`，把可用能力映射到本轮 `coverage_plan` 的起点和降级链。
 
 输出：
 
 ```yaml
 capabilities:
+  ego_ops: boolean
   ego_browser: boolean
   semantic_snapshot: boolean
   browser_context_fetch: boolean
   visual_interaction: boolean
-  opencli_adapter: boolean
+  operation_knowledge: verified_operation_available|exploration_required
   ocr: boolean
 limitations: string[]
 ```
@@ -182,7 +185,7 @@ limitations: string[]
 
 - `source_tasks`：平台列表、详情、社区证据和用户输入任务。
 - `success_signal`：每个来源什么结果算完成，例如“返回至少 3 条含 URL/价格/区服的列表卡片”。
-- `fallback_order`：ego-browser 语义快照、直接 DOM/页内请求、视觉复核、verified adapter、用户截图/复制文本等顺序。
+- `fallback_order`：ego-ops 已验证 operation、同一 operation 内的最小视觉复核、用户截图/复制文本等顺序。未支持 capability 在正常筛选中直接 fail closed；只读探索仅属于维护者显式流程。
 - `confidence_cap_if_missing`：该来源缺失时对最终置信度的影响。
 - `stop_rules`：什么时候停止继续访问，避免无限搜索。
 
@@ -198,24 +201,24 @@ node skills/game-account-select/scripts/create-run-artifact.mjs --game "<game>" 
 
 0. 先执行 `coverage_plan.source_tasks`，每个任务只允许在计划内起点和降级链之间切换；临时新增来源时必须把原因追加回 `coverage_plan`.
 1. 优先用户提供的链接、截图、复制文本或指定平台。
-2. 用户没有指定平台时，按 `game-account-toolkit/references/platform-priority.json` 的 `default_order` 低频尝试：螃蟹账号代售、盼之代售、交易猫、淘手游；闲鱼只作为补充来源。
-3. 每个平台最多做少量用户意图明确的列表页/搜索页读取。不要全站扫描。
+2. 用户没有指定平台时，按 `game-account-toolkit/references/platform-priority.json` 的 `default_order` 检查覆盖，但只有 operation support matrix 中当前 game/platform/mode 为 `verified` 的组合才能启动动态读取；其它平台记录为 `unsupported` 并请求用户材料。
+3. 每个已验证平台最多做少量用户意图明确的列表页/搜索页读取。不要全站扫描，也不要用通用页面操作绕过能力矩阵。
 4. 每条平台路径必须有等待预算：列表页通常 10-15 秒，详情页通常 15-20 秒；单个平台同一意图连续失败后立即降级，不让无输出命令长期挂起。
 5. 对每个平台记录：查询词、开始/结束时间、耗时、等待预算、结果数、失败文本、是否进入详情页、是否使用列表卡片/截图/用户文本降级。
-6. 平台页面不可读时，请用户提供截图/链接/复制文本；若列表卡片可读但详情页不可读，可保留为 `source_status: partial`，不能假装已验明详情。
-7. 盼之详情 URL 末尾的分类段不能反推列表页游戏 ID。例如绝区零详情页 `goodsDetails/<id>/6` 中的 `/6` 不是绝区零列表 ID；不要构造 `goodsList/6` 当作盼之绝区零列表。绝区零列表应从 `https://www.pzds.com/gameList` 自然进入，或使用已经由浏览器确认标题和筛选项为绝区零的 `https://www.pzds.com/goodsList/275`。若进入后标题、面包屑或筛选项不是绝区零，记录 `platform-pzds-zzz-list-route-mismatch` 证据并降级，不得把该尝试计为盼之覆盖。
-8. 每次完成盼之列表或详情处理后，必须运行 `npm run pzds:health -- --json`。如果健康检查发现页面缺少盼之游戏入口、console error、阻断文本或卡在加载，先运行 `npm run pzds:repair -- --json` 做 PZDS 站点范围清理并复验；仍失败时记录 `pzds_browser_state_unhealthy`、console error、页面文本和降级路径，不得把本轮 PZDS 结果作为健康覆盖。
-9. 若高价值平台没有现成 OpenCLI adapter，记录 `adapter_available: false`、当前降级路径和是否适合 adapter 化；只有用户明确要求实现并且 `opencli browser <session> verify <site>/<command>` 通过后，才把新 adapter 当作可靠数据源。
-10. 若平台已有 verified adapter，优先运行 `opencli <site> <command> <input> -f json`，并在记录中保留 `adapter_available: true`、`adapter_verified: true`、`adapter_command`、`verify_command`；adapter 失败时再降级为浏览器 DOM 或用户材料。
-11. 对 PXB 这类列表页，公开接口可能把商品数组放在 `data` 而不是 `data.records`；读取列表时必须兼容 `data[]`、`data.records`、`data.list`、`data.rows` 等形态，并把实际解析形态写入运行记录。若脚本返回空页，先用 `curl` 或浏览器核对响应结构，不要把解析错误当作“无候选”。
-12. 硬条件搜索不要用“专武词/玲珑妆匣”等标题词做唯一预筛。标题可能只列角色，不列完整专武；正确做法是先用角色集合、队伍核心、价格和资源字段找出低价可能项，再进入详情 adapter 用 `agentStatuses` + `sWEngineNames` 确认专武和 1+1。被标题预筛排除的低价项不得直接作为“未找到”的证据。
-13. 绝区零详情页若来自螃蟹 `pxb7/zzz-detail` 或盼之 `pzds/zzz-detail`，必须读取并保留 `agentStatuses` 角色角标字段。该字段来自详情页资产卡片右上角的 `x` 或 `x+y`，`x+y` 表示影画/命座和对应专属音擎；只有 `x` 时不得直接推断有专武，也不得直接判定无专武，必须继续读取 `sWEngineNames` / `game_assets.s_w_engine_names` / `game_assets.w_engines[].name`，交给 ZZZ 本地专武表确认归属。它优先于标题里的 S 角色数量、黄数和“几命”描述。
-14. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses` 或 S 音擎名称清单，先用浏览器低频滚动到资产/验号报告角色卡和 S 级音擎区域复核一次；仍缺失时把 `asset_status_source: missing`、`engine_name_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
-15. 绝区零抽卡资源折算统一写入 `estimated_pulls`：`(菲林 + 菲林底片) / 160 + 加密母带 + 原装母带 + 邦布券`。不要把 `菲林底片` 当作单抽券；如果卖家备注写“还有 N 抽”，用该公式和备注互相校验，差异较大时列人工确认。
-16. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
-17. 浏览器查询必须使用一个可追踪 ego-browser task space，推荐 `gas-<game>-<timestamp>`。首次 `useOrCreateTaskSpace` 后保存数字 id；列表页、详情短名单、页内 `browserFetch` 和健康检查复用同一空间，并记录 `query_session_id`、`browser_transport: ego_browser`、task space id/name、标签 target、观察与验证方式。
-18. 对 PXB 列表，优先使用“一次打开列表页 + 页内 fetch 少量页 + 详情 adapter 验证短名单”的路径。普通 `curl` 若返回站点脚本/风控页，不要继续重试 curl；也不要为了翻页批量打开详情页。
-19. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
+6. 平台 capability 未支持或页面不可读时，请用户提供截图/链接/复制文本；链接本身不授权绕过矩阵动态读取。已验证列表卡片可读但详情 capability 不可用时，可保留为 `source_status: partial`，不能假装已验明详情。
+7. 盼之详情 URL 末尾的分类段不能反推列表页游戏 ID。例如绝区零详情页 `goodsDetails/<id>/6` 中的 `/6` 不是绝区零列表 ID；当前 ZZZ/PZDS list/detail 都是 `unsupported`，不要自然导航、构造或复用 `goodsList/<id>` 来冒充覆盖。历史候选 `goodsList/275` 只属于维护者探索证据，不是 verified 入口。
+8. 每次完成已验证的盼之列表或详情 operation 后，运行 `npm run pzds:health -- --json` 做只读健康复验。若页面缺少盼之游戏入口、出现阻断文本或卡在加载，记录 `operation_drift` / `pzds_browser_state_unhealthy` 并停止，不清理 cookie、缓存或登录态。
+9. 每个平台先读取 support matrix 与 ego-ops 目标 operation；任一不满足 verified 条件都记录 `knowledge_status: exploration_required` / capability gap 并 fail closed。只有维护者显式 `--allow-exploration` 的流程可探索和回写，失败不得刷新验证日期。
+10. 运行记录保留 `query_governance: ego_ops`、`operation`、`knowledge_status`、`operation_reference`、实时页面复核和 task space；operation 失效时在同一空间重观察，不切换查询软件。
+11. 对 PXB 这类列表页，页面状态可能把商品数组放在 `data`、`records`、`list` 或 `rows`；通过 ego-browser 当前页复核实际结构，不把解析错误当作“无候选”。
+12. 硬条件搜索不要用“专武词/玲珑妆匣”等标题词做唯一预筛。已验证列表能力可先用角色集合、队伍核心、价格和资源找候选；只有详情 capability 同样 verified 时才进入 operation 复核。
+13. 若未来绝区零详情 operation 升级为 `verified`，必须保留 `agentStatuses` 角色角标；`x+y` 表示影画/命座和对应专属音擎，只有 `x` 时不得直接推断专武，须用 `sWEngineNames` / 本地专武表交叉确认。当前正常筛选只能从用户材料提取并标注来源。
+14. 已验证详情 operation 若缺少关键资产字段，只允许在同一 task space 按该 operation 的检查点复核一次；仍缺失时标记 `source_status: partial` 和人工确认项，不能用标题猜归属。未支持 operation 不进入这一步。
+15. 绝区零抽卡资源折算统一写入 `estimated_pulls`：`(菲林 + 菲林底片) / 160 + 加密母带 + 原装母带 + 邦布券`。不要把 `菲林底片` 当作单抽券。
+16. 分别记录列表和详情 operation 的知识状态与实时验证结果，避免把“详情可解析”误当成“平台全链路可解析”。
+17. 查询使用一个可追踪 ego-browser task space，推荐 `gas-<game>-<timestamp>`。列表、详情短名单、页内请求和健康检查复用该空间，并记录 `query_session_id`、task-space id/name、观察与验证方式。
+18. PXB list/detail 都已验证时，优先“一次打开列表页 + 当前页少量结构化读取 + 详情 operation 验证短名单”；任一 capability 未支持时按矩阵降级，不为翻页批量打开详情。
+19. 记录数据来源和限制，不声称覆盖未成功读取的平台。
 
 不要全站扫描或高频翻页。
 
@@ -225,7 +228,7 @@ node skills/game-account-select/scripts/create-run-artifact.mjs --game "<game>" 
 coverage_gap:
   source: string
   task_id: string
-  reason: timeout|empty_result|blocked|login_required|verification|wrong_game|adapter_missing|field_missing|not_checked
+  reason: timeout|empty_result|blocked|login_required|verification|wrong_game|operation_missing|operation_drift|field_missing|not_checked
   evidence: string
   fallback_used: string | null
   confidence_effect: string
@@ -346,10 +349,12 @@ community_evidence:
 - `coverage_plan`
 - `coverage_gaps`
 - `platform_attempts`
-- `platform_attempts[].list_adapter_available`
-- `platform_attempts[].detail_adapter_available`
-- `platform_attempts[].adapter_command`
-- `platform_attempts[].verify_command`
+- `platform_attempts[].query_governance`
+- `platform_attempts[].list_operation_status`
+- `platform_attempts[].detail_operation_status`
+- `platform_attempts[].operation`
+- `platform_attempts[].operation_reference`
+- `platform_attempts[].operation_verified`
 - `platform_attempts[].asset_status_source`
 - `platform_attempts[].asset_status_verified`
 - `recommendations`

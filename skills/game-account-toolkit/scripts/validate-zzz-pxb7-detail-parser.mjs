@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   parseTitleAgent,
   parseTitleSnapshot,
-} from '../opencli-adapters/games/zenless-zone-zero/clis/pxb7/zzz-detail-title-parser.js';
+} from '../ego-operations/zzz-title-parser.mjs';
 
 const primaryTitleText = '【JJBOL4373】女主，S级代理人：满命雅，满命叶瞬光，满命蕾米埃尔，2命仪玄，2命维琳娜；S级音擎：精5嵌合编译器，精1霰落星殿，精1青溟笼舍；详情看图【国际服】【字母Q邮箱】【自主截图】';
 

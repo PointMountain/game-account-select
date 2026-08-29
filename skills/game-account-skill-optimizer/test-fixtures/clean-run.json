@@ -3,6 +3,12 @@
   "target_skill": "game-account-wuthering-waves",
   "game": "Wuthering Waves",
   "user_request": "鸣潮 1000 元官服低风险账号",
+  "request_provenance": {
+    "raw_user_request": "鸣潮 1000 元官服低风险账号",
+    "raw_user_request_sha256": "25ab9d4dfe523517d462200c18d89b66e399fb570aa2d3e4b0581bc1b6637df8",
+    "profile_input": "鸣潮 1000 元官服低风险账号",
+    "profile_input_sha256": "25ab9d4dfe523517d462200c18d89b66e399fb570aa2d3e4b0581bc1b6637df8"
+  },
   "success_criteria": {
     "game": "Wuthering Waves",
     "budget": {
@@ -19,8 +25,7 @@
     "risk_tolerance": "low",
     "minimum_source_coverage": {
       "platforms": [
-        "pxb7",
-        "pzds"
+        "user_provided"
       ],
       "community_sources": []
     },
@@ -34,31 +39,12 @@
     "intent_summary": "鸣潮 1000 元官服低风险账号",
     "source_tasks": [
       {
-        "id": "platform-pxb7-list",
-        "type": "platform_listing",
-        "source": "pxb7",
+        "id": "user-material",
+        "type": "user_material",
+        "source": "user_provided",
         "priority": "required",
         "start_path": "natural_navigation",
-        "success_signal": "read traceable listing cards",
-        "fallback_order": [
-          "browser_dom",
-          "user_material"
-        ],
-        "wait_budget_ms": 15000,
-        "required_fields": [
-          "url",
-          "title",
-          "price"
-        ],
-        "confidence_cap_if_missing": "medium"
-      },
-      {
-        "id": "platform-pzds-list",
-        "type": "platform_listing",
-        "source": "pzds",
-        "priority": "required",
-        "start_path": "natural_navigation",
-        "success_signal": "read traceable listing cards",
+        "success_signal": "read one traceable user-provided listing",
         "fallback_order": [
           "browser_dom",
           "user_material"
@@ -74,48 +60,34 @@
     ],
     "completeness_gates": {
       "platforms_required": [
-        "pxb7",
-        "pzds"
+        "user_provided"
       ],
       "url_required_for_all_tiers": true
     },
     "stop_rules": [
-      "stop after required platforms return usable listings"
+      "stop after the required user-provided listing is normalized"
     ]
   },
   "coverage_gaps": [],
   "knowledge_update_candidates": [],
   "platform_attempts": [
     {
-      "platform": "pxb7",
-      "query": "鸣潮 账号 1000 官服",
+      "platform": "user_provided",
+      "query": "用户提供的鸣潮账号材料",
       "status": "success",
-      "duration_ms": 6200,
-      "result_count": 5
-    },
-    {
-      "platform": "pzds",
-      "query": "鸣潮 账号 1000 官服",
-      "status": "success",
-      "duration_ms": 7400,
-      "result_count": 4
-    },
-    {
-      "platform": "taoshouyou",
-      "query": "鸣潮 1000 官服",
-      "status": "partial",
-      "duration_ms": 8200,
-      "result_count": 3
+      "duration_ms": 0,
+      "result_count": 1,
+      "browser_used": false
     }
   ],
   "recommendations": [
     {
-      "listing_id": "pxb7-clean-sample",
-      "url": "https://www.pxb7.com/product/clean-sample/1",
+      "listing_id": "user-clean-sample",
+      "url": "https://example.invalid/user-clean-sample",
       "score": 84,
       "confidence": "high"
     }
   ],
-  "final_response": "推荐优先看 pxb7-clean-sample。数据来源覆盖螃蟹、盼之和淘手游，风险字段完整。",
+  "final_response": "用户材料中的 user-clean-sample 风险字段完整，可继续人工验号。https://example.invalid/user-clean-sample",
   "missing_fields": []
 }

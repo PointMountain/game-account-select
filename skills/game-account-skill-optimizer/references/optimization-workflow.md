@@ -1,6 +1,6 @@
 # Skill 优化工作流
 
-updated_at: 2026-05-17
+updated_at: 2026-08-29
 
 ## 目标
 
@@ -47,13 +47,13 @@ updated_at: 2026-05-17
 - 慢：检查 `duration_ms`、重复查询、等待预算和降级路径。
 - 浏览器残留：检查 `query_session_id`、ego task space id/name、`browser_targets`、`cleanup_reports` 和清理后的进程审计。若执行记录显示用过 ego-browser 却没有完成 task space，或清理后仍有本轮查询进程，输出 `runtime-browser-session-cleanup-missing`，目标文件包括 selector 状态机、平台访问策略、共享 schema 和 cleanup 脚本。
 - 空：检查 `empty_result`、登录提示、验证码、详情页 503、公开列表是否可读。
-- 漏平台：对照 `platform-priority.json`，确认螃蟹、盼之、交易猫、淘手游是否按顺序尝试或明确降级。
-- 缺 adapter：对照 `opencli list -f yaml` 和 `opencli <site> -h`，确认目标平台是否有现成命令；没有时判断是否适合按 OpenCLI adapter 流程固化。
-- 已验证 adapter：若记录里有 `adapter_available: true`、`adapter_verified: true`、`adapter_command` 或 `verify_command`，下次同平台详情读取应先复用该命令，并定期跑 `opencli browser <session> verify <site>/<command> --strict-memory`。
-- 列表/详情能力差异：若只有详情 adapter 可用而列表仍靠浏览器 DOM，记录 `list_adapter_available: false` 和 `detail_adapter_available: true`。优化器应只对缺失的列表能力报 adapter 缺口，同时继续对详情输出 adapter 复用建议。
+- 漏平台：先对照 `platform-priority.json` 规划顺序，再对照 `operation-support-matrix.json` 判断 verified/unsupported。unsupported 只记录降级，不得用其它软件补成“已覆盖”。
+- 缺 operation：渐进读取 ego-ops 的全局站点索引、站点索引和目标 operation。若 `knowledge_status: exploration_required`，只在本轮 ego-browser task space 中低频探索，成功验证后再创建知识条目。
+- 已验证 operation：若记录里有 `operation_verified: true`、`operation` 和 `operation_reference`，下次先复用该经验，但仍必须检查当前页面前置条件、关键状态和成功信号。
+- 列表/详情能力差异：若详情 operation 已验证而列表仍缺失，矩阵必须分别记录 `list: unsupported` 与 `detail: verified`。优化器只对缺失的列表能力报 operation 缺口，同时继续输出详情 operation 复用建议。
 - 盼之绝区零列表错路由：若执行记录把 `goodsDetails/<id>/6` 里的末尾 `/6` 当成 `goodsList/6`，或页面标题/面包屑显示为其它游戏，应输出 `platform-pzds-zzz-list-route-mismatch`。正确做法是从 `gameList` 自然导航，或使用已由浏览器确认标题和筛选项为绝区零的 `goodsList/275`；错路由不能计为 PZDS 覆盖。
 - 社区证据缺口：检查是否有成功的 `community_attempts`；若只有标题、metadata 或列表卡片，应限制置信度并要求人工确认。
-- 工具不可读：检查 B站字幕、小红书正文、评论等失败后是否切换到浏览器 DOM、页面 metadata、Jina/WebFetch/curl、官方公告、Wiki/攻略站或用户截图/文本。
+- 页面不可读：在同一 ego-browser task space 内依次检查语义读取、直接读取和视觉读取；仍失败则记录阻塞并请求用户提供链接、截图或复制文本。
 - 文案怪：检查最终用户回复是否把 `<game_account_evaluation>`、`<recommendations>`、`<skill_quality_report>` 等标签当主文案暴露。
 - 链接缺失：检查主推荐、价格浮动备选、风险备选和排除账号是否都保留商品 URL。
 - 预算浮动：用户允许上下 200-300 元或 20%-30% 浮动时，检查是否单独输出 `flex_budget` 备选，且没有混入主推荐。
@@ -68,31 +68,29 @@ updated_at: 2026-05-17
 - XML 标签仅用于内部契约或日志，不作为主推荐文案。
 - 所有建议必须带证据，例如“xianyu search 超时 45s 且无输出”“最终回复包含 `<game_account_evaluation>`”。
 - 平台覆盖建议必须区分“应该纳入搜索顺序”和“已经有可靠解析器”。
-- Adapter 建议必须区分“可做一次性浏览器降级”和“值得生成 OpenCLI adapter”。只有平台会重复使用、数据在浏览器中可见、能找到可验证的 HTTP/JSON/HTML 数据源、且不需要绕过验证码/风控/付费墙时，才建议走 adapter 化。
+- Operation 建议必须区分“本轮只读探索”和“成功后值得写入 ego-ops”。只有动作可重复、关键状态可观测、成功信号可验证，且不需要绕过验证码/风控/付费墙时，才允许写入稳定经验。
 
-## OpenCLI adapter 化路径
+## ego-ops operation 写入路径
 
-当执行记录显示目标站点没有现成命令、但平台价值高且会反复用于买号筛选时，优化器应输出 `platform-opencli-adapter-gap` finding，并建议执行下面的闭环：
+当执行记录显示目标站点没有已验证 operation、但平台价值高且会反复用于买号筛选时，优化器应输出 `platform-ego-ops-operation-gap` finding，并建议执行下面的闭环：
 
-1. 预检：运行 `opencli list -f yaml`、`opencli <site> -h`，确认没有可用站点命令或命令能力不足。
-2. 侦察：运行 `opencli browser analyze <url>`，必要时用 `opencli browser open/state/network` 判断数据模式和反爬风险。
-3. 判定：数据必须在浏览器可见，且来自可验证的 HTTP/JSON/HTML；验证码、登录墙、强风控、图片 OCR 或付费内容不做 adapter，直接降级为用户链接/截图/复制文本。
-4. 生成：用 `opencli browser init <site>/<command>` 建私有 adapter，按 `opencli-adapter-author` 做 endpoint 验证、字段解码和输出列设计。
-5. 验证：运行 `opencli browser verify <site>/<command> --write-fixture`，再用 fixture 收紧核心字段；字段值必须和网页肉眼值抽查一致。
-6. 记忆：把 endpoint、field-map、notes 和 verify fixture 写入 `~/.opencli/sites/<site>/`；若 adapter 已脱敏、可复用且不含 cookie/token/账号状态，再同步到 `skills/game-account-toolkit/opencli-adapters/` 供其他用户安装。
+1. 预检：创建只读 task card，确定目标站点、operation 名、唯一对象、风险和成功信号。
+2. 渐进读取：只读取 ego-ops 全局站点索引、目标站点索引和目标 operation；不存在则标记 `exploration_required`。
+3. 探索：使用一个有明确名称的 ego-browser task space，按语义读取、直接读取、视觉读取顺序观察页面，再执行最小动作。
+4. 验证：重新读取状态，检查域名、对象标识、价格/链接/字段和阻塞信号，不能只以“命令成功”作为页面成功。
+5. 写入：只有实时验证成功，才用 ego-ops scaffold 新建站点/operation 条目；只保存稳定步骤、检查点、成功信号和安全边界。
+6. 校验与清理：运行 ego-ops knowledge validator，把成功 operation 写入 manifest/support matrix，运行 `validate-operation-support-matrix.mjs`，完成 task space，并确认没有本轮残留。
 
-Adapter 代码实现默认不是自动补丁。只有用户明确要求“实现/生成 adapter”并且验证通过后，才把它纳入当前推荐的数据来源。
+失败或未完成的探索不得写入“已验证经验”，只记录运行 artifact 和待处理 knowledge candidate。
 
-## OpenCLI adapter 复用路径
+## ego-ops operation 复用路径
 
-当执行记录显示某个平台已有 verified adapter 时，优化器应输出 `platform-opencli-adapter-reuse` finding，而不是继续报缺口：
+当执行记录显示某个平台已有 verified operation 时，优化器应输出 `platform-ego-ops-operation-reuse` finding，而不是继续报缺口：
 
-1. 运行记录必须保留 `adapter_available: true`、`adapter_verified: true`、`adapter_command`、`verify_command` 和页面样本 URL/商品编号；如果只覆盖详情页，也必须显式记录 `detail_adapter_available: true` 与 `list_adapter_available: false`。
-2. 推荐前先执行 adapter 命令读取结构化字段；只有 adapter 失败、fixture mismatch 或字段缺失时，才退回 `browser state/eval`、截图或用户文本。
-3. `verify_command` 必须能通过 `--strict-memory`，即 `~/.opencli/sites/<site>/endpoints.json` 和 `notes.md` 都存在。
-4. 若 adapter 输出和网页肉眼值不一致，应按 `opencli-autofix` 或 adapter-author workflow 修 adapter，不要在游戏估值规则里补偿解析错误。
-5. 含本机状态的私有 adapter 不进仓库；已脱敏、可复用的 adapter 应通过 `game-account-toolkit/opencli-adapters` 和安装脚本同步，避免 skill 使用者缺失本机 OpenCLI 能力。
-6. 绝区零的 `pxb7/zzz-detail` / `pzds/zzz-detail` 必须保留详情页角色角标 `agentStatuses`，并尽量保留页面 S 级音擎名称清单 `sWEngineNames`。如果推荐记录只有 `voidHunters` 或标题几命，没有 `agentStatuses`，优化器应输出 `platform-agent-status-asset-cards-missing`；如果角色角标只有 `x` 却没有 S 音擎名称清单，优化器应输出专武名称清单缺失 finding，并要求回到 adapter 或标准化层修复。
+1. 运行记录保留 `query_governance: ego_ops`、`operation_verified: true`、`operation`、`operation_reference`、task-space 身份和页面对象标识；列表与详情能力分别记录。
+2. 执行前只读取对应 operation；执行时仍按当前页面重新确认前置条件和关键状态。
+3. operation 失效、页面漂移或字段缺失时，标记 `operation_drift`，回到只读探索；不要在游戏估值规则里补偿解析错误。
+4. 资产字段完整性门禁只对 support matrix 当前标为 `verified` 的 operation 生效。绝区零的 `pxb7/zzz-detail` / `pzds/zzz-detail` 目前仅为 `exploration_only`，任何成功/partial 声称先触发 `platform-operation-support-claim-mismatch`，不得输出 reuse；若未来正式升级，再要求保留 `agentStatuses` 与 `sWEngineNames`。
 
 ## 手动执行模式
 

@@ -8,12 +8,15 @@ argument-hint: "[listing json or account description]"
 
 ## 作用
 
-对Wuthering Waves（鸣潮）账号进行游戏资产估值。该 skill 只负责Wuthering Waves（鸣潮）内部价值判断，不负责平台访问。
+对 Wuthering Waves（鸣潮）账号进行游戏资产估值。该 skill 只负责游戏内价值判断；平台数据由 `game-account-select` 经 `game-account-toolkit` 的已验证 `ego-ops` operation 获取，并由 `ego-browser` 在单一 task space 中执行。
+
+预算、区服、目标、权重、风险容忍度和硬条件只能存在于当次 `selection_profile` / run artifact，且 `persistence_scope: run_only`。不得把任何一次用户画像写成长期估值默认值。
 
 ## 必须读取
 
 - `../game-account-toolkit/references/skill-io-contract.md`
 - `../game-account-toolkit/references/game-skill-standard.md`
+- `../game-account-toolkit/references/operation-support-matrix.json`
 - `references/valuation-rules.md`
 - `references/character-knowledge.md`
 - `references/community-evidence.md`
@@ -36,6 +39,26 @@ Wuthering Waves（鸣潮）账号不能把总黄数、五星角色数量、五�
 - 星声、月相、浮金波纹、铸潮波纹等资源
 - TAP/Wegame 绑定风险
 - 官服/B服/渠道服
+
+## 执行流程
+
+1. 将用户请求冻结为 run-only `selection_profile`，原始请求另存于 `request_provenance` 并保留 SHA-256。
+2. 平台查询前读取 operation support matrix。只复用已验证 `ego-ops` operation；鸣潮平台 route 未列入矩阵时必须标为 unsupported，并改用用户提供的可追溯材料，不得声称已完成实时平台覆盖。
+3. 标准化挂牌后运行可复用评分入口：
+
+   ```bash
+   node skills/game-account-wuthering-waves/scripts/evaluate-listing.mjs --input <listing.json> --out <evaluation.json>
+   ```
+
+4. `scripts/validate-sample.mjs` 只负责离线 trap 回归，不是唯一评分入口。
+5. 每次真实评估写 raw run artifact，至少包含 `selection_profile`、`request_provenance`、`coverage_plan`、`platform_attempts`、`coverage_gaps`、`knowledge_update_candidates` 与 evaluation。
+6. 使用 finalizer 收尾：
+
+   ```bash
+   node skills/game-account-wuthering-waves/scripts/finalize-evaluation-run.mjs --input <run-artifact.json> --report-out <report.md>
+   ```
+
+   它必须生成确定性 Markdown、optimizer/evaluator sidecar、`self_improve`、`quality_gate` 和带 `final_response_sha256` 的 `delivery_contract`。任一非 info finding 或 `redo_required` 都必须补证、修复或明确降级后再交付。
 
 ## 输入
 
@@ -77,4 +100,4 @@ wuthering_waves_score:
 
 ## 自我优化
 
-如果用户指出某个角色/命座/队伍判断错误，不要立即改文件。先提出规则更新建议，用户确认后更新 `references/character-knowledge.md` 或 `references/valuation-rules.md`，并追加 `references/changelog.md`。
+如果用户指出某个角色/命座/队伍判断错误，不要立即改文件。先写入 `knowledge_update_candidates`；只有稳定事实或具备版本化证据的规则通过样例、finalizer 和 evaluator 后才能应用。用户本轮画像永远不得沉淀。最终答复必须原样交付通过门禁的 report，不得手写替换。

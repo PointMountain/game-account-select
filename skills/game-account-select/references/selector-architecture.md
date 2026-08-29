@@ -8,8 +8,8 @@ Use an evidence-first execution model with ego-browser as the single browser tra
 
 1. Parse and freeze intent before acting. Natural-language budget, objective, priorities, hard conditions, platform and risk preferences become a confirmed run-only `selection_profile`; they never become durable defaults.
 2. Define success before acting. A run is complete only when it can explain the best available candidates, what was not covered, and why the remaining uncertainty does not change the recommendation tier.
-3. Choose the strongest starting path. User-provided links and verified adapters beat ad hoc browser scraping; platform lists beat broad web search for live listings; community evidence beats platform titles for meta and team value.
-4. Treat every step as evidence. Empty pages, timeouts, wrong-game routes, missing subtitles, and partial adapter output are data points that must be preserved in the artifact.
+3. Choose the strongest starting path. User-provided links and verified ego-ops operations beat fresh exploration; platform lists beat broad search for live listings; community evidence beats platform titles for meta and team value.
+4. Treat every step as evidence. Empty pages, timeouts, wrong-game routes, missing subtitles, and partial operation output are data points that must be preserved in the artifact.
 5. Change path instead of repeating failure. After one failed path and one independent check, downgrade or switch source. Do not spend the run retrying the same blocked route.
 6. End by sedimenting knowledge. Durable facts become platform notes, evidence snapshots, valuation-rule suggestions, fixtures, or optimizer knowledge. Run budget, weights, server/risk preferences and hard conditions never sediment.
 
@@ -18,7 +18,7 @@ Use an evidence-first execution model with ego-browser as the single browser tra
 | Layer | Owns | Does not own |
 | --- | --- | --- |
 | `game-account-select` | Natural-language profile parsing/freezing, user goal, success criteria, source coverage plan, candidate collection order, ranking presentation, run artifact, post-run gates | Game-specific base-dimension facts, platform bypass logic, session preferences as permanent rules |
-| `game-account-toolkit` | Shared safety policy, platform access policy, schemas, dependency and adapter support, query cleanup | Final recommendations, game meta ranking |
+| `game-account-toolkit` | Shared safety policy, platform access policy, schemas, ego-ops operation support, query cleanup | Final recommendations, game meta ranking |
 | Game skill | Asset scoring, risk scoring, game-specific knowledge, validation fixtures | Platform discovery, browser sessions, cross-game policy |
 | `game-account-community-updater` | Evidence snapshots, source coverage, limitations | Direct valuation weight changes unless a confirmed rule-update workflow applies them |
 | `game-account-skill-optimizer` | Troubleshooting, finding classification, target-file suggestions | Silent business-rule rewrites |

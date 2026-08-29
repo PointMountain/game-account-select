@@ -33,7 +33,7 @@
 采用“执行前准备 skill + 通用工具 skill + 主筛选 skill + 游戏专属 skill + 生成/评估/更新 skill + 后续本地 Web”的混合路线。
 
 ```text
-game-account-preflight    执行前依赖、ego-browser task space、opencli 与安全边界检查
+game-account-preflight    执行前依赖、ego-ops 治理、ego-browser task space 与安全边界检查
 game-account-toolkit      通用工具、依赖检查、安装指引、平台访问规范
 game-account-select       主筛选编排：收集条件、查询平台、调用游戏估值 skill
 game-account-skill-generator      根据新游戏生成买号估值 skill 和验证样例

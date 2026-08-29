@@ -27,6 +27,7 @@ try {
 
   const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
   const report = fs.readFileSync(reportPath, 'utf8');
+  assert.equal(artifact.schema_version, '3.0');
   assert.equal(artifact.presentation.format, 'markdown_tables');
   assert.equal(artifact.presentation.per_platform_rendered.pxb7, 3);
   assert.equal(artifact.presentation.per_platform_rendered.pzds, 5);
@@ -82,6 +83,39 @@ try {
   );
   assert.ok(budgetArtifact.delivery_contract.rendered_listing_ids.includes('2300429263421710046'));
   assert.equal(budgetArtifact.quality_gate.redo_required, false);
+
+  const wrongIdentityPath = path.join(tempDir, 'wrong-identity.json');
+  const wrongIdentity = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  wrongIdentity.target_skill = 'skills/game-account-zenless-zone-zero';
+  fs.writeFileSync(wrongIdentityPath, `${JSON.stringify(wrongIdentity, null, 2)}\n`);
+  const wrongIdentityRun = spawnSync(process.execPath, [
+    path.join(__dirname, 'finalize-selection-run.mjs'),
+    '--input', wrongIdentityPath,
+    '--report-out', path.join(tempDir, 'wrong-identity.md'),
+  ], { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 1024 * 1024 * 16 });
+  assert.equal(wrongIdentityRun.status, 1, 'Arknights finalizer must reject a different target skill');
+
+  const missingProvenancePath = path.join(tempDir, 'missing-provenance.json');
+  const missingProvenance = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  delete missingProvenance.request_provenance;
+  fs.writeFileSync(missingProvenancePath, `${JSON.stringify(missingProvenance, null, 2)}\n`);
+  const missingProvenanceRun = spawnSync(process.execPath, [
+    path.join(__dirname, 'finalize-selection-run.mjs'),
+    '--input', missingProvenancePath,
+    '--report-out', path.join(tempDir, 'missing-provenance.md'),
+  ], { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 1024 * 1024 * 16 });
+  assert.equal(missingProvenanceRun.status, 1, 'Arknights finalizer must reject missing request provenance');
+
+  const conflictPath = path.join(tempDir, 'path-conflict.json');
+  const conflictBody = fs.readFileSync(fixturePath, 'utf8');
+  fs.writeFileSync(conflictPath, conflictBody);
+  const conflictRun = spawnSync(process.execPath, [
+    path.join(__dirname, 'finalize-selection-run.mjs'),
+    '--input', conflictPath,
+    '--report-out', conflictPath,
+  ], { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 1024 * 1024 * 16 });
+  assert.equal(conflictRun.status, 1, 'Arknights finalizer must reject artifact/sidecar path conflicts');
+  assert.equal(fs.readFileSync(conflictPath, 'utf8'), conflictBody, 'path conflict rejection must not mutate the artifact');
 
   const verifiedExistingPath = path.join(tempDir, 'verified-existing.json');
   const verifiedExistingReportPath = path.join(tempDir, 'verified-existing.md');

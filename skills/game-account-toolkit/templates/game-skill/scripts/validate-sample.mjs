@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'test-fixtures', '{{slug}}-validation-sample.json'), 'utf8'));
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-function scoreListing(listing) {
+export function scoreListing(listing) {
   const assets = listing.game_assets ?? {};
   const namedAssets = assets.named_core_assets ?? [];
   const resources = assets.resources ?? {};
@@ -61,15 +61,29 @@ function scoreListing(listing) {
 
   return {
     id: listing.id,
+    asset_quality_score: assetScore,
+    asset_score: assetScore,
+    resource_score: resourceScore,
+    profile_score: assetScore + resourceScore + 10,
+    risk_penalty: riskPenalty,
+    missing_data_penalty: missingPenalty,
     final_score: finalScore,
     confidence: missingPenalty >= 15 || riskPenalty >= 20 ? 'low' : 'high',
     community_comparison: communityComparison,
     missing_fields: [...new Set(missingFields)],
     highlights,
-    concerns
+    concerns,
+    components: {
+      asset_score: assetScore,
+      resource_score: resourceScore,
+      price_fit_score: 10,
+      risk_penalty: riskPenalty,
+      missing_penalty: missingPenalty
+    }
   };
 }
 
+export function runValidation() {
 const results = fixture.listings.map(scoreListing).sort((a, b) => b.final_score - a.final_score);
 for (const [index, result] of results.entries()) {
   console.log(`${index + 1}. ${result.id} (${result.final_score}) - ${result.community_comparison}`);
@@ -80,3 +94,7 @@ if (results[0]?.id !== fixture.expected_top_id) {
 }
 
 console.log(`Validation passed: ${fixture.expected_top_id} outranks count-only accounts.`);
+return results;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) runValidation();

@@ -29,7 +29,7 @@ Also update Wuthering Waves scoring rules and validation data to cover team arch
 
 - No automatic account purchasing, seller messaging, login bypassing, CAPTCHA bypassing, or bulk platform scraping.
 - No silent self-modification after every run. The optimizer may propose changes; writing rules still requires user confirmation unless the user explicitly asks for an implementation pass.
-- No full browser adapter for Pangxie or Panzhi in this change. The first step is platform policy and execution guidance.
+- No reusable PXB7 or PZDS operation was added in that historical change. The first step was platform policy and execution guidance.
 - No replacement of the existing `<game_account_evaluation>` contract for internal skill-to-skill use. The change is to separate machine-readable artifacts from user-facing prose.
 
 ## Requirements Traceability
@@ -139,4 +139,3 @@ npm run verify:skills
 - Optimizer recommendations can become noisy if they flag every missing field. The taxonomy should separate blocking, recommended, and informational findings.
 - Platform source order can drift quickly. The policy should describe strategy and safe access, not hardcode brittle selectors.
 - Team archetype names may vary between Chinese and English communities. Rules should store aliases and mark evidence freshness.
-

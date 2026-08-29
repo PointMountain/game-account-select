@@ -2,12 +2,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { evaluateListings } from '../../game-account-toolkit/scripts/evaluate-listings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'test-fixtures', 'neverness-validation-sample.json'), 'utf8'));
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-function scoreListing(listing) {
+export function scoreListing(listing) {
   const assets = listing.game_assets ?? {};
   const characters = assets.s_characters ?? [];
   const arcPlates = assets.s_arc_plates ?? [];
@@ -112,6 +113,17 @@ function scoreListing(listing) {
 
   return {
     id: listing.id,
+    asset_quality_score: characterScore + arcScore + awakeningScore,
+    asset_score: characterScore + arcScore + awakeningScore,
+    resource_score: resourceScore,
+    progression_score: awakeningScore,
+    profile_score: rawScore,
+    risk_penalty: riskPenalty,
+    missing_data_penalty: missingPenalty,
+    confidence_penalty: missingPenalty,
+    rule_update_suggestion: missingFields.includes('named S characters') || missingFields.includes('named S arc plates')
+      ? 'Collect named asset evidence before changing durable valuation weights.'
+      : null,
     final_score: finalScore,
     community_comparison: communityComparison,
     confidence,
@@ -122,6 +134,7 @@ function scoreListing(listing) {
   };
 }
 
+export function runValidation() {
 const results = fixture.listings.map(scoreListing).sort((a, b) => b.final_score - a.final_score);
 for (const [index, result] of results.entries()) {
   console.log(`${index + 1}. ${result.id} (${result.final_score}) - ${result.community_comparison}`);
@@ -136,5 +149,24 @@ const sCountTrap = results.find((result) => result.id === 's-count-trap');
 if (!sCountTrap?.community_comparison.includes('conflicts with community valuation')) {
   throw new Error('Expected vague S-count listing to conflict with community valuation');
 }
+if (sCountTrap.asset_quality_score <= 0 || sCountTrap.asset_quality_score <= sCountTrap.final_score) {
+  throw new Error('Expected vague S-count listing to preserve intrinsic asset value independently from penalties');
+}
+const normalizedTrap = evaluateListings({
+  game: 'neverness-to-everness',
+  scoreKey: 'neverness_to_everness_score',
+  scoreListing,
+  inputValue: fixture.listings.find((listing) => listing.id === 's-count-trap'),
+})[0].neverness_to_everness_score;
+if (Object.keys(normalizedTrap.base_dimensions).some((key) => /risk|missing/i.test(key))) {
+  throw new Error('Expected shared evaluator base_dimensions to exclude risk and missing-data penalties');
+}
+if (normalizedTrap.asset_quality_score <= normalizedTrap.final_score || normalizedTrap.risk_penalty <= 0) {
+  throw new Error('Expected shared evaluator to preserve intrinsic asset quality and independent penalties');
+}
 
 console.log(`\nValidation passed: ${fixture.expected_top_id} outranks vague S-count accounts.`);
+return results;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) runValidation();

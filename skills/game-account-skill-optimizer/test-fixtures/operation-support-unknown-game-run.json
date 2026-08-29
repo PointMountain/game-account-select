@@ -1,0 +1,26 @@
+{
+  "run_id": "operation-support-unknown-game",
+  "target_skill": "skills/game-account-toolkit",
+  "game": "Test Frontier",
+  "user_request": "验证未知游戏 operation 必须失败",
+  "request_provenance": {
+    "raw_user_request": "验证未知游戏 operation 必须失败",
+    "raw_user_request_sha256": "45af4ec6ec3b6c5630eb245e4fb6d956d8af04783b24ad814ff565d57814f6ea",
+    "profile_input": "验证未知游戏 operation 必须失败",
+    "profile_input_sha256": "45af4ec6ec3b6c5630eb245e4fb6d956d8af04783b24ad814ff565d57814f6ea"
+  },
+  "success_criteria": { "minimum_source_coverage": { "platforms": ["pxb7"], "community_sources": [] } },
+  "coverage_plan": { "source_tasks": [{ "id": "pxb7-list", "source": "pxb7", "type": "platform_listing" }] },
+  "platform_attempts": [{
+    "platform": "pxb7",
+    "mode": "list",
+    "status": "success",
+    "result_count": 1,
+    "browser_used": true,
+    "operation": "pxb7/test-frontier-list",
+    "operation_verified": true,
+    "ego_task_space_id": 93,
+    "ego_task_space_name": "operation-support-unknown-game"
+  }],
+  "cleanup_reports": [{ "ok": true, "ego_task_spaces_remaining": [] }]
+}

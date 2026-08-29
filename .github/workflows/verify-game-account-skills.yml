@@ -1,0 +1,31 @@
+name: Verify game account skills
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-game-account-skills.yml'
+      - 'package.json'
+      - 'scripts/**'
+      - 'skills/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-game-account-skills.yml'
+      - 'package.json'
+      - 'scripts/**'
+      - 'skills/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run verify:skills
+      - run: npm run list:skills

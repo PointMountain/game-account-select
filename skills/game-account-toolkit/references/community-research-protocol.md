@@ -51,9 +51,9 @@ source_tasks:
     type: community_evidence
     source: bilibili
     priority: required
-    start_path: search
+    start_path: local_verified_snapshot
     success_signal: "拿到可复查的视频/专栏 URL，并读取简介、字幕或可见评论中的队伍/专武结论"
-    fallback_order: [ego_browser_semantic, ego_browser_direct, ego_browser_visual, page_metadata, guide_site, official_source]
+    fallback_order: [user_material]
     wait_budget_ms: 15000
     required_fields: [url, title, author, updated_or_published_at, evidence_note]
     confidence_cap_if_missing: medium
@@ -63,7 +63,7 @@ source_tasks:
 
 ## 平台路由
 
-优先使用当前环境可用工具，低频查询并记录失败原因。
+实时社区查询只允许使用 support matrix 已验证的 ego-ops operation，并由 ego-browser 执行；当前没有对应 operation 时直接记录 coverage gap，使用本地已验证快照或用户材料，不切换到其它搜索或浏览器软件。
 
 ### B站
 
@@ -118,7 +118,7 @@ source_tasks:
 
 社区取证必须低频、可中断，并记录每次尝试：
 
-- `tool`：ego_browser、opencli_adapter、page_metadata、official_source、guide_site、search_engine、user_provided_text 等。
+- `tool`：ego_ops、ego_browser、official_source、guide_site、user_provided_text 等。
 - `wait_budget_ms`：搜索/列表通常 10000-15000，字幕/评论/详情通常 15000-20000；除非用户明确要求深入，不要让单条命令超过 30000。
 - `duration_ms`、`status`、`result_count`、`error_text`。
 - `fallback_used`：例如 `browser_dom`、`page_metadata`、`guide_site`、`official_source`、`user_screenshot`。

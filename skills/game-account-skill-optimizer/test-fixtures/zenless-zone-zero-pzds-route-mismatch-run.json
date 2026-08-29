@@ -16,9 +16,12 @@
       "duration_ms": 9300,
       "wait_budget_ms": 15000,
       "result_count": 25,
-      "list_adapter_available": false,
-      "detail_adapter_available": true,
-      "fallback_used": "ego_browser_for_list_then_opencli_detail_adapter",
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-pzds-route-mismatch",
+      "list_operation_status": "operation_missing",
+      "detail_operation_status": "verified_operation_available",
+      "fallback_used": "ego_ops_exploration_for_list_then_verified_detail_operation",
       "evidence": "PXB canonical list rendered ZZZ cards; details verified with pxb7/zzz-detail"
     },
     {
@@ -29,8 +32,11 @@
       "duration_ms": 11000,
       "wait_budget_ms": 15000,
       "result_count": 0,
-      "list_adapter_available": false,
-      "detail_adapter_available": true,
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-pzds-route-mismatch",
+      "list_operation_status": "operation_drift",
+      "detail_operation_status": "verified_operation_available",
       "fallback_used": "detail_sample_only",
       "error_text": "wrong_game: goodsList/6 rendered League of Legends / non-ZZZ page",
       "evidence": "The run inferred goodsList/6 from pzds goodsDetails/QL9XV5/6; page title and filters were not Zenless Zone Zero. Correct ZZZ list route must be confirmed through gameList or goodsList/275."
@@ -43,11 +49,14 @@
       "duration_ms": 7600,
       "wait_budget_ms": 15000,
       "result_count": 1,
-      "detail_adapter_available": true,
-      "detail_adapter_verified": true,
-      "detail_adapter_command": "opencli pzds zzz-detail QL9XV5 -f json",
-      "verify_command": "opencli browser zzz-verify-pzds verify pzds/zzz-detail --strict-memory",
-      "evidence": "PZDS detail adapter was usable, but list coverage was invalid because goodsList/6 was a wrong-game route."
+      "query_governance": "ego_ops",
+      "browser_transport": "ego_browser",
+      "query_session_id": "zzz-pzds-route-mismatch",
+      "operation": "pzds/zzz-detail",
+      "knowledge_status": "verified_operation_available",
+      "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
+      "operation_verified": true,
+      "evidence": "PZDS detail operation was usable, but list coverage was invalid because goodsList/6 was a wrong-game route."
     }
   ],
   "community_attempts": [
@@ -94,6 +103,14 @@
   "missing_fields": [
     "PZDS ZZZ list route was invalid because goodsList/6 was inferred from a detail URL suffix",
     "Need gameList natural navigation or browser-confirmed goodsList/275 before claiming PZDS list coverage"
+  ],
+  "cleanup_reports": [
+    {
+      "ok": true,
+      "query_session_id": "zzz-pzds-route-mismatch",
+      "ego_task_spaces_remaining": [],
+      "process_audit_after": []
+    }
   ],
   "final_response": "这轮主要来自螃蟹；盼之只复核了一个详情样例，列表误用了 goodsList/6。",
   "user_feedback": [

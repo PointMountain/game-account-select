@@ -8,12 +8,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cleanupScript = path.join(__dirname, 'cleanup-query-session.mjs');
 const fixture = path.join(__dirname, '..', 'test-fixtures', 'ego-task-spaces.json');
 
-function runCleanup(extraArgs) {
+function runCleanup(extraArgs, { dryRun = true, expectedStatus = 0 } = {}) {
   const result = spawnSync(process.execPath, [
     cleanupScript,
     '--process-pattern', 'browser-cleanup-test-never-match',
     '--task-spaces-fixture', fixture,
-    '--dry-run',
+    ...(dryRun ? ['--dry-run'] : []),
     '--json',
     ...extraArgs,
   ], {
@@ -21,7 +21,7 @@ function runCleanup(extraArgs) {
     timeout: 15000,
     maxBuffer: 1024 * 1024 * 4,
   });
-  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(result.status, expectedStatus, result.stderr || result.stdout);
   return JSON.parse(result.stdout);
 }
 
@@ -42,5 +42,13 @@ assert.equal(
 const duplicateCleanup = runCleanup(['--task-space', '42', '--task-space', '42']);
 assert.deepEqual(duplicateCleanup.ego_task_spaces_requested, ['42'], 'duplicate exact targets should be completed once');
 assert.equal(duplicateCleanup.ego_task_space_closures[0].matched.name, 'gas-arknights-20260829');
+
+const userOwnedRefusal = runCleanup(['--task-space', 'user-shopping'], { dryRun: false, expectedStatus: 1 });
+assert.equal(userOwnedRefusal.ok, false);
+assert.deepEqual(userOwnedRefusal.ego_task_spaces_remaining, ['user-shopping']);
+assert.equal(userOwnedRefusal.ego_task_space_closures[0].matched.ownership, 'user');
+assert.equal(userOwnedRefusal.ego_task_space_closures[0].result.skipped, 'task-space-not-agent-owned');
+assert.equal(userOwnedRefusal.ego_task_space_closures[0].execution.command, 'shared completion decision with fixture execution');
+assert.deepEqual(userOwnedRefusal.killed, []);
 
 console.log('game-account-toolkit ego-browser cleanup validation passed');

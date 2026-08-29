@@ -39,6 +39,6 @@ const boundedPzdsPlan = buildListQueryPlan({
   displayCount: 15,
   detailCount: 20,
 });
-assert.equal(boundedPzdsPlan[0].limit, 60, 'PZDS accumulated scan must respect the adapter maximum');
+assert.equal(boundedPzdsPlan[0].limit, 60, 'PZDS accumulated scan must respect the operation maximum');
 
 console.log('Validation passed: PZDS uses one accumulating scan while PXB7 keeps cheap paged requests.');
