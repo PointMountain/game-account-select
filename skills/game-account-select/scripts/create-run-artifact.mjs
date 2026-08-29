@@ -90,7 +90,10 @@ function parseBrowserRoute(value) {
       mode: null,
       status: 'pending_preflight',
       selected_transport: null,
-      fallback_probe: null,
+      runtime_validation: null,
+      task_space_required: null,
+      cleanup_policy: null,
+      control_handoff_policy: null,
       unattended_safe: null,
       requires_user_presence_now: null,
       authorization_may_recur: null,
@@ -104,7 +107,7 @@ function parseBrowserRoute(value) {
     throw new Error('--browser-route-json must be valid JSON');
   }
 
-  const allowedTransports = new Set(['chrome_use_extension', 'web_access_cdp', null]);
+  const allowedTransports = new Set(['ego_browser', null]);
   const allowedModes = new Set(['interactive', 'unattended']);
   const allowedStatuses = new Set(['not_required', 'ready', 'needs_user_action']);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -122,16 +125,15 @@ function parseBrowserRoute(value) {
   if (parsed.status === 'ready' && !parsed.selected_transport) {
     throw new Error('--browser-route-json ready status requires selected_transport');
   }
-  if (parsed.mode === 'unattended' && parsed.selected_transport === 'web_access_cdp') {
-    throw new Error('--browser-route-json cannot select web_access_cdp in unattended mode');
-  }
-
   return {
     requested: parsed.requested ?? true,
     mode: parsed.mode,
     status: parsed.status ?? 'ready',
     selected_transport: parsed.selected_transport ?? null,
-    fallback_probe: parsed.fallback_probe ?? null,
+    runtime_validation: parsed.runtime_validation ?? 'first_browser_operation',
+    task_space_required: parsed.task_space_required ?? parsed.selected_transport === 'ego_browser',
+    cleanup_policy: parsed.cleanup_policy ?? (parsed.selected_transport === 'ego_browser' ? 'complete_task_space' : 'none'),
+    control_handoff_policy: parsed.control_handoff_policy ?? (parsed.selected_transport === 'ego_browser' ? 'pause_until_explicit_user_confirmation' : 'none'),
     unattended_safe: parsed.unattended_safe ?? false,
     requires_user_presence_now: parsed.requires_user_presence_now ?? false,
     authorization_may_recur: parsed.authorization_may_recur ?? false,
@@ -227,7 +229,7 @@ const platformTasks = requiredPlatforms.map((platform) => ({
   priority: 'required',
   start_path: platform === 'user_provided' ? 'user_material' : 'natural_navigation',
   success_signal: 'read traceable listing cards with url/source id, price, title, server/risk hints, and candidate count',
-  fallback_order: ['verified_adapter', 'chrome_use_dom', 'browser_dom', 'user_material'],
+  fallback_order: ['ego_browser_semantic', 'ego_browser_direct', 'ego_browser_visual', 'verified_adapter', 'user_material'],
   wait_budget_ms: 15000,
   required_fields: ['url', 'title', 'price', 'platform', 'source_status'],
   confidence_cap_if_missing: 'medium'
@@ -240,7 +242,7 @@ const communityTasks = communitySources.map((source) => ({
   priority: source === 'youtube' ? 'preferred' : 'required',
   start_path: 'search',
   success_signal: 'capture reviewable source URL plus meta/team/signature/risk notes relevant to candidate assets',
-  fallback_order: ['chrome_use_dom', 'browser_dom', 'page_metadata', 'guide_site', 'official_source', 'user_material'],
+  fallback_order: ['ego_browser_semantic', 'ego_browser_direct', 'ego_browser_visual', 'page_metadata', 'guide_site', 'official_source', 'user_material'],
   wait_budget_ms: 15000,
   required_fields: ['url', 'title', 'evidence_note', 'status'],
   confidence_cap_if_missing: source === 'youtube' ? 'medium' : 'low'

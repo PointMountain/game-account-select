@@ -37,7 +37,7 @@ Out of scope:
 - User asked for an evaluation skill that judges generated skills against usage standards.
 - User asked for automatic or execution-time community updates to avoid stale local rules.
 - User asked to improve skill structure, inputs, outputs, tags, and data-processing documentation while taking inspiration from mainstream skill frameworks such as `gsd-build/get-shit-done`.
-- User asked for a pre-execution preparation skill that checks dependencies such as `opencli` and `web-access`, auto-installs when safe, and guides manual installation otherwise.
+- User asked for a pre-execution preparation skill that checks dependencies such as `opencli` and the browser runtime, auto-installs when safe, and guides manual installation otherwise.
 
 ## Design Decisions
 
@@ -100,7 +100,7 @@ Files:
 
 Behavior:
 
-- Check Node, `gh`, `git`, `opencli`, and local `web-access` skill availability.
+- Check Node, `gh`, `git`, `opencli`, and the configured browser skill availability.
 - Auto-install only safe local/project dependencies if introduced later; for global tools or Codex skills, output manual install guidance instead of silently mutating the machine.
 - Emit machine-readable JSON and a human-readable summary.
 
@@ -162,7 +162,7 @@ Files:
 
 Behavior:
 
-- Provide a documented workflow for execution-time refresh using `opencli`, web search, and `web-access` when available.
+- Provide a documented workflow for execution-time refresh using `opencli`, web search, and the configured browser skill when available.
 - Provide a deterministic script that updates evidence metadata and creates a refresh report from supplied evidence JSON.
 - Never fabricate source coverage; failed sources must be recorded as failed/limited and cap confidence.
 

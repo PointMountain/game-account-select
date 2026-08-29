@@ -426,10 +426,10 @@ const browserLikeAttempts = attempts.filter((attempt) => {
     attempt.evidence,
     attempt.url
   ].filter(Boolean).join('\n');
-  return /opencli\s+browser|browser_cdp|manual_browser_dom|CDP|Chrome|tab|target|pzds:health|goodsList|selectPageList|pxb7|pzds/i.test(text);
+  return /ego[_ -]?browser|task[_ -]?space|semantic_snapshot|browser_context_fetch|direct_dom|browser_fetch|visual|snapshotText|openOrReuseTab/i.test(text);
 });
 const attemptsMissingQuerySession = browserLikeAttempts.filter((attempt) => {
-  const hasSession = attempt.query_session_id || attempt.session || attempt.browser_session || attempt.opencli_session;
+  const hasSession = attempt.query_session_id || attempt.session || attempt.browser_session || attempt.ego_task_space_id || attempt.ego_task_space_name;
   const explicitNoBrowser = attempt.browser_used === false || attempt.no_browser === true;
   return !hasSession && !explicitNoBrowser;
 });
@@ -440,21 +440,21 @@ const residualProcessReports = cleanupReports.filter((report) => {
     ...(Array.isArray(report.residual_processes) ? report.residual_processes : []),
     ...(Array.isArray(report.leftover_processes) ? report.leftover_processes : [])
   ];
-  return residuals.some((line) => /opencli\s+browser\s+gas-|run-with-timeout|pxb7|pzds|zzz-detail|selectPageList|goodsList\/275/i.test(String(line)));
+  return residuals.some((line) => /ego-browser\s+nodejs|run-with-timeout|opencli\s+(?:pxb7|pzds)|zzz-detail|selectPageList|goodsList\/275/i.test(String(line)));
 });
-const incompleteBrowserTargetReports = cleanupReports.filter((report) => (
+const incompleteTaskSpaceReports = cleanupReports.filter((report) => (
   report?.ok === false
-  || (Array.isArray(report?.cdp_targets_remaining) && report.cdp_targets_remaining.length > 0)
+  || (Array.isArray(report?.ego_task_spaces_remaining) && report.ego_task_spaces_remaining.length > 0)
 ));
-if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessReports.length || incompleteBrowserTargetReports.length) {
+if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessReports.length || incompleteTaskSpaceReports.length) {
   addFinding({
     id: 'runtime-browser-session-cleanup-missing',
-    severity: residualProcessReports.length || incompleteBrowserTargetReports.length ? 'high' : 'medium',
+    severity: residualProcessReports.length || incompleteTaskSpaceReports.length ? 'high' : 'medium',
     category: 'runtime',
-    summary: 'Browser/OpenCLI query sessions must be named, cleaned up, and audited before final output',
+    summary: 'ego-browser task spaces must be named, completed, and audited before final output',
     evidence: [
       cleanupMissing ? 'browser-like platform attempts were recorded but no cleanup_report/cleanup_reports were attached' : null,
-      ...attemptsMissingQuerySession.map((attempt) => `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}: missing query_session_id/browser_session for browser-backed path`),
+      ...attemptsMissingQuerySession.map((attempt) => `${platformName(attempt)} ${attempt.query ?? attempt.url ?? ''}: missing query_session_id or ego task-space identity for browser-backed path`),
       ...residualProcessReports.flatMap((report) => {
         const residuals = [
           ...(Array.isArray(report.process_audit_after) ? report.process_audit_after : []),
@@ -463,10 +463,10 @@ if (cleanupMissing || attemptsMissingQuerySession.length || residualProcessRepor
         ];
         return residuals.map((line) => `residual process after cleanup: ${line}`);
       }),
-      ...incompleteBrowserTargetReports.flatMap((report) => [
+      ...incompleteTaskSpaceReports.flatMap((report) => [
         report?.ok === false ? `cleanup_report ok=false${report.error ? `: ${report.error}` : ''}` : null,
-        ...(Array.isArray(report?.cdp_targets_remaining)
-          ? report.cdp_targets_remaining.map((targetId) => `browser target remained after cleanup: ${targetId}`)
+        ...(Array.isArray(report?.ego_task_spaces_remaining)
+          ? report.ego_task_spaces_remaining.map((taskSpace) => `ego task space remained after cleanup: ${taskSpace}`)
           : []),
       ]),
     ].filter(Boolean),
@@ -589,9 +589,9 @@ function hasExplicitAdapterGap(attempt) {
     attempt.evidence
   ].filter(Boolean).join('\n');
   const listGap = explicitFalse(attempt.list_adapter_available)
-    && /browser_cdp|manual_browser_dom|browser DOM|自然导航|one-?off|临时|手工|截图|list adapter|列表.*(?:adapter|适配器).*缺|列表.*降级/i.test(fallbackText);
+    && /ego_browser|semantic_snapshot|direct_dom|browser_fetch|visual|browser DOM|自然导航|one-?off|临时|手工|截图|list adapter|列表.*(?:adapter|适配器).*缺|列表.*降级/i.test(fallbackText);
   const detailGap = explicitFalse(attempt.detail_adapter_available)
-    && /browser_cdp|manual_browser_dom|browser DOM|detail|详情|one-?off|临时|手工|截图|detail adapter|详情.*(?:adapter|适配器).*缺|详情.*降级/i.test(fallbackText);
+    && /ego_browser|semantic_snapshot|direct_dom|browser_fetch|visual|browser DOM|detail|详情|one-?off|临时|手工|截图|detail adapter|详情.*(?:adapter|适配器).*缺|详情.*降级/i.test(fallbackText);
   const text = [
     explicitFalse(attempt.adapter_available) ? 'adapter_available_false' : '',
     explicitFalse(attempt.opencli_adapter_available) ? 'opencli_adapter_available_false' : '',
@@ -615,7 +615,7 @@ const adapterGapAttempts = attempts.filter((attempt) => {
     attempt.error_text,
     attempt.evidence
   ].filter(Boolean).join('\n');
-  return !hasVerifiedAdapter(attempt) && /browser_cdp|manual_browser_dom/i.test(text);
+  return !hasVerifiedAdapter(attempt) && /ego_browser|semantic_snapshot|direct_dom|browser_fetch|visual/i.test(text);
 });
 const verifiedAdapterAttempts = attempts.filter((attempt) => {
   return hasVerifiedAdapter(attempt);

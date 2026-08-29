@@ -115,8 +115,11 @@ browser_route:
   requested: boolean|null
   mode: interactive|unattended|null
   status: pending_preflight|not_required|ready|needs_user_action
-  selected_transport: chrome_use_extension|web_access_cdp|null
-  fallback_probe: skipped_browser_not_requested|skipped_primary_ready|skipped_unattended|completed_after_primary_unavailable|null
+  selected_transport: ego_browser|null
+  runtime_validation: not_required|first_browser_operation|null
+  task_space_required: boolean|null
+  cleanup_policy: none|complete_task_space|null
+  control_handoff_policy: none|pause_until_explicit_user_confirmation|null
   unattended_safe: boolean|null
   requires_user_presence_now: boolean|null
   authorization_may_recur: boolean|null
@@ -141,7 +144,7 @@ coverage_plan:
       type: platform_listing|platform_detail|community_evidence|user_input
       source: string
       priority: required|preferred|supplemental
-      start_path: verified_adapter|natural_navigation|chrome_use_dom|browser_dom|user_material|search
+      start_path: ego_browser_semantic|ego_browser_direct|ego_browser_visual|verified_adapter|natural_navigation|user_material|search
       success_signal: string
       fallback_order: string[]
       wait_budget_ms: number
@@ -218,8 +221,12 @@ platform_attempt:
   query: string
   url: string | null
   query_session_id: string | null
-  browser_transport: chrome_use_extension|opencli_browser|web_access_cdp|none|null
-  browser_targets: string[]
+  browser_transport: ego_browser|none|null
+  ego_task_space_id: number|string|null
+  ego_task_space_name: string|null
+  browser_targets: string[] # task-space tab target ids only
+  observation_method: semantic_snapshot|direct_dom|browser_fetch|visual|null
+  verification_method: semantic_readback|url_and_count_crosscheck|screenshot|adapter_crosscheck|user_confirmation|null
   started_at: string | null
   duration_ms: number | null
   wait_budget_ms: number | null
@@ -331,8 +338,8 @@ score:
 - 用户可见报告先声明预算内完整满足数量，再展示最多 5 个预算内 `near_match_listings`，最后单列最多 5 个 `budget_breakthrough_listings`。若 artifact 中已有预算内接近项但 `final_response` 没有其 ID/URL，质量门禁必须打回。
 - `user_request` 保存原话，`request_provenance.profile_input` 保存可选的派生画像文本，两者分别哈希。Finalizer 生成 `delivery_contract` 后，调用方必须逐字交付 `final_response`；手写替换、丢失预算分层或 Self-improve 均不得沿用原 evaluator 通过状态。
 - 社区证据工具超时或正文不可读时，必须记录 `community_attempt` 和 `fallback_used`，不能只在最终文案里笼统说“未覆盖”。
-- 第一条浏览器命令前必须把 preflight 的 `browser_route` 从 `pending_preflight` 更新并冻结；可在创建 artifact 时通过 `--browser-route-json` 写入。选中 `chrome_use_extension` 后不得再初始化 web-access/CDP；无人值守时不得把 relay 失败自动切换成 CDP。
-- `chrome-use`、浏览器 CDP 或 OpenCLI 查询必须记录 `query_session_id`、`browser_transport` 和 `browser_targets`。筛选结束后必须运行查询清理脚本，并把 `cleanup.closed_sessions`、`cleanup.closed_targets`、`cleanup.closed_windows`、`cleanup.residual_processes` 写入 artifact。OpenCLI daemon 和 chrome-use relay 是共享服务，不应作为残留查询线程杀掉；只关闭本轮命名 session/target，以及基线之后新建且只含查询页/空白页的独立窗口。
+- 第一条浏览器命令前必须把 preflight 的 `browser_route` 从 `pending_preflight` 更新并冻结；可在创建 artifact 时通过 `--browser-route-json` 写入。浏览器传输只允许 `ego_browser`，首次实际操作负责验证运行时。
+- ego-browser 查询必须记录 `query_session_id`、`browser_transport`、task space id/name、标签 target、观察方式和验证方式。筛选结束后调用 `completeTaskSpace`，并把 `ego_task_space_closures`、`ego_task_spaces_remaining` 和 `process_audit_after` 写入 cleanup report；只关闭本轮明确记录的空间。
 - 平台或社区来源未完成时必须写入 `coverage_gaps`，并把置信度影响同步到最终推荐限制。
 - 可复用观察先写入 `knowledge_update_candidates`。除非用户确认或本轮目标明确要求应用优化，否则候选不得直接改写游戏估值规则。
 - `verified_existing` 只代表本轮再次验证了运行前已有的 adapter、fallback 或字段，不计入本轮 `applied`；只有本轮实际修改持久文件并跑过 `validation_commands` 才能标记 `applied`。

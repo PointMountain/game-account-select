@@ -1,6 +1,6 @@
 ---
 name: game-account-select
-description: 根据用户预算、游戏目标、平台偏好和风险偏好，先制定覆盖计划，再低频查询中国游戏账号平台候选账号，调用游戏专属 skill 估值，并把平台缺口、社区证据、用户反馈和优化建议沉淀到可验证的 run artifact。
+description: 根据用户预算、游戏目标、平台偏好和风险偏好，先制定覆盖计划，再用单一 ego-browser task space 低频查询中国游戏账号平台候选，调用游戏专属 skill 估值，并把字段验证、平台缺口、社区证据、用户反馈和优化建议沉淀到可验证的 run artifact。任何主动找号或动态平台读取都应使用本 skill。
 argument-hint: "[游戏] [预算] [偏好]"
 ---
 
@@ -12,7 +12,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 ## 设计哲学
 
-本 skill 借鉴 `web-access` 的执行哲学：先定义成功标准，再选择最可能直达目标的起点；每一步结果都是证据，失败后换路径而不是重复等待；完成后把可复用事实沉淀到 references、fixtures 或优化器知识库。
+本 skill 采用证据优先的执行哲学：先定义成功标准，再选择最可能直达目标的起点；每一步结果都是证据，失败后换工作流而不是重复等待；完成后把可复用事实沉淀到 references、fixtures 或优化器知识库。
 
 主入口只做策略编排：
 
@@ -44,7 +44,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 
 ## 执行流程
 
-第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。后台或用户不在场时追加 `--unattended`。把报告中的 `browser_route` 写入 raw run artifact（创建时可传 `--browser-route-json`）并冻结；选中 chrome-use 后不得再加载 web-access/CDP。无人值守时 relay 失效则降级并记录覆盖缺口，不触发授权弹窗。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
+第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。后台或用户不在场时追加 `--unattended`。把报告中的 `browser_route` 写入 raw run artifact（创建时可传 `--browser-route-json`）并冻结为 `ego_browser`；随后为本轮目标创建一个 ego-browser task space，保存数字 id，在全部平台和社区步骤中复用。首次真实操作验证运行时；用户接管、inactive 或未分配状态必须暂停等待明确确认。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
 
 执行前必须读取：
 
@@ -52,6 +52,7 @@ argument-hint: "[游戏] [预算] [偏好]"
 - `references/source-coverage-playbook.md`
 - `references/knowledge-ledger.md`
 - `references/selection-state-machine.md`
+- `../game-account-toolkit/references/ego-browser-workflow.md`
 - `../game-account-toolkit/references/skill-io-contract.md`
 
 按状态机执行，不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。每次真实查询都必须执行状态机里的 `POST_RUN_OPTIMIZE` 收尾阶段：先生成 raw run artifact，运行 `game-account-skill-optimizer`，再运行 `game-account-skill-evaluator --from-report=<run-artifact>`，根据门禁结果补查、降级、改写推荐或打回重做。

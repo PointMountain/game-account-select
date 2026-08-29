@@ -94,17 +94,18 @@ success_criteria:
 
 1. 检查依赖。
 2. 读取平台访问策略。
-3. 确认可用能力：WebFetch、`chrome-use` 扩展 relay、浏览器 CDP 兜底、OCR、样本库。
+3. 确认可用能力：ego-browser 语义/直接数据/视觉工作流、可选 adapter、OCR、样本库。
 4. 读取 `source-coverage-playbook.md`，把可用能力映射到本轮 `coverage_plan` 的起点和降级链。
 
 输出：
 
 ```yaml
 capabilities:
-  chrome_use_relay: boolean
-  browser_cdp: boolean
-  browser_access: boolean
-  web_fetch: boolean
+  ego_browser: boolean
+  semantic_snapshot: boolean
+  browser_context_fetch: boolean
+  visual_interaction: boolean
+  opencli_adapter: boolean
   ocr: boolean
 limitations: string[]
 ```
@@ -181,7 +182,7 @@ limitations: string[]
 
 - `source_tasks`：平台列表、详情、社区证据和用户输入任务。
 - `success_signal`：每个来源什么结果算完成，例如“返回至少 3 条含 URL/价格/区服的列表卡片”。
-- `fallback_order`：verified adapter、自然导航、`chrome-use` DOM、CDP 浏览器 DOM、用户截图/复制文本等顺序。
+- `fallback_order`：ego-browser 语义快照、直接 DOM/页内请求、视觉复核、verified adapter、用户截图/复制文本等顺序。
 - `confidence_cap_if_missing`：该来源缺失时对最终置信度的影响。
 - `stop_rules`：什么时候停止继续访问，避免无限搜索。
 
@@ -212,7 +213,7 @@ node skills/game-account-select/scripts/create-run-artifact.mjs --game "<game>" 
 14. 若 Pxb7/PZDS adapter 没有返回 `agentStatuses` 或 S 音擎名称清单，先用浏览器低频滚动到资产/验号报告角色卡和 S 级音擎区域复核一次；仍缺失时把 `asset_status_source: missing`、`engine_name_source: missing`、`source_status: partial` 和人工确认项写入运行记录，不要用标题猜专属音擎归属。
 15. 绝区零抽卡资源折算统一写入 `estimated_pulls`：`(菲林 + 菲林底片) / 160 + 加密母带 + 原装母带 + 邦布券`。不要把 `菲林底片` 当作单抽券；如果卖家备注写“还有 N 抽”，用该公式和备注互相校验，差异较大时列人工确认。
 16. 区分列表页和详情页能力：例如当前只有 `pxb7/zzz-detail` 或 `pzds/zzz-detail` adapter，但列表页仍靠浏览器 DOM 时，分别记录 `list_adapter_available`、`detail_adapter_available` 和对应降级路径，避免把“详情可解析”误当成“平台全链路可解析”。
-17. 浏览器查询必须使用可追踪 session，推荐 `gas-<game>-<platform>-<timestamp>`；优先用 `chrome-use --session <name>` 复用真实 Chrome 的扩展 relay，避免重复 remote-debugging 授权。不要为同一次筛选创建多个无名 Chrome 分组或空窗口。第一次浏览器命令前捕获 target 基线，能在同一 session 内完成的列表页、页内 `fetch`、PZDS 健康检查必须复用，并记录 `query_session_id`、`browser_transport` 与 `browser_targets`。OpenCLI 的 lease close 会保留 `about:blank` 容器占位符，不能代替 target 清理。
+17. 浏览器查询必须使用一个可追踪 ego-browser task space，推荐 `gas-<game>-<timestamp>`。首次 `useOrCreateTaskSpace` 后保存数字 id；列表页、详情短名单、页内 `browserFetch` 和健康检查复用同一空间，并记录 `query_session_id`、`browser_transport: ego_browser`、task space id/name、标签 target、观察与验证方式。
 18. 对 PXB 列表，优先使用“一次打开列表页 + 页内 fetch 少量页 + 详情 adapter 验证短名单”的路径。普通 `curl` 若返回站点脚本/风控页，不要继续重试 curl；也不要为了翻页批量打开详情页。
 19. 记录数据来源和限制，不要声称覆盖了未成功读取的平台。
 
@@ -268,7 +269,7 @@ community_evidence:
 
 - 只要存在强度、配队、命座/影画、专武/音擎、版本环境或账号交易避坑的不确定性，就必须先找社群答案或刷新证据；不能只凭本地旧快照或平台标题直接给高置信结论。
 - 优先用 B站和 YouTube 长视频/字幕/评论、小红书图文/评论、抖音话题或视频信号；全球同步进度游戏必须把 YouTube 作为可用独立社区来源之一。平台不可用时记录失败原因并使用降级来源。
-- 社区读取必须有工具降级链：先用可用的结构化工具读取搜索/详情/字幕/评论；若超时或无输出，使用 preflight 已选中的 chrome-use 传输读取页面 DOM、标题、简介、相关视频/笔记卡片和公开评论；仅在交互模式且 relay 不可用时切换 web-access/CDP。无人值守时直接尝试 Jina/WebFetch/curl/页面元数据、官方公告、Wiki/攻略站。每一步都记录 `community_attempts`、等待预算、失败文本和 `fallback_used`。
+- 社区读取必须有工具降级链：先用可用的结构化工具读取搜索/详情/字幕/评论；若超时或无输出，在同一 ego-browser task space 中依次读取语义树、直接 DOM/页内请求和截图。动态页面仍失败时尝试页面元数据、官方公告、Wiki/攻略站或用户材料。每一步都记录 `community_attempts`、等待预算、失败文本和 `fallback_used`。
 - B站/YouTube 字幕、小红书正文、抖音内容等关键正文无法读取时，`community_confidence` 最高为 `medium`；只有标题/卡片不能单独支撑“当前 meta 强规则”。
 - 不得因为单条视频标题、短帖或评论就显著提高账号排名。
 - 如果当前证据过期、冲突或覆盖不足，继续筛选时必须降低置信度并列出人工确认项。
@@ -362,7 +363,7 @@ community_evidence:
 - `knowledge_update_candidates`
 - `user_feedback`
 - `evaluation_reports`：目标 skill、生成器产物或优化产物的 evaluator 输出。
-- `cleanup_reports`：查询结束后 `npm run query:cleanup -- --json` 的输出，至少包含基线捕获状态、关闭的 sessions/targets、`cdp_targets_remaining` 和剩余匹配进程。
+- `cleanup_reports`：查询结束后 `npm run query:cleanup -- --task-space <id> --json` 的输出，至少包含完成的 task space、`ego_task_spaces_remaining` 和剩余匹配进程。
 
 执行：
 
@@ -370,10 +371,10 @@ community_evidence:
 2. 运行查询清理和后台审计。默认命令：
 
 ```bash
-npm run query:cleanup -- --session-prefix gas- --baseline <run-browser-baseline.json> --close-new-query-targets --json
+npm run query:cleanup -- --task-space <ego-task-space-id> --json
 ```
 
-若本轮记录了具体 session 或 CDP target，必须显式传入 `--session` / `--target`。如果清理报告 `ok:false`、`cdp_targets_remaining` 非空，或仍显示本轮生成的 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail` 等进程，先处理残留或在 artifact 里记录 `cleanup_incomplete`；不要留下空白窗口、测试分组或后台查询脚本后直接结束。
+必须显式传入本轮 ego-browser task space id 或精确名称。如果清理报告 `ok:false`、`ego_task_spaces_remaining` 非空，或仍显示本轮生成的浏览器/查询脚本进程，先处理残留或在 artifact 里记录 `cleanup_incomplete`；不要留下未完成 task space 或后台查询脚本后直接结束。
 
 3. 运行优化器：
 

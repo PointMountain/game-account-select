@@ -2,66 +2,35 @@
 import assert from 'node:assert/strict';
 import { resolveBrowserRoute } from './browser-routing.mjs';
 
-function failingProbe(name) {
-  return () => {
-    throw new Error(`${name} must not be probed on this route`);
-  };
-}
-
-const chromeUseReady = resolveBrowserRoute({
+const interactive = resolveBrowserRoute({
   needsBrowser: true,
   unattended: false,
-  checkChromeUse: () => ({ ok: true, found: 'chrome-use 1.5.68' }),
-  checkWebAccessSkill: failingProbe('web-access'),
-  checkChromePort: failingProbe('Chrome remote debugging'),
 });
-assert.equal(chromeUseReady.route.selected_transport, 'chrome_use_extension');
-assert.equal(chromeUseReady.route.fallback_probe, 'skipped_primary_ready');
-assert.equal(chromeUseReady.route.unattended_safe, true);
-assert.equal(chromeUseReady.webAccess.skipped, true);
-assert.equal(chromeUseReady.chromePort.skipped, true);
+assert.equal(interactive.browserAccessOk, true);
+assert.equal(interactive.route.selected_transport, 'ego_browser');
+assert.equal(interactive.route.runtime_validation, 'first_browser_operation');
+assert.equal(interactive.route.task_space_required, true);
+assert.equal(interactive.route.cleanup_policy, 'complete_task_space');
+assert.equal(interactive.route.control_handoff_policy, 'pause_until_explicit_user_confirmation');
+assert.equal(interactive.route.unattended_safe, true);
+assert.equal(interactive.egoBrowser.assumed_ready, true);
 
-const unattendedWithoutRelay = resolveBrowserRoute({
+const unattended = resolveBrowserRoute({
   needsBrowser: true,
   unattended: true,
-  checkChromeUse: () => ({ ok: false, found: null }),
-  checkWebAccessSkill: failingProbe('web-access'),
-  checkChromePort: failingProbe('Chrome remote debugging'),
 });
-assert.equal(unattendedWithoutRelay.browserAccessOk, false);
-assert.equal(unattendedWithoutRelay.route.selected_transport, null);
-assert.equal(unattendedWithoutRelay.route.fallback_probe, 'skipped_unattended');
-assert.equal(unattendedWithoutRelay.route.requires_user_presence_now, true);
-
-let webAccessProbeCount = 0;
-let chromePortProbeCount = 0;
-const interactiveFallback = resolveBrowserRoute({
-  needsBrowser: true,
-  unattended: false,
-  checkChromeUse: () => ({ ok: false, found: null }),
-  checkWebAccessSkill: () => {
-    webAccessProbeCount += 1;
-    return { ok: true, found: '/tmp/web-access/SKILL.md' };
-  },
-  checkChromePort: () => {
-    chromePortProbeCount += 1;
-    return { ok: true, found: 'localhost:9222' };
-  },
-});
-assert.equal(interactiveFallback.route.selected_transport, 'web_access_cdp');
-assert.equal(interactiveFallback.route.unattended_safe, false);
-assert.equal(interactiveFallback.route.authorization_may_recur, true);
-assert.equal(webAccessProbeCount, 1);
-assert.equal(chromePortProbeCount, 1);
+assert.equal(unattended.browserAccessOk, true);
+assert.equal(unattended.route.mode, 'unattended');
+assert.equal(unattended.route.selected_transport, 'ego_browser');
+assert.equal(unattended.route.requires_user_presence_now, false);
+assert.equal(unattended.route.authorization_may_recur, false);
 
 const browserNotRequested = resolveBrowserRoute({
   needsBrowser: false,
   unattended: false,
-  checkChromeUse: failingProbe('chrome-use'),
-  checkWebAccessSkill: failingProbe('web-access'),
-  checkChromePort: failingProbe('Chrome remote debugging'),
 });
 assert.equal(browserNotRequested.route.status, 'not_required');
-assert.equal(browserNotRequested.route.fallback_probe, 'skipped_browser_not_requested');
+assert.equal(browserNotRequested.route.runtime_validation, 'not_required');
+assert.equal(browserNotRequested.route.task_space_required, false);
 
 console.log('game-account-preflight browser routing validation passed');

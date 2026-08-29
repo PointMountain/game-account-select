@@ -5,7 +5,7 @@ updated_at: 2026-08-12
 ## Known Run Signals
 
 - Repeated platform timeouts should become a future wait-budget or fallback rule.
-- Browser-backed platform attempts must leave no hidden query state. Runs should record a stable `query_session_id`, close OpenCLI/CDP tabs through `query:cleanup`, and attach a process audit; missing cleanup or leftover `opencli browser gas-*` / `run-with-timeout` / platform detail processes should trigger `runtime-browser-session-cleanup-missing`.
+- ego-browser-backed platform attempts must leave no hidden query state. Runs should record a stable `query_session_id` plus task space id/name, call `completeTaskSpace` through `query:cleanup`, and attach a process audit; missing cleanup, remaining task spaces, or leftover `ego-browser nodejs` / `run-with-timeout` / platform detail processes should trigger `runtime-browser-session-cleanup-missing`.
 - Empty result pages with login prompts should become a data-source limitation, not a repeated retry loop.
 - Missing mainstream platforms should become a platform coverage finding even if one platform produced a usable result.
 - An Arknights run with both PXB7 and PZDS attempts but only one visible platform result should trigger `output-dual-platform-shortlists-missing`; a passing run contains both platform shortlists and may still select one cross-platform best-value listing.

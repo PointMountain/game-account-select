@@ -49,7 +49,7 @@
 
 ## 2026-05-28
 
-- 增加浏览器查询清理诊断：执行记录缺少 `query_session_id`、缺少 `cleanup_reports`，或清理后仍有本轮 OpenCLI/CDP/平台详情进程时，输出 `runtime-browser-session-cleanup-missing`。
+- 增加 ego-browser task space 清理诊断：执行记录缺少 `query_session_id` / task space 身份、缺少 `cleanup_reports`，或清理后仍有本轮 task space / 查询进程时，输出 `runtime-browser-session-cleanup-missing`。
 - 工具层新增 `query:cleanup`，用于关闭查询 session/target 并审计残留进程；选择器状态机要求最终答复前运行清理。
 - 平台访问策略补充 PXB/PZDS 查询操作：列表预筛复用一个受控 session，详情只对短名单运行 verified adapter，避免多开 Chrome 分组和空窗口。
 

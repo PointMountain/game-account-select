@@ -1,6 +1,6 @@
 ---
 name: game-account-preflight
-description: 游戏账号 skill 执行前准备和环境校验。检查 Node、git、gh、opencli 和浏览器路由；chrome-use 扩展桥可用时独占浏览器主路径，不再探测 web-access/CDP，并支持禁止交互式授权的无人值守模式。
+description: 游戏账号 skill 执行前准备和环境校验。检查 Node、git、gh、opencli 与配套 skills，并把所有动态网页访问冻结到唯一的 ego-browser 路由；首次真实浏览器操作验证运行时，避免重复探针和多传输竞争。
 argument-hint: "[--json|--strict|--browser|--unattended|--opencli-adapters]"
 ---
 
@@ -14,8 +14,11 @@ argument-hint: "[--json|--strict|--browser|--unattended|--opencli-adapters]"
 
 - `references/preflight-checklist.md`
 - `../game-account-toolkit/references/dependency-state-machine.md`
+- `../game-account-toolkit/references/ego-browser-workflow.md`（需要浏览器时）
 - `../game-account-toolkit/references/platform-access-policy.md`
 - `../game-account-toolkit/references/skill-io-contract.md`
+
+需要访问网页时，还必须完整读取当前可用的 `ego-browser/SKILL.md`。浏览器操作以该 skill 的 task-space、观察、交互、接管和清理规则为最终准则。
 
 ## 执行
 
@@ -25,15 +28,15 @@ argument-hint: "[--json|--strict|--browser|--unattended|--opencli-adapters]"
 node skills/game-account-preflight/scripts/preflight.mjs --json
 ```
 
-如需要浏览器，追加 `--browser`。该检查先验证 `chrome-use` 扩展 relay；一旦可用，就冻结 `browser_route.selected_transport: chrome_use_extension`，跳过 `web-access` 和 remote-debugging 探针，避免双重初始化与授权弹窗。
+如需要动态或登录态页面，追加 `--browser`。预检直接冻结 `browser_route.selected_transport: ego_browser`，但不运行 `which`、版本或连接探针；首次 `ego-browser nodejs` 操作同时完成运行时验证，减少无效启动和重复等待。
 
-用户不在电脑前、后台执行或明确要求无人值守时使用 `--unattended`（它隐含 `--browser`）。这个模式禁止 CDP 兜底：若 relay 不可用，预检会停止浏览器路径并记录需要用户恢复扩展连接，不会调用 `web-access`。只有普通交互模式中 relay 确实不可用时，才检查 `web-access` + Chrome remote debugging；启动或授权 CDP 前仍需用户在场。
+用户不在电脑前、后台执行或明确要求无人值守时使用 `--unattended`（它隐含 `--browser`）。ego-browser 使用隔离 task space，正常情况下可继续无人值守；一旦返回“user is controlling”、inactive 或未分配状态，整个浏览器路径立即暂停，等待用户明确确认后才能继续，不能切换其它传输绕过接管。
 
-如需要确认仓库托管的 Pxb7/PZDS OpenCLI adapter 是否已同步到本机，追加 `--opencli-adapters`。
+如需要确认仓库托管的 Pxb7/PZDS OpenCLI adapter 是否已同步到本机，追加 `--opencli-adapters`。Adapter 是结构化字段交叉验证能力，不是第二条浏览器传输。
 
 ## 输出
 
-必须先把 `<preflight_report>` 显示给用户，再继续后续 skill 输出。即使全部检查通过，也要保留这段报告，方便用户确认本次运行使用了哪些本地能力：
+必须先把 `<preflight_report>` 显示给用户，再继续后续 skill 输出：
 
 ```xml
 <preflight_report>
@@ -49,10 +52,11 @@ node skills/game-account-preflight/scripts/preflight.mjs --json
 
 ## 安全边界
 
-- 不静默安装全局工具。
-- 不静默安装或修改 Codex skill。
-- 不绕过 Chrome 授权、验证码、登录墙或平台风控。
-- `browser_route.selected_transport` 一旦选定，本轮不再初始化另一条浏览器传输；chrome-use 成功后不得加载 `web-access` 或运行它的 `check-deps.mjs`。
-- `--unattended` 下禁止尝试 `web-access`/CDP，即使本机安装了该 skill。
-- 对缺失的 `opencli`、`chrome-use`、`web-access` 或 Chrome remote debugging 只输出可执行安装/授权指引。
+- 不静默安装全局工具或修改 Codex skills。
+- 不绕过登录、验证码、平台风控或付费墙。
+- 浏览器路由只有 `ego_browser`；运行中不初始化其它浏览器自动化栈。
+- 每轮只创建或复用一个与本轮目标对应的 task space，并优先保存返回的数字 id。
+- 用户接管、inactive 或未分配状态是硬停止；只有用户明确确认后才能 `takeOverTaskSpace` 或 `claimTaskSpace`。
+- 完成后用独立最终 heredoc 调 `completeTaskSpace(id, { keep: false })`；只有明确需要留给用户操作或查看时使用 `keep: true`。
+- 对缺失的运行时只在首次真实操作失败后按 ego-browser 的安装指南处理，不预先堆叠探针。
 - 对缺失或版本不一致的仓库托管 OpenCLI adapter，只输出安装脚本指引；不静默写入 `~/.opencli`。

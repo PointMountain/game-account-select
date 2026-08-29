@@ -6,17 +6,13 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cleanupScript = path.join(__dirname, 'cleanup-query-session.mjs');
-const baseline = path.join(__dirname, '..', 'test-fixtures', 'browser-targets-baseline.json');
-const afterQuery = path.join(__dirname, '..', 'test-fixtures', 'browser-targets-after-query.json');
-const afterQueryWindows = path.join(__dirname, '..', 'test-fixtures', 'browser-windows-after-query.json');
+const fixture = path.join(__dirname, '..', 'test-fixtures', 'ego-task-spaces.json');
 
 function runCleanup(extraArgs) {
   const result = spawnSync(process.execPath, [
     cleanupScript,
-    '--session-prefix', '',
     '--process-pattern', 'browser-cleanup-test-never-match',
-    '--targets-fixture', afterQuery,
-    '--windows-fixture', afterQueryWindows,
+    '--task-spaces-fixture', fixture,
     '--dry-run',
     '--json',
     ...extraArgs,
@@ -30,50 +26,21 @@ function runCleanup(extraArgs) {
 }
 
 const safeDefault = runCleanup([]);
-assert.deepEqual(safeDefault.cdp_targets_closed, [], 'default cleanup must not close URL-matching user tabs');
+assert.deepEqual(safeDefault.ego_task_spaces_requested, [], 'cleanup without an exact task space must be a no-op');
+assert.deepEqual(safeDefault.ego_task_space_closures, []);
 
-const baselineCleanup = runCleanup(['--baseline', baseline, '--close-new-query-targets']);
-assert.deepEqual(
-  baselineCleanup.cdp_targets_closed.map((item) => item.targetId).sort(),
-  ['RUN-BLANK', 'RUN-PXB7'],
-  'baseline cleanup must close only new query pages and OpenCLI blank placeholders',
-);
+const exactCleanup = runCleanup(['--task-space', 'gas-arknights-20260829']);
+assert.deepEqual(exactCleanup.ego_task_spaces_requested, ['gas-arknights-20260829']);
+assert.equal(exactCleanup.ego_task_space_closures[0].matched.id, 42);
+assert.equal(exactCleanup.ego_task_space_closures[0].matched.ownership, 'agent');
 assert.equal(
-  baselineCleanup.cdp_targets_closed.some((item) => item.targetId === 'USER-PXB7'),
+  exactCleanup.ego_task_space_closures.some((item) => item.matched?.id === 7),
   false,
-  'a platform tab that existed before the run belongs to the user',
-);
-assert.deepEqual(
-  baselineCleanup.chrome_windows_closed.map((item) => item.windowId).sort(),
-  ['RUN-BLANK-WINDOW', 'RUN-PZDS-WINDOW'],
-  'baseline cleanup must close new automation-only Chrome windows, including the standalone blank popup',
-);
-assert.equal(
-  baselineCleanup.chrome_windows_closed.some((item) => item.windowId === 'USER-WINDOW'),
-  false,
-  'a Chrome window that existed before the run must be preserved',
-);
-assert.equal(
-  baselineCleanup.chrome_windows_closed.some((item) => item.windowId === 'NEW-MIXED-WINDOW'),
-  false,
-  'a new mixed window containing an unrelated user tab must be preserved',
-);
-assert.equal(
-  baselineCleanup.cdp_targets_closed.some((item) => item.targetId === 'USER-BLANK'),
-  false,
-  'a blank tab that existed before the run must be preserved',
-);
-assert.equal(
-  baselineCleanup.cdp_targets_closed.some((item) => item.targetId === 'NEW-UNRELATED'),
-  false,
-  'a concurrently opened unrelated tab must be preserved',
+  'an unrelated user-owned task space must not be selected by prefix or URL',
 );
 
-const explicitCleanup = runCleanup(['--target', 'RUN-BLANK']);
-assert.deepEqual(
-  explicitCleanup.cdp_targets_closed.map((item) => item.targetId),
-  ['RUN-BLANK'],
-  'explicit target ownership must remain supported',
-);
+const duplicateCleanup = runCleanup(['--task-space', '42', '--task-space', '42']);
+assert.deepEqual(duplicateCleanup.ego_task_spaces_requested, ['42'], 'duplicate exact targets should be completed once');
+assert.equal(duplicateCleanup.ego_task_space_closures[0].matched.name, 'gas-arknights-20260829');
 
-console.log('game-account-toolkit browser cleanup validation passed');
+console.log('game-account-toolkit ego-browser cleanup validation passed');

@@ -1,6 +1,6 @@
 ---
 name: game-account-community-updater
-description: 更新指定游戏账号 skill 的社区证据快照。支持执行时刷新，也支持从 evidence JSON 写入本地 community-evidence.md 和 refresh report。
+description: 更新指定游戏账号 skill 的社区证据快照。动态社区页面统一用 ego-browser task space 读取与验证，也支持从 evidence JSON 写入本地 community-evidence.md 和 refresh report。
 argument-hint: "[skill path] [evidence json]"
 ---
 
@@ -12,7 +12,7 @@ argument-hint: "[skill path] [evidence json]"
 
 ## 执行前准备
 
-先运行 `game-account-preflight`，并在刷新前显示 `<preflight_report>`。如果缺少浏览器或网络相关能力，记录降级范围；如果需要 B站、抖音、小红书等动态页面，必须遵循 toolkit 的单一浏览器路由和平台访问安全边界：chrome-use relay 可用时不加载 web-access，无人值守时禁止 CDP 兜底。
+先运行 `game-account-preflight`，并在刷新前显示 `<preflight_report>`。如果缺少浏览器或网络相关能力，记录降级范围；如果需要 B站、抖音、小红书等动态页面，必须遵循 toolkit 的 ego-browser 单一路由、task-space 生命周期和平台访问安全边界。
 
 ## 必须读取
 
@@ -32,7 +32,7 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 
 安全刷新模式：
 
-1. 用 `opencli`、网页搜索或已选中的浏览器传输获取少量高信号来源；浏览器默认使用 chrome-use，只有交互模式下 relay 不可用时才使用 web-access/CDP。
+1. 用 ego-browser、已验证的结构化 adapter 或公开来源获取少量高信号材料；同一刷新目标复用一个 task space，按语义快照、直接 DOM/页内请求、视觉复核的顺序读取并验证。
 2. 把来源整理为 evidence JSON。
 3. 运行脚本写入快照或输出到临时目录。
 

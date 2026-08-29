@@ -14,7 +14,10 @@
       "wait_budget_ms": 15000,
       "result_count": 50,
       "adapter_available": false,
-      "fallback_used": "browser_cdp",
+      "fallback_used": "ego_browser_direct",
+      "browser_transport": "ego_browser",
+      "query_session_id": "gas-zzz-community-performance",
+      "ego_task_space_id": 101,
       "evidence": "opencli list had no pxb7 site command; product pages were readable through browser DOM"
     },
     {
@@ -24,7 +27,10 @@
       "duration_ms": 19000,
       "result_count": 10,
       "adapter_available": false,
-      "fallback_used": "browser_cdp",
+      "fallback_used": "ego_browser_semantic",
+      "browser_transport": "ego_browser",
+      "query_session_id": "gas-zzz-community-performance",
+      "ego_task_space_id": 101,
       "error_text": "no opencli adapter; detail asset tab failed with XMLHttpRequest header error"
     },
     {

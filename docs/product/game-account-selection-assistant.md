@@ -33,7 +33,7 @@
 采用“执行前准备 skill + 通用工具 skill + 主筛选 skill + 游戏专属 skill + 生成/评估/更新 skill + 后续本地 Web”的混合路线。
 
 ```text
-game-account-preflight    执行前依赖、权限、浏览器/CDP、opencli、web-access 检查
+game-account-preflight    执行前依赖、ego-browser task space、opencli 与安全边界检查
 game-account-toolkit      通用工具、依赖检查、安装指引、平台访问规范
 game-account-select       主筛选编排：收集条件、查询平台、调用游戏估值 skill
 game-account-skill-generator      根据新游戏生成买号估值 skill 和验证样例
@@ -71,7 +71,7 @@ Skill 适合早期，因为估值规则会根据用户反馈快速迭代；Web �
 
 1. 用户给出游戏、预算、区服、风险偏好和目标角色/资源偏好。
 2. 主筛选 skill 低频访问平台公开列表页或用户提供的页面。
-3. 通用工具层负责浏览器/CDP、OCR、HTML 提取、依赖检查和平台风险提示。
+3. 通用工具层负责 ego-browser 语义/直接数据/视觉工作流、OCR、HTML 提取、依赖检查和平台风险提示。
 4. 游戏专属 skill 将挂牌字段转换为游戏内资产强度。
 5. 输出 Top N 候选、排除理由、风险提示和待人工确认点。
 

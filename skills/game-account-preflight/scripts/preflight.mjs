@@ -25,15 +25,6 @@ function commandExists(command, versionArgs = ['--version']) {
   };
 }
 
-function checkWebAccessSkill() {
-  const candidates = [
-    path.join(os.homedir(), '.agents/skills/web-access/SKILL.md'),
-    path.join(os.homedir(), '.codex/skills/web-access/SKILL.md')
-  ];
-  const found = candidates.find((candidate) => fs.existsSync(candidate));
-  return { ok: Boolean(found), found };
-}
-
 function checkGameAccountSkill(skillName) {
   const candidates = [
     path.join(os.homedir(), '.agents/skills', skillName, 'SKILL.md'),
@@ -42,29 +33,6 @@ function checkGameAccountSkill(skillName) {
   ];
   const found = candidates.find((candidate) => fs.existsSync(candidate));
   return { ok: Boolean(found), found };
-}
-
-function checkChromePort() {
-  const result = spawnSync('sh', ['-lc', 'curl -s --max-time 2 http://localhost:9222/json/version >/dev/null'], { encoding: 'utf8' });
-  return { ok: result.status === 0, found: result.status === 0 ? 'localhost:9222' : null };
-}
-
-function checkChromeUse() {
-  const cli = commandExists('chrome-use', ['--version']);
-  if (!cli.ok) return { ok: false, found: null, detail: null };
-  const relay = spawnSync('chrome-use', ['browsers', '--json'], { encoding: 'utf8', timeout: 5000 });
-  let detail = null;
-  try {
-    detail = JSON.parse(relay.stdout || '{}');
-  } catch {
-    detail = { parse_error: (relay.stderr || relay.stdout || '').trim() };
-  }
-  const browsers = detail?.data?.browsers ?? detail?.browsers ?? [];
-  return {
-    ok: relay.status === 0 && Array.isArray(browsers) && browsers.length > 0,
-    found: cli.found,
-    detail: { connected_browsers: Array.isArray(browsers) ? browsers.length : 0 },
-  };
 }
 
 function checkOpencliAdapters() {
@@ -163,62 +131,21 @@ checks.push({
 const browser = resolveBrowserRoute({
   needsBrowser,
   unattended,
-  checkChromeUse,
-  checkWebAccessSkill,
-  checkChromePort,
 });
 
 if (needsBrowser) {
   checks.push({
-    name: 'chrome-use extension relay',
-    required: false,
-    strict_relevant: false,
-    ok: browser.chromeUse.ok,
-    found: browser.chromeUse.found,
-    detail: browser.chromeUse.detail,
-    required_for: 'primary permission-light access to the user-visible, logged-in Chrome session',
-    action: browser.chromeUse.ok
-      ? 'none'
-      : unattended
-        ? 'Reconnect chrome-use and its Chrome extension before the unattended run.'
-        : 'Reconnect chrome-use and its Chrome extension, or continue interactively with the web-access CDP fallback.'
-  });
-
-  if (!browser.webAccess.skipped) {
-    checks.push({
-      name: 'web-access skill',
-      required: false,
-      strict_relevant: false,
-      ok: browser.webAccess.ok,
-      found: browser.webAccess.found,
-      required_for: 'interactive Chrome/CDP fallback after chrome-use is unavailable',
-      action: browser.webAccess.ok ? 'none' : 'Install or enable web-access only if an interactive CDP fallback is acceptable.'
-    });
-  }
-
-  if (!browser.chromePort.skipped) {
-    checks.push({
-      name: 'chrome remote debugging',
-      required: false,
-      strict_relevant: false,
-      ok: browser.chromePort.ok,
-      found: browser.chromePort.found,
-      required_for: 'interactive web-access fallback after chrome-use is unavailable',
-      action: browser.chromePort.ok ? 'none' : 'With the user present, enable Chrome remote debugging and authorize CDP access.'
-    });
-  }
-
-  checks.push({
-    name: 'browser automation access',
+    name: 'ego-browser route',
     required: true,
     ok: browser.browserAccessOk,
     found: browser.route.selected_transport,
-    required_for: 'dynamic or logged-in platform/community pages',
-    action: browser.browserAccessOk
-      ? 'none'
-      : unattended
-        ? 'Reconnect the chrome-use extension relay; web-access/CDP is intentionally disabled in unattended mode.'
-        : 'Reconnect chrome-use, or authorize the web-access CDP fallback while present.'
+    detail: {
+      runtime_validation: browser.route.runtime_validation,
+      task_space_required: browser.route.task_space_required,
+      cleanup_policy: browser.route.cleanup_policy,
+    },
+    required_for: 'isolated, login-aware platform and community browser access',
+    action: 'none; validate the runtime on the first ego-browser operation and follow its install guide only if that operation fails.'
   });
 }
 

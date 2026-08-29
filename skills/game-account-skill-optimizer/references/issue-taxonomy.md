@@ -77,7 +77,7 @@ updated_at: 2026-08-12
 - 把失败原因写入数据来源限制。
 - 对社区来源同样适用等待预算；`duration_ms` 较长但缺少 `wait_budget_ms` 时，应补运行记录字段，便于下次判断是否该提前降级。
 - PZDS 需要多个逻辑批次时应合并为单次累积扫描，避免每批重新导航和从头 `loadMore`；在 `platform_attempts[].list_attempts` 记录实际扫描策略与耗时。
-- 浏览器/OpenCLI 查询必须有可追踪 `query_session_id`，首个浏览器命令前捕获 target 基线，结束后运行 `npm run query:cleanup -- --json` 并把清理报告写入 artifact。若报告 `ok:false`、`cdp_targets_remaining` 非空，或清理后仍有本轮 `opencli browser gas-*`、`run-with-timeout`、`pxb7/pzds/zzz-detail`、`selectPageList`、`goodsList/275` 进程，输出 `runtime-browser-session-cleanup-missing`，先关闭本轮空白占位符/测试分组并处理残留再结束。
+- ego-browser 查询必须有可追踪 `query_session_id` 和 task space id/name，结束后运行 `npm run query:cleanup -- --task-space <id> --json` 并把清理报告写入 artifact。若报告 `ok:false`、`ego_task_spaces_remaining` 非空，或清理后仍有本轮 `ego-browser nodejs`、`run-with-timeout`、`pxb7/pzds/zzz-detail`、`selectPageList`、`goodsList/275` 进程，输出 `runtime-browser-session-cleanup-missing`，先完成 task space 并处理残留再结束。
 
 ### empty_result
 
@@ -138,15 +138,15 @@ updated_at: 2026-08-12
 
 ### adapter_gap
 
-目标网站没有可复用 OpenCLI adapter，导致每次都靠临时 CDP/DOM 抽取、手动解析或截图降级。
+目标网站没有可复用 OpenCLI adapter，导致每次都重复写临时 ego-browser DOM 抽取、手动解析或截图降级。
 
 常见信号：
 
 - `adapter_available: false` 或 `opencli_adapter_available: false`
-- `list_adapter_available: false` 且列表页需要反复通过 CDP/DOM 读取
-- `detail_adapter_available: false` 且详情页需要反复通过 CDP/DOM 读取
+- `list_adapter_available: false` 且列表页需要反复通过 ego-browser DOM 读取
+- `detail_adapter_available: false` 且详情页需要反复通过 ego-browser DOM 读取
 - 运行记录包含 `no opencli adapter`、`missing adapter`、`没有适配器`
-- `fallback_used: browser_cdp` / `manual_browser_dom` 且同平台会反复用于账号筛选
+- `fallback_used: ego_browser_semantic` / `ego_browser_direct` / `ego_browser_visual` 且同平台会反复用于账号筛选
 
 建议：
 

@@ -1,0 +1,16 @@
+{
+  "task_spaces": [
+    {
+      "id": 42,
+      "taskId": "gas-arknights-20260829",
+      "name": "gas-arknights-20260829",
+      "ownership": "agent"
+    },
+    {
+      "id": 7,
+      "taskId": "user-shopping",
+      "name": "user-shopping",
+      "ownership": "user"
+    }
+  ]
+}

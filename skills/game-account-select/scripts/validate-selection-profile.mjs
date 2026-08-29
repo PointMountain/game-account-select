@@ -122,8 +122,11 @@ const routedRun = spawnSync(process.execPath, [
     requested: true,
     mode: 'unattended',
     status: 'ready',
-    selected_transport: 'chrome_use_extension',
-    fallback_probe: 'skipped_primary_ready',
+    selected_transport: 'ego_browser',
+    runtime_validation: 'first_browser_operation',
+    task_space_required: true,
+    cleanup_policy: 'complete_task_space',
+    control_handoff_policy: 'pause_until_explicit_user_confirmation',
     unattended_safe: true,
     requires_user_presence_now: false,
     authorization_may_recur: false,
@@ -132,23 +135,25 @@ const routedRun = spawnSync(process.execPath, [
 ], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
 assert.equal(routedRun.status, 0, routedRun.stderr);
 const routedArtifact = JSON.parse(routedRun.stdout);
-assert.equal(routedArtifact.browser_route.selected_transport, 'chrome_use_extension');
-assert.equal(routedArtifact.browser_route.fallback_probe, 'skipped_primary_ready');
+assert.equal(routedArtifact.browser_route.selected_transport, 'ego_browser');
+assert.equal(routedArtifact.browser_route.runtime_validation, 'first_browser_operation');
 assert.equal(routedArtifact.browser_route.unattended_safe, true);
+assert.equal(routedArtifact.browser_route.task_space_required, true);
+assert.equal(routedArtifact.browser_route.cleanup_policy, 'complete_task_space');
 
-const invalidUnattendedCdpRun = spawnSync(process.execPath, [
+const invalidLegacyTransportRun = spawnSync(process.execPath, [
   artifactScript,
   '--game', '明日方舟',
   '--user-request', '限定联动多，1000 元左右，螃蟹',
   '--browser-route-json', JSON.stringify({
-    mode: 'unattended',
+    mode: 'interactive',
     status: 'ready',
-    selected_transport: 'web_access_cdp',
+    selected_transport: 'legacy_browser_transport',
   }),
   '--json',
 ], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
-assert.equal(invalidUnattendedCdpRun.status, 2);
-assert.match(invalidUnattendedCdpRun.stderr, /cannot select web_access_cdp in unattended mode/);
+assert.equal(invalidLegacyTransportRun.status, 2);
+assert.match(invalidLegacyTransportRun.stderr, /unsupported selected_transport/);
 
 const overrideRun = spawnSync(process.execPath, [
   artifactScript,

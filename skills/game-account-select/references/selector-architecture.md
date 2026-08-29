@@ -4,7 +4,7 @@
 
 ## Design philosophy
 
-Borrow the useful parts of `web-access` without copying its browser mechanics:
+Use an evidence-first execution model with ego-browser as the single browser transport:
 
 1. Parse and freeze intent before acting. Natural-language budget, objective, priorities, hard conditions, platform and risk preferences become a confirmed run-only `selection_profile`; they never become durable defaults.
 2. Define success before acting. A run is complete only when it can explain the best available candidates, what was not covered, and why the remaining uncertainty does not change the recommendation tier.

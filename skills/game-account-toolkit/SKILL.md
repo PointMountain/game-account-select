@@ -1,6 +1,6 @@
 ---
 name: game-account-toolkit
-description: 游戏账号筛选相关的通用工具层，负责依赖检查、浏览器访问、OCR、结构化抽取、平台访问安全和缺失工具安装指引。供 game-account-select 与各游戏估值 skill 引用。
+description: 游戏账号筛选相关的通用工具层，负责依赖检查、ego-browser 单一 task-space 浏览器访问、OCR、结构化抽取、字段交叉验证、平台访问安全和缺失工具安装指引。涉及动态、交互式或登录态平台/社区页面时必须使用本 skill 的 ego-browser 工作流。
 argument-hint: "[check|install-guide|platform|ocr|extract]"
 ---
 
@@ -31,6 +31,7 @@ game-account-toolkit/
 ├── references/
 │   ├── community-research-protocol.md
 │   ├── dependency-state-machine.md
+│   ├── ego-browser-workflow.md
 │   ├── game-skill-standard.md
 │   ├── platform-access-policy.md
 │   ├── skill-io-contract.md
@@ -53,11 +54,12 @@ game-account-toolkit/
 每次被筛选 skill 调用前，按状态机执行：
 
 1. 读取 `references/dependency-state-machine.md`。
-2. 调用 `game-account-preflight`，或运行 `node skills/game-account-preflight/scripts/preflight.mjs --json` 检查本地依赖。
-3. 若全部存在，继续执行。
-4. 若缺少可本地安装的 npm 依赖，先说明将安装什么、安装到哪里、为什么需要，再请求用户确认。
-5. 若缺少系统级依赖或浏览器设置，给出人工安装步骤，不静默安装。
-6. 若目标站点需要浏览器访问，优先加载并遵循 `chrome-use`，先执行 `chrome-use skills get core --full`；relay 可用后冻结单一传输，禁止再加载 `web-access` 或运行 CDP 前置检查。只有 relay 确实不可用且用户在场时，才加载 `web-access` 走 CDP 兜底；无人值守任务不走该兜底。
+2. 需要动态或登录态网页时读取 `references/ego-browser-workflow.md`。
+3. 调用 `game-account-preflight`，或运行 `node skills/game-account-preflight/scripts/preflight.mjs --json` 检查本地依赖。
+4. 若全部存在，继续执行。
+5. 若缺少可本地安装的 npm 依赖，先说明将安装什么、安装到哪里、为什么需要，再请求用户确认。
+6. 若缺少系统级依赖或浏览器设置，给出人工安装步骤，不静默安装。
+7. 若目标站点需要浏览器访问，完整加载并遵循 `ego-browser`。为本轮目标创建一个短名称 task space，保存返回的数字 id，并在后续所有 heredoc 中复用；不要初始化第二套浏览器传输。
 
 ## 安全边界
 
@@ -72,24 +74,23 @@ game-account-toolkit/
 
 优先级：
 
-1. 已验证的 OpenCLI adapter 或静态读取能力。
-2. `chrome-use` 扩展 relay，用命名 session 复用真实 Chrome；本机实测不会触发 remote-debugging 授权弹窗。
-3. `web-access` + CDP 只作为需要用户在场的浏览器兜底，不与 chrome-use 同时初始化。
-4. 本 skill 的 `scripts/check-deps.mjs` 做本地依赖检查。
-5. OCR、截图解析等能力缺失时，先降级为人工截图/文本输入，再建议安装。
+1. 用户提供的链接、截图、文本与无需交互的已验证静态事实。
+2. `ego-browser` 语义工作流：`snapshotText()` + 稳定 locator，适合列表、详情、链接、按钮和表单。
+3. `ego-browser` 直接数据工作流：单次 `js()` IIFE、`browserFetch()` 或 `serverFetch()`，适合紧凑字段抽取；必须用可见文本、URL 或截图交叉验证关键值。
+4. `ego-browser` 视觉工作流：截图 + 坐标/真实键盘，适合虚拟化、canvas 和语义树不完整的页面。
+5. 已验证的 OpenCLI adapter 只用于结构化字段交叉验证或重复路径加速，不形成第二条浏览器路由。
+6. OCR、截图解析等能力缺失时，先降级为人工截图/文本输入，再建议安装。
 
 ## 浏览器生命周期
 
-OpenCLI adapter 的 `--keep-tab false` 只释放 lease；OpenCLI Browser Bridge 会把最后一个自动化标签改成 `about:blank` 作为复用占位符，并保留容器窗口。因此“命令结束”不等于“窗口已清理”。
+每轮筛选只使用一个 ego-browser task space；需要多平台时在同一空间复用少量标签页，并随手关闭一次性搜索页。正常 heredoc 开头调用 `useOrCreateTaskSpace(nameOrId)`，后续优先使用首次返回的数字 id，避免名称碰撞。
 
-筛选执行器应在第一次浏览器命令前同时捕获 target 基线和（macOS）Chrome 窗口 ID 基线，登记本轮新 target，并在成功、报错、`SIGINT`、`SIGTERM` 和进程退出路径统一调用 `scripts/cleanup-query-session.mjs`。清理器默认不按平台 URL 批量关用户标签；它关闭显式 `--target`、显式会话，以及配合 `--baseline --close-new-query-targets` 识别出的本轮平台页/空白占位符。若 Chrome 在关闭最后一个 target 后又生成新的空白占位标签，清理器还会关闭“本轮新建且全部标签均为查询页或 about:blank”的独立窗口；运行前窗口、混合用户窗口和无关新窗口始终保留。
+每次关键导航、点击、输入或抽取后，用 `snapshotText()`、`pageInfo()`、截图或导出/读回路径验证结果。若出现“user is controlling”、inactive 或未分配错误，停止整个浏览器路径并等待用户明确确认；不得自动重试、创建新空间或夺回控制。
 
-明日方舟的 `run-dual-platform-selection.mjs` 已内置这套生命周期。手工浏览器测试需要使用命名 session，并在结束时传入实际 target；不要把 `opencli browser <session> close` 当成完整清理。
+任务确认完成后，用独立最终 heredoc 调 `completeTaskSpace(id, { keep: false })`。只有用户明确要求保留页面、需要在该页手动操作，或结果无法用链接/文件/摘要交付时，才使用 `keep: true`；保留前关闭无关临时标签。
 
 ```bash
-node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --capture-baseline /tmp/gas-browser-baseline.json --json
-# 运行本轮查询或验证，并记录返回的 target id
-node skills/game-account-toolkit/scripts/cleanup-query-session.mjs --baseline /tmp/gas-browser-baseline.json --close-new-query-targets --target <owned-target-id> --json
+npm run query:cleanup -- --task-space <task-space-id-or-name> --json
 npm run verify:browser-cleanup
 ```
 

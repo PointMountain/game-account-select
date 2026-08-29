@@ -24,7 +24,7 @@ description: 明日方舟账号的通用动态估值与筛选能力。把限定/
 
 ## 执行流程
 
-1. 调用 `game-account-preflight` 并展示 `<preflight_report>`；后台执行时使用 `--unattended`。平台访问遵循报告冻结的单一 `browser_route`，选中 chrome-use 后不得再初始化 web-access/CDP。
+1. 调用 `game-account-preflight` 并展示 `<preflight_report>`；后台执行时使用 `--unattended`。平台访问冻结为 `ego_browser`，同一筛选复用一个 task space，并按语义、直接数据、视觉复核的顺序读取。
 2. 用 `../game-account-select/scripts/parse-selection-profile.mjs` 解析自然语言。
 3. 预算或主要目标缺失、或用户明确表示尚未决定哪个目标优先时只补问关键项；收藏、战力、养成和资源并列出现时自动形成 `custom` 复合画像，不得强迫用户删减条件或先选择固定抽数。其余缺项用中性假设并写入 `assumptions`。
 4. 查询前向用户展示画像。预算和目标完整时自动记录 `profile_confirmation` 和 digest，冻结为 run-only artifact 后继续，不要求用户先选择预算策略。
@@ -54,7 +54,7 @@ opencli pzds arknights-detail <url-or-id> -f json
 node skills/game-account-arknights/scripts/run-dual-platform-selection.mjs --request "限定多，1000元左右" --details-per-platform 5 --display-per-platform 5 --out /tmp/arknights-dual.json --report-out /tmp/arknights-dual.md
 ```
 
-双平台执行器会在首个 OpenCLI 命令前捕获浏览器 target 基线，逐命令登记本轮新标签，并在成功、失败、信号中断和进程退出时关闭本轮拥有的标签及 `about:blank` 占位符；清理报告写入 `cleanup_reports`。不要在执行器外再创建无名验证 session，也不要把 `--keep-tab false` 误认为已经关闭了自动化窗口。
+双平台执行器中的 OpenCLI adapter 是结构化批量读取路径，不代表浏览器传输。需要网页复核时必须在外层 selector 已创建的 ego-browser task space 内完成，并把 task space、标签和验证方式写入 `platform_attempts`；结束后用 `completeTaskSpace` 生成 `cleanup_reports`。
 
 ## 独立基础维度
 

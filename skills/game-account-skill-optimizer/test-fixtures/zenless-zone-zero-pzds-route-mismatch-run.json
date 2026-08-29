@@ -18,7 +18,7 @@
       "result_count": 25,
       "list_adapter_available": false,
       "detail_adapter_available": true,
-      "fallback_used": "browser_cdp_for_list_then_opencli_detail_adapter",
+      "fallback_used": "ego_browser_for_list_then_opencli_detail_adapter",
       "evidence": "PXB canonical list rendered ZZZ cards; details verified with pxb7/zzz-detail"
     },
     {

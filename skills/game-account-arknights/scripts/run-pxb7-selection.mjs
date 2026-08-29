@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +16,6 @@ const limitedRoster = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ref
 const communityEvidenceText = fs.readFileSync(path.join(__dirname, '..', 'references', 'community-evidence.md'), 'utf8');
 const args = process.argv.slice(2);
 const REQUIRED_PLATFORMS = ['pxb7', 'pzds'];
-const cleanupScriptPath = path.resolve(__dirname, '..', '..', 'game-account-toolkit', 'scripts', 'cleanup-query-session.mjs');
 
 function readArg(name, fallback = null) {
   const inline = args.find((arg) => arg.startsWith(`${name}=`));
@@ -75,105 +73,8 @@ function run(command, commandArgs, timeout = 90000) {
   };
 }
 
-function listRelayPageTargets() {
-  const result = run('curl', ['-s', '--max-time', '3', 'http://localhost:3456/targets'], 5000);
-  if (!result.ok) return [];
-  try {
-    const parsed = parseJsonOutput(result.stdout);
-    return Array.isArray(parsed)
-      ? parsed.filter((target) => target?.type === 'page' && (target.targetId ?? target.id))
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-const ownedBrowserTargets = new Set();
-const ownedBrowserTargetsByPlatform = new Map(REQUIRED_PLATFORMS.map((platform) => [platform, new Set()]));
-
 function runOwnedOpencli(commandArgs, timeout = 90000) {
-  const beforeIds = new Set(listRelayPageTargets().map((target) => target.targetId ?? target.id));
-  const result = run('opencli', commandArgs, timeout);
-  const platform = REQUIRED_PLATFORMS.includes(commandArgs[0]) ? commandArgs[0] : null;
-  const afterTargets = listRelayPageTargets();
-  for (const target of afterTargets) {
-    const targetId = target.targetId ?? target.id;
-    if (!targetId || beforeIds.has(targetId)) continue;
-    ownedBrowserTargets.add(targetId);
-  }
-  if (platform) {
-    for (const target of afterTargets) {
-      const targetId = target.targetId ?? target.id;
-      if (ownedBrowserTargets.has(targetId)) ownedBrowserTargetsByPlatform.get(platform)?.add(targetId);
-    }
-  }
-  return result;
-}
-
-let browserBaselinePath = null;
-let browserBaselineCapture = null;
-let browserCleanupReport = null;
-let browserCleanupInProgress = false;
-let browserCleanupComplete = false;
-
-function captureBrowserBaseline(runId) {
-  browserBaselinePath = path.join(os.tmpdir(), `${runId}.browser-targets.json`);
-  const capture = run(process.execPath, [cleanupScriptPath, '--capture-baseline', browserBaselinePath, '--json'], 15000);
-  try {
-    browserBaselineCapture = parseJsonOutput(capture.stdout);
-  } catch {
-    browserBaselineCapture = {
-      ok: false,
-      mode: 'capture_baseline',
-      baseline_path: browserBaselinePath,
-      error: (capture.stderr || capture.stdout || 'browser baseline capture failed').trim().slice(0, 500),
-    };
-  }
-  return browserBaselineCapture;
-}
-
-function cleanupOwnedBrowserTargets(trigger = 'normal_completion') {
-  if (browserCleanupComplete || browserCleanupInProgress) return browserCleanupReport;
-  browserCleanupInProgress = true;
-  const cleanupArgs = [
-    cleanupScriptPath,
-    '--session-prefix', 'gas-arknights-',
-    '--process-pattern', 'opencli\\s+browser\\s+gas-|run-with-timeout|arknights-list|arknights-detail|selectSearchPageList',
-    ...(browserBaselineCapture?.ok && browserBaselinePath
-      ? ['--baseline', browserBaselinePath, '--close-new-query-targets']
-      : []),
-    ...[...ownedBrowserTargets].flatMap((targetId) => ['--target', targetId]),
-    '--json',
-  ];
-  const cleanupCommand = run(process.execPath, cleanupArgs, 30000);
-  try {
-    browserCleanupReport = {
-      ...parseJsonOutput(cleanupCommand.stdout),
-      trigger,
-      baseline_capture: browserBaselineCapture,
-      tracked_target_ids: [...ownedBrowserTargets],
-    };
-  } catch {
-    browserCleanupReport = {
-      ok: false,
-      trigger,
-      baseline_capture: browserBaselineCapture,
-      tracked_target_ids: [...ownedBrowserTargets],
-      error: (cleanupCommand.stderr || cleanupCommand.stdout || 'browser cleanup failed').trim().slice(0, 500),
-    };
-  }
-  browserCleanupComplete = browserCleanupReport.ok === true;
-  browserCleanupInProgress = false;
-  if (browserCleanupComplete && browserBaselinePath && fs.existsSync(browserBaselinePath)) {
-    try {
-      fs.unlinkSync(browserBaselinePath);
-      browserCleanupReport.baseline_file_removed = true;
-    } catch (error) {
-      browserCleanupReport.baseline_file_removed = false;
-      browserCleanupReport.baseline_remove_error = error instanceof Error ? error.message : String(error);
-    }
-  }
-  return browserCleanupReport;
+  return run('opencli', commandArgs, timeout);
 }
 
 function normalizeServer(server) {
@@ -468,18 +369,6 @@ profile.clarification_required = [];
 profile.platforms = [...new Set([...REQUIRED_PLATFORMS, ...profile.platforms])];
 profile.confirmation_required = false;
 const runId = `gas-arknights-dual-${new Date().toISOString().replace(/[-:.]/g, '')}`;
-captureBrowserBaseline(runId);
-process.on('exit', () => {
-  cleanupOwnedBrowserTargets('process_exit');
-});
-process.once('SIGINT', () => {
-  cleanupOwnedBrowserTargets('SIGINT');
-  process.exit(130);
-});
-process.once('SIGTERM', () => {
-  cleanupOwnedBrowserTargets('SIGTERM');
-  process.exit(143);
-});
 const digest = crypto.createHash('sha256').update(JSON.stringify(profile)).digest('hex');
 const evidenceDate = communityEvidenceText.match(/updated_at:\s*(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
 const evidenceAgeDays = evidenceDate == null
@@ -912,12 +801,8 @@ const bestValueListing = rankings
     .sort((a, b) => b.final_score - a.final_score || Number(a.price) - Number(b.price))[0]
   ?? null;
 
-const cleanupReport = cleanupOwnedBrowserTargets('normal_completion');
 const pzdsAssetGridListings = rankings.filter((listing) => listing.platform === 'pzds'
   && Number(listing.game_assets?.platform_facts?.status?.operatorDomCount ?? 0) > 0);
-const closedTransientChromeWindows = Array.isArray(cleanupReport?.chrome_windows_closed)
-  ? cleanupReport.chrome_windows_closed.length
-  : 0;
 
 const artifact = {
   run_id: runId,
@@ -966,7 +851,7 @@ const artifact = {
     intent_summary: request,
     source_tasks: [
       ...REQUIRED_PLATFORMS.flatMap((platform) => [
-        { id: `platform-${platform}-list`, type: 'platform_listing', source: platform, priority: 'required', start_path: 'verified_adapter', success_signal: 'current rows with traceable ids and prices', fallback_order: ['chrome_use_dom', 'browser_dom', 'user_material'], wait_budget_ms: 90000, required_fields: ['listingId', 'priceCny', 'url', 'publishedAt'], confidence_cap_if_missing: 'low' },
+        { id: `platform-${platform}-list`, type: 'platform_listing', source: platform, priority: 'required', start_path: 'verified_adapter', success_signal: 'current rows with traceable ids and prices', fallback_order: ['ego_browser_semantic', 'ego_browser_direct', 'ego_browser_visual', 'user_material'], wait_budget_ms: 90000, required_fields: ['listingId', 'priceCny', 'url', 'publishedAt'], confidence_cap_if_missing: 'low' },
         { id: `platform-${platform}-detail-shortlist`, type: 'platform_detail', source: platform, priority: 'required', start_path: 'verified_adapter', success_signal: `detail facts and verification-image evidence for top ${detailCount} preliminary candidates`, fallback_order: ['final_platform_verification'], wait_budget_ms: detailCount * 90000, required_fields: ['priceCny', 'operatorNames', 'elite2OperatorNames', 'operatorImageUrls|verificationImageUrls', 'riskFacts'], confidence_cap_if_missing: 'medium' },
       ]),
       { id: 'community-current-snapshot', type: 'community_evidence', source: 'hypergryph+prts+bilibili', priority: 'required', start_path: 'verified_local_snapshot', success_signal: 'snapshot updated today with reviewable URLs', fallback_order: ['refresh'], wait_budget_ms: 15000, required_fields: ['updated_at', 'sources', 'limitations'], confidence_cap_if_missing: 'medium' },
@@ -993,9 +878,9 @@ const artifact = {
     query: `Arknights ${profile.budget.flex_min ?? profile.budget.primary_min}-${profile.budget.flex_max ?? profile.budget.primary_max}`,
     url: platform === 'pxb7' ? 'https://www.pxb7.com/buy/10053/1?keyword=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F' : 'https://www.pzds.com/goodsList/84/6/headerSearch?queryFrom=search&searchType=GAME_NAME',
     query_session_id: runId,
-    browser_transport: 'opencli_browser',
+    browser_transport: 'none',
     site_session: 'ephemeral',
-    browser_targets: [...(ownedBrowserTargetsByPlatform.get(platform) ?? [])],
+    browser_targets: [],
     duration_ms: listCommands.filter((item) => item.platform === platform).reduce((sum, item) => sum + item.duration_ms, 0),
     wait_budget_ms: 90000,
     status: listCommands.some((item) => item.platform === platform && item.ok) ? (platform === 'pzds' && pzdsPaginationPartial ? 'partial' : 'success') : 'error',
@@ -1028,7 +913,7 @@ const artifact = {
       detail_attempts: expansionDetailAttempts.filter((attempt) => attempt.platform === platform),
     },
   })),
-  community_attempts: [{ source: 'local_current_snapshot', tool: 'chrome_use plus official pages', query: 'current Arknights general/story-map tiers, role coverage, progression and account-trade evidence', url: 'skills/game-account-arknights/references/community-evidence.md', duration_ms: null, wait_budget_ms: 15000, status: evidenceIsCurrent ? 'success' : 'limited', result_count: evidenceIsCurrent ? 7 : 0, error_text: evidenceIsCurrent ? null : 'community evidence snapshot is stale or undated', fallback_used: evidenceIsCurrent ? null : 'refresh' }],
+  community_attempts: [{ source: 'local_current_snapshot', tool: 'local_evidence_snapshot', query: 'current Arknights general/story-map tiers, role coverage, progression and account-trade evidence', url: 'skills/game-account-arknights/references/community-evidence.md', duration_ms: null, wait_budget_ms: 15000, status: evidenceIsCurrent ? 'success' : 'limited', result_count: evidenceIsCurrent ? 7 : 0, error_text: evidenceIsCurrent ? null : 'community evidence snapshot is stale or undated', fallback_used: evidenceIsCurrent ? null : 'refresh' }],
   candidate_count: listRows.length + expansionAttempts.reduce((sum, attempt) => sum + attempt.result_count, 0),
   detail_verified_count: allDetailedIds.size,
   rankings: rankings.map((listing) => compactRecommendation(listing, allDetailedIds.has(listingKey(listing)) ? 'ranked_detail_verified' : 'ranked_list_only')),
@@ -1057,7 +942,7 @@ const artifact = {
   })),
   excluded_listings: rankings.filter((listing) => !selectedIds.has(listingKey(listing)) && (!listing.hard_filter_passed || listing.budget_tier === 'excluded_price')).map((listing) => compactRecommendation(listing, 'excluded')),
   experience_summary: {
-    effective: ['dual-platform PXB7/PZDS list coverage', 'separate platform shortlists plus cross-platform best-value ranking', 'dynamic price filters', 'named E2/E1 operator facts', ...(pzdsAssetGridListings.length ? [`PZDS asset-grid cards supplied named operator and image evidence for ${pzdsAssetGridListings.length} detail-verified listings`] : []), 'separate published and platform-verified timestamps', 'verification-image evidence extraction', 'community meta-core matching', 'story-map role coverage', `top-${detailCount}-per-platform detail risk verification`, 'profile ranking with a cross-profile playability floor', 'explicit collaboration-completion hard condition', ...(closedTransientChromeWindows ? [`closed ${closedTransientChromeWindows} transient Chrome windows opened by this run`] : []), ...(profile.budget_expansion?.enabled ? [`bidirectional budget expansion stopped with ${expansionStopReason}`, 'nearby-budget near match versus lower/higher exact-match comparison'] : [])],
+    effective: ['dual-platform PXB7/PZDS list coverage', 'separate platform shortlists plus cross-platform best-value ranking', 'dynamic price filters', 'named E2/E1 operator facts', ...(pzdsAssetGridListings.length ? [`PZDS asset-grid cards supplied named operator and image evidence for ${pzdsAssetGridListings.length} detail-verified listings`] : []), 'separate published and platform-verified timestamps', 'verification-image evidence extraction', 'community meta-core matching', 'story-map role coverage', `top-${detailCount}-per-platform detail risk verification`, 'profile ranking with a cross-profile playability floor', 'explicit collaboration-completion hard condition', ...(profile.budget_expansion?.enabled ? [`bidirectional budget expansion stopped with ${expansionStopReason}`, 'nearby-budget near match versus lower/higher exact-match comparison'] : [])],
     ineffective_or_missing: ['Current public reports do not expose dedicated per-operator mastery/module values', 'platform verification time may be undisclosed even when verification method is known', ...(pzdsPaginationPartial ? ['PZDS pagination was rate-limited; initial rendered rows were retained as a partial fallback'] : []), ...(!evidenceIsCurrent ? ['community evidence snapshot is stale or undated'] : [])],
     next_run_actions: ['reuse all four verified PXB7/PZDS Arknights adapters', 'prefer PZDS metadata resources but merge the visible asset grid when metadata names are delayed or absent', 'capture the pre-run Chrome window baseline and close only new all-query/about:blank windows', 'never present a single-platform shortlist as a completed run', 'require push_readiness and role coverage in recommendation explanations', 'give unknown mastery/module zero credit', 'inspect mastery/module and binding state during final platform verification', 'refresh evidence when snapshot exceeds 7 days'],
   },
@@ -1102,7 +987,7 @@ const artifact = {
     preference_scope: 'durable',
   }] : [])],
   rule_update_suggestions: [],
-  cleanup_reports: cleanupReport ? [cleanupReport] : [],
+  cleanup_reports: [],
 };
 
 const absoluteOut = path.resolve(outPath);

@@ -9,7 +9,7 @@ origin: user request
 
 ## Problem Frame
 
-The current README is functional, but it still reads partly like internal skill implementation documentation. The user wants it to feel more like a public product-facing skill repository: localized visuals, an anime-game style icon, a polished flow diagram with node explanations, better language-switch state, and a design philosophy section inspired by strong skill repos such as `taste-skill` and `web-access`.
+The current README is functional, but it still reads partly like internal skill implementation documentation. The user wants it to feel more like a public product-facing skill repository: localized visuals, an anime-game style icon, a polished flow diagram with node explanations, better language-switch state, and a design philosophy section inspired by strong skill repos.
 
 ## Scope Boundaries
 
@@ -37,7 +37,7 @@ Out of scope:
 - User asked to remove internal implementation language such as "users do not need to run preflight" and make the README more feature-oriented.
 - User asked for a better-looking flow diagram instead of text arrows, with each node explained.
 - User asked active language to be non-clickable/bold/dark instead of a link.
-- User asked to reference `eze-is/web-access` and summarize the current skill's design philosophy.
+- User asked to reference a mature browser-skill repository and summarize the current skill's design philosophy.
 
 ## Design Decisions
 

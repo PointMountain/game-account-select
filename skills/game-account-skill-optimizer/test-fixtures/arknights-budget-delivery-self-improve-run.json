@@ -120,5 +120,5 @@
     "profile_preferences_persisted": false
   },
   "final_response": "| 层级 | 价格/区服 | 联动核验 | 抽卡资源 | 成熟度 | 皮肤 | 上架时间 | 平台验号时间 | 缺口/风险 | 链接 |\n|---|---:|---|---|---|---|---|---|---|---|\n| 符合 | ¥2999 | 全齐 | 3万 | 成熟 | 200 | 未披露 | 未披露 | 超预算 | PXB-2999 |\n\n### 盼之候选\nPZ-1500、PZ-1560、PZ-1999、PZ-2100、PZ-2300",
-  "cleanup_reports": [{ "ok": true, "remaining_matching_processes": [], "cdp_targets_remaining": [] }]
+  "cleanup_reports": [{ "ok": true, "process_audit_after": [], "ego_task_spaces_remaining": [] }]
 }

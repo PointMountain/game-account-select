@@ -2,103 +2,98 @@
 
 ## 目标
 
-让筛选 skill 在执行前能判断工具是否可用，并在缺失时给出安全、可审计的安装路径。
+让筛选 skill 在执行前冻结唯一浏览器路线，在第一次真实操作验证运行时，并把控制权和清理状态纳入可审计结果。
 
 ## 状态
 
 ```text
 START
   -> CHECK_NODE
-  -> CHECK_BROWSER_ACCESS
+  -> FREEZE_BROWSER_ROUTE
   -> CHECK_OPTIONAL_TOOLS
-  -> READY | NEED_USER_ACTION | DEGRADED_MODE
+  -> READY
+  -> FIRST_BROWSER_OPERATION
+  -> RUNNING | NEED_USER_ACTION | DEGRADED_MODE
+  -> COMPLETE_TASK_SPACE
 ```
 
 ## CHECK_NODE
 
-运行：
+运行 `node --version`。Node.js >= 22 时继续；版本过低或不存在时进入 `NEED_USER_ACTION`。不要自动安装 Node.js。
 
-```bash
-node --version
+## FREEZE_BROWSER_ROUTE
+
+任务需要动态、交互式或登录态网页时，把 `browser_route.selected_transport` 冻结为 `ego_browser`。这是单一路由选择，不进行多个浏览器工具的并行体检。
+
+显式使用 ego-browser 时，不提前执行 `which`、版本、package metadata 或连接探针。预检只记录：
+
+```yaml
+browser_route:
+  selected_transport: ego_browser
+  runtime_validation: first_browser_operation
+  task_space_required: true
+  cleanup_policy: complete_task_space
+  control_handoff_policy: pause_until_explicit_user_confirmation
 ```
-
-判定：
-
-- Node.js 存在且版本 >= 22：继续。
-- Node.js 存在但版本 < 22：可继续部分能力，但 WebSocket/CDP 可能需要 `ws` 包。
-- Node.js 不存在：进入 `NEED_USER_ACTION`，提示用户安装 Node.js。
-
-不要自动安装 Node.js。
-
-## CHECK_BROWSER_ACCESS
-
-若任务需要平台页面访问，先加载 `chrome-use` 并执行 `chrome-use skills get core --full`，检查扩展 relay。浏览器传输是互斥选择，不是两套依赖的并行体检：relay 成功后立即冻结 `chrome_use_extension`，不得再加载 `web-access`、运行其 `check-deps.mjs` 或探测 remote-debugging。
-
-判定：
-
-- `chrome-use browsers --json` 返回至少一个连接浏览器：使用 `chrome_use_extension` 继续，`fallback_probe` 记为 `skipped_primary_ready`。
-- `chrome-use` 不可用、用户在场且允许交互授权：此时才加载 `web-access`、检查 Chrome remote debugging，并用 `web_access_cdp` 继续。
-- 无人值守模式下 `chrome-use` 不可用：`fallback_probe` 记为 `skipped_unattended`，不得尝试 web-access/CDP；降级静态来源或进入 `NEED_USER_ACTION`。
-- 两条通道都不可用：提示用户连接 `chrome-use` 扩展，或按 `web-access` 指南开启 CDP。
-- 站点内容通过 WebFetch 足够获取：可不启用 CDP。
 
 ## CHECK_OPTIONAL_TOOLS
 
-可选能力：
+- OpenCLI adapter：结构化字段交叉验证和重复路径加速，不是浏览器 fallback。
+- OCR：识别平台验号图中的角色、资源和绑定状态。
+- 本地样本库：保存脱敏且人工确认过的挂牌字段。
 
-- OCR：用于截图中的角色、资源、绑定状态识别。
-- Jina：用于正文网页转 Markdown。
-- 本地样本库：用于保存人工确认过的挂牌样本。
+缺失时不阻塞核心浏览器读取；在 `capabilities` 和 `coverage_gaps` 中标记降级。任何安装都必须说明命令、写入位置和影响范围，并等待用户确认。
 
-缺失时处理：
+## FIRST_BROWSER_OPERATION
 
-- 不阻塞核心筛选。
-- 降级为用户粘贴文本或手动提供截图内容。
-- 若建议安装，必须说明安装命令和影响范围，并等待用户确认。
+加载 `ego-browser/SKILL.md`，然后直接运行与用户目标相关的首个 `ego-browser nodejs` heredoc：
 
-## READY
+1. `useOrCreateTaskSpace(<goal-name>)`。
+2. `openOrReuseTab(<url>, { wait: true, timeout: <seconds> })`。
+3. 用 `snapshotText()` 或 `pageInfo()` 验证页面。
+4. 用 `cliLog()` 输出 task space id 和验证结果。
 
-依赖满足，返回工具能力清单：
+判定：
+
+- 成功：保存数字 task space id，进入 `RUNNING`。
+- 命令或环境缺失：读取 ego-browser 的 `references/install.md`，完成安装后恢复原任务。
+- 用户控制、inactive 或未分配：进入 `NEED_USER_ACTION`，不重试、不新建替代空间、不自动夺回。
+- 页面登录墙、验证码、风控或付费墙：进入 `DEGRADED_MODE`，不绕过限制。
+
+## READY / RUNNING
 
 ```yaml
 capabilities:
-  chrome_use_relay: true|false
-  browser_cdp: true|false
-  browser_access: true|false
-browser_route:
-  selected_transport: chrome_use_extension|web_access_cdp|null
-  fallback_probe: skipped_primary_ready|skipped_unattended|completed_after_primary_unavailable
-  unattended_safe: true|false
-  web_fetch: true|false
+  ego_browser: true
+  semantic_snapshot: true
+  browser_context_fetch: true
+  visual_interaction: true
+  opencli_adapter: true|false
   ocr: true|false
   sample_store: true|false
+task_space:
+  id: number|null
+  name: string|null
+  ownership: agent|agentDelegatedToUser|user|null
 limitations:
   - string
 ```
 
 ## NEED_USER_ACTION
 
-缺少无法安全自动安装的依赖或设置，输出用户需要执行的步骤。建议用户用 `! command` 在当前会话运行需要交互的命令。
+告诉用户具体 task space 和需要完成的动作。只有用户明确回复继续后，才能按 ego-browser 规则调用 `takeOverTaskSpace`；对已有 user-owned/inactive 空间，先列出空间并在确认后 `claimTaskSpace(id)`，再选择确切标签页。
 
 ## DEGRADED_MODE
 
-依赖不完整但仍可完成部分任务时，明确降级范围。例如：
+- 语义树不完整：切换到一次 `js()` IIFE 或视觉工作流。
+- 页内请求失败：保留已加载可见行，标记 `partial`，再用页面元数据、已验证 adapter 或用户材料交叉验证。
+- 无 OCR：只分析文本字段，图片资产列人工确认。
+- 动态页面被阻断：使用公开官方来源、Wiki/攻略站或用户提供链接/截图/文本，并降低置信度。
 
-- 无 OCR：只分析文本字段。
-- 无 `chrome-use` relay 且无 CDP：只使用 WebFetch 或用户粘贴内容。
-- 无样本库：只做当前会话的一次性比较。
+## COMPLETE_TASK_SPACE
+
+确认任务完成后，用独立最终 heredoc 检查 task space ownership；只有 ownership 仍是 `agent` 时才调用 `completeTaskSpace(id, { keep: false })`。清理报告记录 `done`、关闭的 task space id/name、剩余空间和进程审计。用户明确要求保留页面时才使用 `keep: true`。
 
 ## 自我安装规则
 
-允许：
-
-- 在用户确认后安装项目本地 npm 依赖。
-- 在用户确认后创建项目本地缓存目录或样本文件。
-
-禁止：
-
-- 静默全局安装工具。
-- 修改系统配置。
-- 绕过浏览器安全设置。
-- 跳过验证码或登录限制。
-- 因安装失败而绕过安全检查。
+允许在用户确认后安装项目本地依赖、创建项目本地缓存目录或按 ego-browser 安装指南恢复缺失运行时。禁止静默全局安装、修改系统配置、绕过浏览器安全设置、跳过验证码或因安装失败而绕过安全检查。

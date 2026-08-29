@@ -286,7 +286,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const preservesCommunityEvidence = /bilibili|youtube|xiaohongshu|subtitle|小红书|B站|YouTube/i.test(evidence);
     const preservesYoutubeEvidence = /youtube|YouTube/i.test(evidence);
     const preservesLinkEvidence = /recommendations:QL9CHD|excluded_listings:JHYXJ3302/.test(evidence);
-    const preservesAdapterGapEvidence = /pxb7|pzds|no opencli adapter|browser_cdp/i.test(evidence);
+    const preservesAdapterGapEvidence = /pxb7|pzds|no opencli adapter|ego_browser/i.test(evidence);
     if (missingFindingIds.length === 0 && preservesCommunityEvidence && preservesYoutubeEvidence && preservesLinkEvidence && preservesAdapterGapEvidence) addScore(6);
     else {
       if (missingFindingIds.length) issue(`Optimizer missed ZZZ community/performance findings: ${missingFindingIds.join(', ')}`);
@@ -323,7 +323,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasGapFinding = findingIds.has('platform-opencli-adapter-gap');
     const hasReuseFinding = findingIds.has('platform-opencli-adapter-reuse');
-    const gapIsListSpecific = /list_adapter_available=false|browser_cdp_for_list/i.test(evidence);
+    const gapIsListSpecific = /list_adapter_available=false|ego_browser_for_list/i.test(evidence);
     const reusePreservesDetailCommands = /pxb7 zzz-detail|pzds zzz-detail|pxb7\/zzz-detail|pzds\/zzz-detail/i.test(evidence);
     if (hasGapFinding && hasReuseFinding && gapIsListSpecific && reusePreservesDetailCommands) addScore(4);
     else {
@@ -406,7 +406,7 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasCleanupFinding = findingIds.has('runtime-browser-session-cleanup-missing');
-    const preservesCleanupEvidence = /query_session_id|cleanup_report|cleanup_reports|opencli browser gas-|run-with-timeout|process|browser target remained|cdp_targets_remaining/i.test(evidence);
+    const preservesCleanupEvidence = /query_session_id|cleanup_report|cleanup_reports|ego-browser nodejs|run-with-timeout|process|ego task space remained|ego_task_spaces_remaining/i.test(evidence);
     if (hasCleanupFinding && preservesCleanupEvidence) addScore(4);
     else {
       if (!hasCleanupFinding) issue('Optimizer did not catch missing browser/OpenCLI query cleanup');

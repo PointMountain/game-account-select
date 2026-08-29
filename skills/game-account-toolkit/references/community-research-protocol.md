@@ -53,7 +53,7 @@ source_tasks:
     priority: required
     start_path: search
     success_signal: "拿到可复查的视频/专栏 URL，并读取简介、字幕或可见评论中的队伍/专武结论"
-    fallback_order: [chrome_use_dom, browser_dom, page_metadata, guide_site, official_source]
+    fallback_order: [ego_browser_semantic, ego_browser_direct, ego_browser_visual, page_metadata, guide_site, official_source]
     wait_budget_ms: 15000
     required_fields: [url, title, author, updated_or_published_at, evidence_note]
     confidence_cap_if_missing: medium
@@ -75,7 +75,7 @@ source_tasks:
 2. 读取搜索结果标题、作者、互动分、URL。
 3. 对代表性视频读取 metadata、字幕和少量高赞评论。
 4. 若字幕不可用，只能摘要标题/简介/评论，不得声称已理解完整视频内容。
-5. 若结构化命令超时或无输出，先用 `chrome-use` 命名 session 读取页面 DOM、`meta[name=description]`、合集/相关视频标题和页面可见评论；relay 不可用时再用浏览器 CDP。仍失败时记录 `fallback_used: browser_dom_or_metadata` 或 `failed`，不要继续等待同一命令。
+5. 若结构化命令超时或无输出，在同一 ego-browser task space 中先用 `snapshotText()` 读取标题、简介、合集/相关视频和可见评论，再用一次 `js()` IIFE 或截图补证。仍失败时记录 `fallback_used: ego_browser_or_metadata` 或 `failed`，不要继续等待同一命令。
 
 ### YouTube
 
@@ -86,7 +86,7 @@ source_tasks:
 1. 查询词包含英文游戏名、角色英文名、team、build、signature weapon、dupe / mindscape / resonance、account value 等关键词。
 2. 读取搜索结果标题、频道、发布时间、观看量、URL 和简介。
 3. 优先读取章节、字幕、简介、置顶评论和少量高赞评论；字幕不可用时，只能把标题/简介/章节/评论作为中低置信证据。
-4. 若结构化工具不可用，先用已选中的 chrome-use 传输，再尝试页面 metadata、公开字幕接口、Jina/WebFetch/curl 或通用搜索摘要；仅在交互模式且 relay 不可用时使用浏览器 CDP。仍失败时记录 `fallback_used` 和失败原因。
+4. 若结构化工具不可用，使用已冻结的 ego-browser task space 读取页面语义、公开字幕接口或页内请求，再尝试页面 metadata、公开正文服务或通用搜索摘要。仍失败时记录 `fallback_used` 和失败原因。
 5. 不得把单条英文视频标题直接升级成硬规则；应与 B站、小红书、攻略站或官方资料交叉确认。
 
 ### 小红书
@@ -98,7 +98,7 @@ source_tasks:
 1. 查询角色强度、账号购买、专武、资源、绑定风险。
 2. 读取笔记正文和互动数。
 3. 用评论补充争议点，但不要把单条评论升级为规则。
-4. 若搜索或详情工具超时，先用 chrome-use 读取搜索结果卡片、标题、作者、互动数和可见正文；仅在交互模式且 relay 不可用时改用浏览器 CDP。若登录墙、验证码或空卡片阻断，记录失败并改用 B站、贴吧/微博、通用搜索、官方公告或攻略站交叉验证。
+4. 若搜索或详情工具超时，用 ego-browser 的语义快照读取结果卡片、标题、作者、互动数和可见正文，必要时再用直接 DOM 或截图复核。若登录墙、验证码或空卡片阻断，记录失败并改用 B站、贴吧/微博、通用搜索、官方公告或攻略站交叉验证。
 
 ### 抖音
 
@@ -118,7 +118,7 @@ source_tasks:
 
 社区取证必须低频、可中断，并记录每次尝试：
 
-- `tool`：opencli、chrome_use、browser_cdp、web_fetch、jina、curl、search_engine、user_provided_text 等。
+- `tool`：ego_browser、opencli_adapter、page_metadata、official_source、guide_site、search_engine、user_provided_text 等。
 - `wait_budget_ms`：搜索/列表通常 10000-15000，字幕/评论/详情通常 15000-20000；除非用户明确要求深入，不要让单条命令超过 30000。
 - `duration_ms`、`status`、`result_count`、`error_text`。
 - `fallback_used`：例如 `browser_dom`、`page_metadata`、`guide_site`、`official_source`、`user_screenshot`。

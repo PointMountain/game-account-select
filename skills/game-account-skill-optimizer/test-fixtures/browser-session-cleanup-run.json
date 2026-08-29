@@ -11,9 +11,10 @@
       "result_count": 192,
       "duration_ms": 29000,
       "wait_budget_ms": 30000,
-      "tool": "opencli browser plus page fetch",
-      "fallback_used": "browser_cdp",
-      "evidence": "PXB direct curl returned script page, so the run opened a browser tab and used page-context fetch for selectPageList."
+      "tool": "ego-browser browserFetch",
+      "browser_transport": "ego_browser",
+      "fallback_used": "ego_browser_direct",
+      "evidence": "PXB direct request returned a script page, so the run opened one ego-browser tab and used browser-context fetch for selectPageList."
     },
     {
       "platform": "pzds",
@@ -24,27 +25,26 @@
       "duration_ms": 12000,
       "wait_budget_ms": 40000,
       "query_session_id": "gas-zzz-pzds-0528",
+      "ego_task_space_id": 42,
+      "ego_task_space_name": "gas-zzz-pzds-0528",
       "browser_targets": [
         "BB185328017FF50F9D6E3E00B6BB3C8F"
       ],
-      "tool": "opencli browser",
+      "tool": "ego-browser semantic snapshot",
+      "browser_transport": "ego_browser",
       "fallback_used": "verified_list_route_plus_detail_adapter"
     }
   ],
   "cleanup_reports": [
     {
-      "command": "npm run query:cleanup -- --session-prefix gas- --json",
+      "command": "npm run query:cleanup -- --task-space 42 --json",
       "ok": false,
-      "baseline_loaded": true,
-      "closed_sessions": [
-        "gas-zzz-pzds-0528"
-      ],
-      "closed_targets": [],
-      "cdp_targets_remaining": [
-        "BB185328017FF50F9D6E3E00B6BB3C8F"
+      "ego_task_space_closures": [],
+      "ego_task_spaces_remaining": [
+        "42"
       ],
       "process_audit_after": [
-        "60219 35427 00:32 node /opt/agent-tools/agent-session-guard/scripts/run-with-timeout.mjs --timeout-ms 30000 -- opencli browser gas-zzz-pxb7-0528 eval fetch selectPageList"
+        "60219 35427 00:32 ego-browser nodejs"
       ]
     }
   ],
@@ -56,5 +56,5 @@
       "price": 1600
     }
   ],
-  "final_response": "推荐 JHYXJ7897，但本次查询过程留下了一个 opencli browser gas-zzz-pxb7-0528 后台进程。"
+  "final_response": "推荐 JHYXJ7897，但本次查询过程留下了未完成的 ego-browser task space。"
 }
