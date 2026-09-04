@@ -19,22 +19,6 @@
       "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-detail.md",
       "operation_verified": true,
       "evidence": "verified detail operation returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
-    },
-    {
-      "platform": "pzds",
-      "query": "QLA18X",
-      "status": "success",
-      "duration_ms": 9100,
-      "wait_budget_ms": 15000,
-      "result_count": 1,
-      "query_governance": "ego_ops",
-      "browser_transport": "ego_browser",
-      "query_session_id": "zzz-asset-status",
-      "operation": "pzds/zzz-detail",
-      "knowledge_status": "verified_operation_available",
-      "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
-      "operation_verified": true,
-      "evidence": "verified detail operation returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
     }
   ],
   "community_attempts": [
@@ -59,15 +43,6 @@
       "recommendation_tier": "risk_backup",
       "voidHunters": "星见雅:2+1; 仪玄:1+1; 叶瞬光:2+1",
       "reason": "标题和 voidHunters 显示三虚狩，但没有把角色卡片角标 agentStatuses 结构化传给估值"
-    },
-    {
-      "listing_id": "QLA18X",
-      "platform": "pzds",
-      "url": "https://www.pzds.com/goodsDetails/QLA18X/6",
-      "price": 1200,
-      "recommendation_tier": "primary",
-      "voidHunters": "叶瞬光:0+1; 星见雅:0+1; 仪玄:0+1",
-      "reason": "称三虚狩和资源充足，但缺少 agentStatuses，无法确认辅助和专武归属字段是否进入评分"
     }
   ],
   "backup_listings": [],
@@ -81,7 +56,7 @@
       "process_audit_after": []
     }
   ],
-  "final_response": "推荐 QLA18X，备选 JHYXJ0699；已用 pxb7/pzds zzz-detail operation 读取三虚狩。",
+  "final_response": "仅保留 PXB7 未支持 operation 的负例，必须先被 support matrix 拒绝，不能继续运行资产完整性检查。",
   "user_feedback": [
     "螃蟹详情页下面有商品图片，角色右上角数字 x+y 可以直接预览，之后 skill 查询要一起看一下"
   ]

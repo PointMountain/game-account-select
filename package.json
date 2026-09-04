@@ -13,6 +13,7 @@
     "verify:query-stack": "node skills/game-account-toolkit/scripts/validate-query-stack.mjs",
     "verify:ego-operations": "node skills/game-account-toolkit/scripts/validate-ego-operations.mjs",
     "verify:operation-support": "node skills/game-account-toolkit/scripts/validate-operation-support-matrix.mjs",
+    "verify:live-game-skills": "node skills/game-account-toolkit/scripts/run-live-game-skill-regression.mjs",
     "query:cleanup": "node skills/game-account-toolkit/scripts/cleanup-query-session.mjs",
     "verify:browser-routing": "node skills/game-account-preflight/scripts/validate-browser-routing.mjs",
     "verify:browser-cleanup": "node skills/game-account-toolkit/scripts/validate-browser-cleanup.mjs",

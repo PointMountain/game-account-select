@@ -19,6 +19,7 @@ argument-hint: "[check|install-guide|platform|ocr|extract]"
 ```bash
 npm run query:ego -- --operation pzds/arknights-list --task-space <run-id> --min-price 800 --max-price 1200 --json
 npm run query:ego -- --operation generic/semantic-search --task-space <run-id> --url <public-page-url> --expected <page-signal> --json
+npm run verify:live-game-skills
 ```
 
 一次多平台筛选传 `--task-space-disposition keep` 复用同一空间，父流程完成后统一调用 `query:cleanup`。
@@ -48,6 +49,7 @@ game-account-toolkit/
     ├── cleanup-query-session.mjs
     ├── evaluate-listings.mjs
     ├── finalize-game-evaluation.mjs
+    ├── run-live-game-skill-regression.mjs
     └── run-ego-operation.mjs
 ```
 
@@ -88,6 +90,12 @@ game-account-toolkit/
 
 ```bash
 node skills/game-account-toolkit/scripts/validate-operation-support-matrix.mjs
+```
+
+发布或修改游戏查询能力后还必须运行真实全栈回归。该入口逐游戏执行已验证列表、详情、专属估值器、finalizer、质量门禁和 task-space 清理；任一游戏未找到公开账号或任一步失败，整体返回非零：
+
+```bash
+GAME_ACCOUNT_EGO_OPS_DIR=<ego-ops-skill-dir> npm run verify:live-game-skills
 ```
 
 ## 浏览器生命周期

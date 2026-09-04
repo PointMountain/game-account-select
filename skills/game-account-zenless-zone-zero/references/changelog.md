@@ -2,9 +2,9 @@
 
 ## 2026-08-30
 
+- 经真实 PZDS `goodsList/275` 列表与 `QLEUJB` 详情回归，把 `pzds/zzz-list`、`pzds/zzz-detail` 升级为 verified；完整跑通实时找号、估值、finalizer、质量门禁和清理审计。
+- PXB7 ZZZ 仍保持 unsupported / exploration-only，不因 PZDS 已验证而跨平台冒充支持。
 - 用共享确定性 finalizer 统一 provenance 双哈希、run-only 画像、optimizer/evaluator sidecar、self-improve、质量门禁与最终交付哈希，并增加完整回归 fixture。
-- 将 PXB7/PZDS 详情解析器明确降为 `exploration_only`：外部 `ego-ops` 尚无对应 verified operation，正常筛选默认在启动浏览器前 fail closed。
-- 正常评估优先使用用户提供的链接、截图或文本；只有维护者受控探索、知识回写、矩阵升级、离线验证和真实 smoke 全部完成后才能发布平台能力。
 
 ## 2026-08-03
 

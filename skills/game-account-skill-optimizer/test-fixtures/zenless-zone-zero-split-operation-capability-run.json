@@ -33,14 +33,15 @@
       "query_governance": "ego_ops",
       "browser_transport": "ego_browser",
       "query_session_id": "zzz-split-operation",
-      "list_operation_status": "operation_missing",
+      "list_operation_status": "verified_operation_available",
       "detail_operation_status": "verified_operation_available",
       "operation": "pzds/zzz-detail",
+      "operations": ["pzds/zzz-list", "pzds/zzz-detail"],
       "knowledge_status": "verified_operation_available",
       "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
       "operation_verified": true,
-      "fallback_used": "ego_ops_exploration_for_list",
-      "evidence": "列表页仍需 ego-ops 只读探索；详情页已复用 verified pzds/zzz-detail operation 抽取 binding/resources/voidHunters"
+      "fallback_used": "verified_pzds_list_then_detail",
+      "evidence": "列表页与详情页均复用 verified PZDS ZZZ operation 抽取 listing、binding、resources 和 voidHunters"
     }
   ],
   "community_attempts": [
@@ -72,7 +73,7 @@
       "url": "https://www.pzds.com/goodsDetails/QL9CHD/6",
       "price": 799,
       "recommendation_tier": "risk_backup",
-      "reason": "详情 operation 确认三虚狩，列表页仍需 ego-ops 探索"
+      "reason": "verified PZDS 列表和详情 operation 确认三虚狩"
     }
   ],
   "excluded_listings": [],
@@ -85,6 +86,6 @@
       "process_audit_after": []
     }
   ],
-  "final_response": "已复用 pxb7/zzz-detail 和 pzds/zzz-detail operation；列表页仍需 ego-ops 低频探索。",
+  "final_response": "PZDS 已复用 verified zzz-list 和 zzz-detail operation；PXB7 仍缺少 verified ZZZ 列表与详情能力。",
   "user_feedback": []
 }

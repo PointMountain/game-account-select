@@ -5,6 +5,7 @@ import {
   parseTitleAgent,
   parseWEngineNamesFromText,
 } from './zzz-title-parser.mjs';
+import { normalizePzdsList } from './arknights-parsers.mjs';
 
 const VOID_HUNTERS = [
   { names: ['星见雅', '雅'] },
@@ -175,7 +176,21 @@ function parsePzds(raw) {
   const text = cleanText(raw.text).replace(/\n+/g, '\n');
   const nodes = Array.isArray(raw.titleNodes) ? raw.titleNodes : [];
   const statuses = parseAgentStatuses(nodes, text);
-  const engines = parseWEngines(nodes, text);
+  const assets = [...(Array.isArray(raw.assets) ? raw.assets : []), ...(Array.isArray(raw.domAssets) ? raw.domAssets : [])];
+  const engines = [...new Set([
+    ...parseWEngines(nodes, text),
+    ...assets.filter((asset) => /^JQ10/i.test(cleanText(asset?.code))).map((asset) => cleanText(asset?.name)).filter(Boolean),
+  ])];
+  const groupedAssets = assets.reduce((groups, asset) => {
+    const prefix = cleanText(asset?.code).slice(0, 5) || 'unknown';
+    if (!groups[prefix]) groups[prefix] = [];
+    groups[prefix].push(asset);
+    return groups;
+  }, {});
+  const assetGroups = Object.entries(groupedAssets)
+    .map(([prefix, rows]) => ({ prefix, count: rows.length, samples: rows.slice(0, 4).map((asset) => cleanText(asset?.name)).filter(Boolean) }))
+    .sort((left, right) => right.count - left.count)
+    .slice(0, 20);
   const listingId = firstMatch(`${raw.title}\n${text}`, [/账号编号([A-Z0-9]+)/, /商品编号\s*([A-Z0-9]+)/, /\b([A-Z0-9]{5,8})\s+号/]);
   const title = firstMatch(text, [new RegExp(`${listingId || '[A-Z0-9]+'}\\s+号\\s+([^\\n]+)`), /绝区零-[^\n]+账号编号[^\n]+出售/]) || cleanText(raw.title);
   const polychromeText = text.replace(/菲林底片\s*\n?\s*\d+/g, '');
@@ -205,11 +220,21 @@ function parsePzds(raw) {
     voidHunters: ['叶瞬光', '星见雅', '仪玄', '蕾米埃尔'].map((name) => `${name}:${statusForAgent(statuses, [name], text)}`).join('; '),
     sellerNote: firstMatch(text, [/卖家\s*\n留言\s*\n([^\n]+)/, /卖家 留言\s*([^\n]+)/]),
     listedAt: firstMatch(text, [/上架时间\s*\n?\s*([^\n]+)/]),
+    status: {
+      sourceStatus: listingId && Number.isFinite(numberMatch(text, [/¥\s*\n?\s*([0-9][0-9,]*(?:\.\d+)?)/])) && statuses.length ? 'success' : 'partial',
+      assetCount: assets.length,
+      guarantee: Boolean(raw.details?.compensation),
+      confidenceBuy: Boolean(raw.details?.isConfidenceBuy),
+      officialVerification: /官方/.test(cleanText(raw.details?.shotTypeName)),
+      verifiedAt: cleanText(raw.details?.verifyTime),
+    },
+    assetGroups,
     url: raw.url,
   };
 }
 
-export function parseZzzOperation(operation, raw) {
+export function parseZzzOperation(operation, raw, options = {}) {
+  if (operation === 'pzds/zzz-list') return normalizePzdsList(raw, options);
   if (operation === 'pxb7/zzz-detail') return [parsePxb7(raw)];
   if (operation === 'pzds/zzz-detail') return [parsePzds(raw)];
   throw new Error(`Unsupported ZZZ operation: ${operation}`);

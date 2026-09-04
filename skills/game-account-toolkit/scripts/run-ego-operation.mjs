@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { parseArknightsOperation } from '../ego-operations/arknights-parsers.mjs';
 import { buildBrowserScript, normalizeOperationUrl } from '../ego-operations/browser-scripts.mjs';
+import { parseGenericGameOperation } from '../ego-operations/generic-game-parsers.mjs';
 import { parseZzzOperation } from '../ego-operations/zzz-parsers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,6 +45,8 @@ function usage() {
     '  --task-space <name|id>            Named task space reused by the parent query goal.',
     '  --input <url|id>                  Detail operation input.',
     '  --url <url>                       URL for generic/semantic-search.',
+    '  --match <public text>             Return bounded DOM ancestry for matching public text. Repeatable.',
+    '  --follow-match <public text>      Follow one exact visible match before returning page evidence.',
     '  --expected <text>                 Additional live page signal. Repeatable.',
     '  --min-price <CNY> --max-price <CNY> --limit <n> --page <n> --sort <mode>',
     '  --task-space-disposition <mode>   complete (default) or keep for a parent multi-operation run.',
@@ -80,6 +83,8 @@ const options = {
   limit: valueAfter('--limit', '20'),
   page: valueAfter('--page', '1'),
   sort: valueAfter('--sort', 'default'),
+  matchTexts: valuesAfter('--match'),
+  followMatch: valueAfter('--follow-match'),
 };
 const input = operation.id === 'generic/semantic-search' ? valueAfter('--url') : valueAfter('--input');
 let url;
@@ -181,7 +186,8 @@ function isControlStop(execution) {
 
 function parseData(raw) {
   if (operation.id.includes('/arknights-')) return parseArknightsOperation(operation.id, raw, options);
-  if (operation.id.endsWith('/zzz-detail')) return parseZzzOperation(operation.id, raw);
+  if (operation.game === 'zenless-zone-zero') return parseZzzOperation(operation.id, raw, options);
+  if (['wuthering-waves', 'neverness-to-everness'].includes(operation.game)) return parseGenericGameOperation(operation.id, raw, options);
   if (operation.id === 'generic/semantic-search') return raw;
   throw new Error(`No parser for ${operation.id}`);
 }
@@ -310,9 +316,9 @@ if (payload?.page?.url) {
   } catch { reasons.push('page_url_invalid'); }
 }
 const observedText = `${payload?.page?.title ?? ''}\n${payload?.semantic ?? ''}\n${payload?.raw?.text ?? ''}`;
-if (expectedSignals.length && !expectedSignals.every((signal) => observedText.includes(signal))) reasons.push('expected_page_signal_missing');
-if (/(滑块验证|安全验证|人机验证|请完成验证|验证后继续|访问过于频繁|安全校验|captcha|forbidden|403)/i.test(observedText)) reasons.push('verification_or_blocker_detected');
-if ((payload?.error_events?.length ?? 0) > 0) reasons.push('browser_error_events');
+if (!knowledgeBlocked && expectedSignals.length && !expectedSignals.every((signal) => observedText.includes(signal))) reasons.push('expected_page_signal_missing');
+if (!knowledgeBlocked && /(滑块验证|安全验证|人机验证|请完成验证|验证后继续|访问过于频繁|安全校验|captcha|403\s*forbidden|http\s*403|access\s+denied|forbidden\s+error)/i.test(observedText)) reasons.push('verification_or_blocker_detected');
+if (!knowledgeBlocked && (payload?.error_events?.length ?? 0) > 0) reasons.push('browser_error_events');
 
 let data = null;
 if (payload?.raw != null && !hardStop) {
@@ -323,7 +329,7 @@ if (data != null) reasons.push(...validateData(data));
 
 const completionTarget = payload?.task_space_id ?? taskSpace;
 const completion = fixturePath || hardStop || knowledgeBlocked || disposition === 'keep' ? null : completeTaskSpace(completionTarget);
-if (!fixturePath && !hardStop && disposition === 'complete' && completion?.ok !== true) reasons.push('task_space_cleanup_failed');
+if (!fixturePath && !hardStop && !knowledgeBlocked && disposition === 'complete' && completion?.ok !== true) reasons.push('task_space_cleanup_failed');
 const uniqueReasons = [...new Set(reasons)];
 const report = {
   ok: uniqueReasons.length === 0,

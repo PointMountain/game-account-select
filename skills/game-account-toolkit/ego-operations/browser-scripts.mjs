@@ -77,7 +77,7 @@ function pxb7ArknightsList(options) {
   })()`;
 }
 
-function pzdsArknightsList(options) {
+function pzdsList(options) {
   const limit = positiveInteger(options.limit, 20, 60);
   const startPage = positiveInteger(options.page, 1, 100);
   const config = {
@@ -235,21 +235,69 @@ function pzdsDetail() {
 
 function semanticSearch(options) {
   const limit = positiveInteger(options.limit, 30, 100);
-  return `(() => {
+  const followMatch = String(options.followMatch || '').trim();
+  const matchTexts = Array.isArray(options.matchTexts)
+    ? options.matchTexts.map((value) => String(value).trim()).filter(Boolean).slice(0, 12)
+    : [];
+  return `(async () => {
+    const matchTexts = ${JSON.stringify(matchTexts)};
+    const followMatch = ${JSON.stringify(followMatch)};
+    let followed = null;
+    if (followMatch) {
+      const exact = Array.from(document.querySelectorAll('body *')).find((node) =>
+        node instanceof HTMLElement
+        && (node.textContent || '').replace(/\\s+/g, ' ').trim() === followMatch
+        && node.getClientRects().length > 0
+        && !Array.from(node.children).some((child) => (child.textContent || '').replace(/\\s+/g, ' ').trim() === followMatch));
+      const clickable = exact?.closest('a[href], button, [role="button"], .game-item') || exact;
+      if (clickable instanceof HTMLElement) {
+        const from = location.href;
+        clickable.click();
+        const deadline = Date.now() + 10000;
+        while (Date.now() < deadline && location.href === from) await new Promise((resolve) => setTimeout(resolve, 200));
+        followed = { term: followMatch, from, to: location.href, changed: location.href !== from };
+        if (followed.changed) await new Promise((resolve) => setTimeout(resolve, 1800));
+      } else followed = { term: followMatch, error: 'exact_visible_match_not_found' };
+    }
     const links = Array.from(document.querySelectorAll('a[href]')).map((anchor) => ({
       text: (anchor.innerText || anchor.getAttribute('aria-label') || '').replace(/\\s+/g, ' ').trim().slice(0, 240),
       url: anchor.href
     })).filter((item) => item.text && /^https?:\\/\\//i.test(item.url));
     const unique = [...new Map(links.map((item) => [item.url, item])).values()].slice(0, ${limit});
-    return { url: location.href, title: document.title || '', links: unique };
+    const matches = matchTexts.map((term) => {
+      const nodes = Array.from(document.querySelectorAll('body *')).filter((node) => {
+        const text = (node.textContent || '').replace(/\\s+/g, ' ').trim();
+        if (!text || !text.includes(term) || node.getClientRects().length === 0) return false;
+        return !Array.from(node.children).some((child) => (child.textContent || '').replace(/\\s+/g, ' ').trim().includes(term));
+      }).slice(0, 8);
+      return {
+        term,
+        nodes: nodes.map((node) => {
+          const ancestry = [];
+          let current = node;
+          for (let depth = 0; current && depth < 5; depth += 1, current = current.parentElement) {
+            ancestry.push({
+              tag: current.tagName,
+              className: String(current.className || '').slice(0, 240),
+              href: current instanceof HTMLAnchorElement ? current.href : null,
+              dataTrackClick: current.getAttribute('data-track-click'),
+              dataGameId: current.getAttribute('data-game-id'),
+              dataId: current.getAttribute('data-id'),
+            });
+          }
+          return { text: (node.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 400), ancestry };
+        }),
+      };
+    });
+    return { url: location.href, title: document.title || '', links: unique, matches, followed };
   })()`;
 }
 
 export function buildBrowserScript(operation, options = {}) {
   if (operation === 'pxb7/arknights-list') return pxb7ArknightsList(options);
-  if (operation === 'pzds/arknights-list') return pzdsArknightsList(options);
+  if (operation.startsWith('pzds/') && operation.endsWith('-list')) return pzdsList(options);
   if (operation === 'pxb7/arknights-detail' || operation === 'pxb7/zzz-detail') return pxb7Detail();
-  if (operation === 'pzds/arknights-detail' || operation === 'pzds/zzz-detail') return pzdsDetail();
+  if (operation.startsWith('pzds/') && operation.endsWith('-detail')) return pzdsDetail();
   if (operation === 'generic/semantic-search') return semanticSearch(options);
   throw new Error(`Unsupported operation: ${operation}`);
 }

@@ -43,11 +43,13 @@ Wuthering Waves（鸣潮）账号不能把总黄数、五星角色数量、五�
 ## 执行流程
 
 1. 将用户请求冻结为 run-only `selection_profile`，原始请求另存于 `request_provenance` 并保留 SHA-256。
-2. 平台查询前读取 operation support matrix。只复用已验证 `ego-ops` operation；鸣潮平台 route 未列入矩阵时必须标为 unsupported，并改用用户提供的可追溯材料，不得声称已完成实时平台覆盖。
+2. 平台查询前读取 operation support matrix。PZDS 主动找号使用已验证的 `pzds/wuthering-waves-list` 与 `pzds/wuthering-waves-detail`，同一 task space 内先列表后详情；PXB7 仍标为 unsupported，不得声称已覆盖。
 3. 标准化挂牌后运行可复用评分入口：
 
    ```bash
    node skills/game-account-wuthering-waves/scripts/evaluate-listing.mjs --input <listing.json> --out <evaluation.json>
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/wuthering-waves-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/wuthering-waves-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
    ```
 
 4. `scripts/validate-sample.mjs` 只负责离线 trap 回归，不是唯一评分入口。

@@ -39,11 +39,13 @@ argument-hint: "[listing json or account description]"
 ## 执行流程
 
 1. 将原始请求与派生画像分开记录到 `request_provenance` 和 run-only `selection_profile`。
-2. 查询前读取 operation support matrix。异环平台 route 未列入矩阵时必须标为 unsupported，只能评估用户提供或其它明确可追溯的材料；不得暗示已完成实时平台覆盖。
+2. 查询前读取 operation support matrix。PZDS 主动找号使用已验证的 `pzds/neverness-to-everness-list` 与 `pzds/neverness-to-everness-detail`，同一 task space 内先列表后详情；PXB7 仍标为 unsupported，不得暗示已覆盖。
 3. 运行可复用评分入口：
 
    ```bash
    node skills/game-account-neverness-to-everness/scripts/evaluate-listing.mjs --input <listing.json> --out <evaluation.json>
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/neverness-to-everness-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/neverness-to-everness-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
    ```
 
 4. `scripts/validate-sample.mjs` 只做离线 trap 回归。
