@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 
 import { parseArknightsOperation } from '../ego-operations/arknights-parsers.mjs';
 import { buildBrowserScript } from '../ego-operations/browser-scripts.mjs';
+import { parseGenericGameOperation } from '../ego-operations/generic-game-parsers.mjs';
+import { parseZzzOperation } from '../ego-operations/zzz-parsers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const runner = path.join(__dirname, 'run-ego-operation.mjs');
@@ -72,15 +74,37 @@ assert.equal(parsedPzdsDetail[0].priceCny, 1888);
 assert.deepEqual(parsedPzdsDetail[0].operatorNames, ['维什戴尔']);
 assert.equal(parsedPzdsDetail[0].status.sourceStatus, 'success');
 
-for (const operation of [
-  'pxb7/arknights-list',
-  'pxb7/arknights-detail',
-  'pzds/arknights-list',
-  'pzds/arknights-detail',
-  'pxb7/zzz-detail',
-  'pzds/zzz-detail',
-  'generic/semantic-search',
-]) {
+const parsedZzzList = parseZzzOperation('pzds/zzz-list', {
+  rows: [{ goodsNo: 'QLTEST', price: 1000, simpleMessage: '官服', title: '60级，22个S级代理人，加密母带300' }],
+  paginationPartial: false,
+}, { limit: 1 });
+assert.equal(parsedZzzList[0].listingId, 'QLTEST');
+assert.equal(parsedZzzList[0].url, 'https://www.pzds.com/goodsDetails/QLTEST/6');
+
+const parsedZzzDetail = parseZzzOperation('pzds/zzz-detail', {
+  url: 'https://www.pzds.com/goodsDetails/QLTEST/6',
+  title: '绝区零账号编号QLTEST出售',
+  text: '绝区零-官服 账号编号QLTEST 出售\n¥1000\n60级\nS代理人 1\n未绑定TAP\n未绑定PSN',
+  details: { goodsNo: 'QLTEST', price: 1000, compensation: true, shotTypeName: '盼之官方' },
+  titleNodes: [{ title: '星见雅', text: '0+1' }],
+  assets: [{ name: '霰落星殿', code: 'JQ10001', cornerMark: '1' }],
+}, {});
+assert.equal(parsedZzzDetail[0].status.sourceStatus, 'success');
+assert.deepEqual(parsedZzzDetail[0].sWEngineNames, ['霰落星殿']);
+assert.equal(parsedZzzDetail[0].status.guarantee, true);
+
+const parsedGenericDetail = parseGenericGameOperation('pzds/wuthering-waves-detail', {
+  url: 'https://www.pzds.com/goodsDetails/MCTEST/6',
+  text: '鸣潮 官服账号',
+  details: { goodsNo: 'MCTEST', price: 849, title: '鸣潮账号', description: '【星声】1000', compensation: true, shotTypeName: '盼之官方' },
+  assets: [{ name: '爱弥斯', code: 'MC00043', cornerMark: '1+1', evidenceSource: 'metadata_resource' }],
+}, {});
+assert.equal(parsedGenericDetail[0].listingId, 'MCTEST');
+assert.equal(parsedGenericDetail[0].status.sourceStatus, 'success');
+assert.equal(parsedGenericDetail[0].assets[0].name, '爱弥斯');
+
+const operationManifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ego-operations', 'manifest.json'), 'utf8'));
+for (const operation of operationManifest.operations.map((item) => item.id)) {
   const script = buildBrowserScript(operation, { limit: 5, page: 1 });
   assert.doesNotThrow(() => new Function(`return ${script};`), `${operation} browser script must parse`);
 }
@@ -236,6 +260,20 @@ try {
   assert.ok(blockerReport.reasons.includes('verification_or_blocker_detected'), 'verification blocker reason must be explicit');
 
   fs.writeFileSync(fixturePath, JSON.stringify({
+    page: { url: 'https://www.pzds.com/goodsDetails/YETEST/6', title: '异环账号详情' },
+    semantic: '异环账号详情 403人看过',
+    raw: { url: 'https://www.pzds.com/goodsDetails/YETEST/6', title: '异环账号详情', links: [] },
+  }));
+  const numeric403 = spawnSync(process.execPath, [
+    runner,
+    '--operation', 'generic/semantic-search',
+    '--url', 'https://www.pzds.com/goodsDetails/YETEST/6',
+    '--raw-fixture', fixturePath,
+    '--json',
+  ], spawnOptions);
+  assert.equal(numeric403.status, 0, 'a public view count containing 403 must not be treated as an HTTP 403 blocker');
+
+  fs.writeFileSync(fixturePath, JSON.stringify({
     page: { url: 'https://www.pxb7.com/product/999/1', title: '明日方舟 商品详情' },
     semantic: '明日方舟 商品详情',
     raw: {
@@ -308,6 +346,11 @@ try {
   assert.equal(explorationBlocked.status, 1, 'an exploration-only operation must fail closed by default');
   const explorationReport = JSON.parse(explorationBlocked.stdout);
   assert.ok(explorationReport.reasons.includes('ego_ops_operation_not_verified'), 'unverified operation reason must be explicit');
+  assert.deepEqual(
+    explorationReport.reasons,
+    ['ego_ops_operation_not_verified'],
+    'an operation blocked before browser startup must not report page-signal or cleanup failures',
+  );
   assert.equal(explorationReport.execution.command, 'ego-browser not started', 'fail-closed validation must not open ego-browser');
   assert.equal(explorationReport.completion, null, 'fail-closed validation must not start a cleanup browser process');
   assert.equal(explorationReport.ego_ops.manifest_availability, 'exploration_only');

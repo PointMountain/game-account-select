@@ -2,9 +2,10 @@
 
 ## 2026-08-30
 
+- 经真实 PZDS `goodsList/303` 列表与 `MCHYH0` 详情回归，发布 verified `pzds/wuthering-waves-list/detail`，并跑通实时找号、估值、finalizer、质量门禁和清理审计。
 - 新增可复用 `evaluate-listing.mjs`、确定性 `finalize-evaluation-run.mjs`、run artifact fixture 与 finalizer 回归，不再把样例验证器当作唯一评分入口。
 - 接入统一 `request_provenance`、run-only `selection_profile`、coverage/experience/knowledge candidates、optimizer/evaluator sidecar、delivery hash 与 redo gate。
-- 平台能力按 support matrix fail closed；未验证的 PXB7/PZDS list/detail 不切换到其他网页软件，也不伪装成已覆盖。
+- 平台能力按 support matrix fail closed；PZDS 已验证，PXB7 未验证时不切换到其他网页软件，也不伪装成已覆盖。
 
 ## 2026-05-17
 

@@ -2,9 +2,10 @@
 
 ## 2026-08-30
 
+- 经真实 PZDS `goodsList/1546` 列表与 `YED48X` 详情回归，发布 verified `pzds/neverness-to-everness-list/detail`，并跑通实时找号、估值、finalizer、质量门禁和清理审计。
 - 新增可复用 `evaluate-listing.mjs`、确定性 `finalize-evaluation-run.mjs`、run artifact fixture 与 finalizer 回归，形成可独立复测的估值和交付接口。
 - 接入统一 `request_provenance`、run-only `selection_profile`、coverage/experience/knowledge candidates、optimizer/evaluator sidecar、delivery hash 与 redo gate。
-- 平台能力按 support matrix fail closed；未验证的 PXB7/PZDS list/detail 只记录覆盖缺口，不切换到其他网页软件。
+- 平台能力按 support matrix fail closed；PZDS 已验证，PXB7 未验证时只记录覆盖缺口，不切换到其他网页软件。
 
 ## 2026-05-16
 

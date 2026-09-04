@@ -136,7 +136,7 @@ function normalizePxb7List(raw, options) {
   return unique.slice(0, limit).map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
-function normalizePzdsList(raw, options) {
+export function normalizePzdsList(raw, options) {
   const minPrice = Math.max(0, Number(options.minPrice) || 0);
   const maxPrice = Math.max(0, Number(options.maxPrice) || 0);
   const limit = Math.max(1, Math.min(Number(options.limit) || 20, 60));

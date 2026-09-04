@@ -22,8 +22,8 @@
         "detail": { "status": "unsupported", "operation": null }
       },
       "pzds": {
-        "list": { "status": "unsupported", "operation": null },
-        "detail": { "status": "unsupported", "operation": null }
+        "list": { "status": "verified", "operation": "pzds/zzz-list" },
+        "detail": { "status": "verified", "operation": "pzds/zzz-detail" }
       }
     },
     "wuthering-waves": {
@@ -32,8 +32,8 @@
         "detail": { "status": "unsupported", "operation": null }
       },
       "pzds": {
-        "list": { "status": "unsupported", "operation": null },
-        "detail": { "status": "unsupported", "operation": null }
+        "list": { "status": "verified", "operation": "pzds/wuthering-waves-list" },
+        "detail": { "status": "verified", "operation": "pzds/wuthering-waves-detail" }
       }
     },
     "neverness-to-everness": {
@@ -42,11 +42,11 @@
         "detail": { "status": "unsupported", "operation": null }
       },
       "pzds": {
-        "list": { "status": "unsupported", "operation": null },
-        "detail": { "status": "unsupported", "operation": null }
+        "list": { "status": "verified", "operation": "pzds/neverness-to-everness-list" },
+        "detail": { "status": "verified", "operation": "pzds/neverness-to-everness-detail" }
       }
     }
   },
-  "exploration_only_operations": ["pxb7/zzz-detail", "pzds/zzz-detail"],
+  "exploration_only_operations": ["pxb7/zzz-detail"],
   "non_game_operations": ["generic/semantic-search"]
 }

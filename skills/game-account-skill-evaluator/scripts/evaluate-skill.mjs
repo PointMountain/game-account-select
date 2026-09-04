@@ -328,13 +328,15 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findingIds = new Set((zzzVerifiedOperationReport?.findings ?? []).map((finding) => finding.id));
     const evidence = (zzzVerifiedOperationReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
-    const avoidsReuseFinding = !findingIds.has('platform-ego-ops-operation-reuse');
-    const preservesUnsupportedClaim = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
-    if (hasMismatchFinding && avoidsReuseFinding && preservesUnsupportedClaim) addScore(4);
+    const hasReuseFinding = findingIds.has('platform-ego-ops-operation-reuse');
+    const preservesUnsupportedClaim = /pxb7\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    const preservesVerifiedPzdsClaim = /pzds\/zzz-detail/i.test(evidence);
+    if (hasMismatchFinding && hasReuseFinding && preservesUnsupportedClaim && preservesVerifiedPzdsClaim) addScore(4);
     else {
       if (!hasMismatchFinding) issue('Optimizer did not reject ZZZ operations that are absent from the verified support matrix');
-      if (!avoidsReuseFinding) issue('Optimizer treated an unsupported ZZZ operation claim as reusable');
+      if (!hasReuseFinding) issue('Optimizer did not reuse the verified PZDS ZZZ operation');
       if (!preservesUnsupportedClaim) issue('Optimizer did not preserve the unsupported ZZZ operation claim evidence');
+      if (!preservesVerifiedPzdsClaim) issue('Optimizer did not preserve the verified PZDS ZZZ operation evidence');
     }
   } else {
     issue('Missing ZZZ unsupported-operation-claim optimizer fixture');
@@ -364,14 +366,14 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasGapFinding = findingIds.has('platform-ego-ops-operation-gap');
     const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
-    const avoidsReuseFinding = !findingIds.has('platform-ego-ops-operation-reuse');
-    const gapIsListSpecific = /list_operation_status=operation_missing|ego_ops_exploration_for_list/i.test(evidence);
+    const hasReuseFinding = findingIds.has('platform-ego-ops-operation-reuse');
+    const gapIsListSpecific = /pxb7[\s\S]*(?:list_operation_status=operation_missing|ego_ops_exploration_for_list)/i.test(evidence);
     const preservesDetailClaims = /pxb7\/zzz-detail|pzds\/zzz-detail/i.test(evidence);
-    if (hasGapFinding && hasMismatchFinding && avoidsReuseFinding && gapIsListSpecific && preservesDetailClaims) addScore(4);
+    if (hasGapFinding && hasMismatchFinding && hasReuseFinding && gapIsListSpecific && preservesDetailClaims) addScore(4);
     else {
       if (!hasGapFinding) issue('Optimizer did not report missing list operation capability');
       if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ detail-operation claims');
-      if (!avoidsReuseFinding) issue('Optimizer treated unsupported ZZZ detail-operation claims as reusable');
+      if (!hasReuseFinding) issue('Optimizer did not reuse the verified PZDS ZZZ list/detail operations');
       if (!gapIsListSpecific) issue('Optimizer did not distinguish list-operation gaps from detail-operation reuse');
       if (!preservesDetailClaims) issue('Optimizer did not preserve the claimed ZZZ detail operations');
     }
