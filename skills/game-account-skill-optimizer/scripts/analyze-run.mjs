@@ -1347,7 +1347,7 @@ const independentTeamEvidence = [
   ...feedback.split('\n').filter((line) => independentTeamPattern.test(line)),
   ...finalResponse.split('\n').filter((line) => independentTeamPattern.test(line) && independentTeamConcernPattern.test(line))
 ].filter(Boolean);
-if (independentTeamEvidence.length) {
+if (matrixGameKey === 'zenless-zone-zero' && independentTeamEvidence.length) {
   addFinding({
     id: 'valuation-independent-team-completeness',
     severity: 'high',

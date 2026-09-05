@@ -395,8 +395,8 @@ const profileRequest = readArg('--profile-request', request);
 const outPath = readArg('--out');
 const limit = Math.max(10, Math.min(Number(readArg('--limit', 20)) || 20, 60));
 const batchCount = Math.max(1, Math.min(Number(readArg('--batches', 1)) || 1, 3));
-const detailCount = Math.max(1, Math.min(Number(readArg('--details-per-platform', readArg('--details', 5))) || 5, 20));
-const displayCount = Math.max(3, Math.min(Number(readArg('--display-per-platform', 5)) || 5, 15));
+const detailCount = Math.max(1, Math.min(Number(readArg('--details-per-platform', readArg('--details', 10))) || 10, 20));
+const displayCount = Math.max(3, Math.min(Number(readArg('--display-per-platform', 10)) || 10, 15));
 const recommendationCount = Math.max(1, Math.min(Number(readArg('--recommendations', 5)) || 5, 15));
 const backupCount = Math.max(0, Math.min(Number(readArg('--backups', 3)) || 3, 10));
 const collabImageVerificationCount = Math.max(0, Math.min(Number(readArg('--collab-image-verifications', 3)) || 3, 5));
@@ -406,7 +406,7 @@ const expansionDetailCount = Math.max(1, Math.min(Number(readArg('--expansion-de
 const pinnedUrls = readArgs('--pinned-url');
 const reportOut = readArg('--report-out');
 if (!request || !outPath) {
-  console.error('Usage: node run-dual-platform-selection.mjs --request <raw-user-text> --out <artifact.json> [--profile-request <derived-runtime-profile-text>] [--profile-confirmed] [--task-space <name|id>] [--pinned-url <live-listing-url>] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 5] [--display-per-platform 5] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
+  console.error('Usage: node run-dual-platform-selection.mjs --request <raw-user-text> --out <artifact.json> [--profile-request <derived-runtime-profile-text>] [--profile-confirmed] [--task-space <name|id>] [--pinned-url <live-listing-url>] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 10] [--display-per-platform 10] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
   process.exit(2);
 }
 

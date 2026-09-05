@@ -25,7 +25,7 @@ function uniqueRows(rows) {
   });
 }
 
-export function selectPlatformRows(section, limit = 5) {
+export function selectPlatformRows(section, limit = 10) {
   if (!section || typeof section !== 'object') return [];
   return uniqueRows([
     ...(Array.isArray(section.display_candidates) ? section.display_candidates : []),
@@ -199,7 +199,7 @@ function tableFor(platform, section, perPlatform, limitedMode = false) {
 function primaryBudget(profile) {
   const min = number(profile?.budget?.primary_min);
   const max = number(profile?.budget?.primary_max);
-  return { min, max };
+  return { min, max, unlimited: profile?.budget?.interpretation === 'explicit_unlimited' && max == null };
 }
 
 function isInsidePrimaryBudget(row, budget) {
@@ -239,6 +239,7 @@ function budgetLayerRows(artifact, limit = 5) {
 }
 
 function budgetLabel(budget) {
+  if (budget.unlimited) return '无上限';
   if (budget.min === 0 && budget.max != null) return `不高于 ¥${budget.max.toLocaleString('zh-CN')}`;
   if (budget.min != null && budget.max != null) return `¥${budget.min.toLocaleString('zh-CN')}–¥${budget.max.toLocaleString('zh-CN')}`;
   if (budget.max != null) return `不高于 ¥${budget.max.toLocaleString('zh-CN')}`;
@@ -264,13 +265,15 @@ function budgetLayerReport(artifact, limitedMode = false) {
     `- 本轮主预算：${budgetLabel(budget)}。`,
     exact.length
       ? `- 预算内完整满足全部硬条件：${exact.length} 个；仍需按表中风险项完成下单前终验。`
-      : '- 预算内完整满足全部硬条件：0 个。以下先给预算内最接近项，再单独列出突破预算的完整满足项；两层不得互相替代。',
+      : budget.unlimited
+        ? '- 预算内完整满足全部硬条件：0 个。当前候选仍有图鉴或练度证据缺口。'
+        : '- 预算内完整满足全部硬条件：0 个。以下先给预算内最接近项，再单独列出突破预算的完整满足项；两层不得互相替代。',
     '',
-    rowsTable('预算内最接近', near, near.length ? '这些账号仍有明确硬条件缺口，但价格在本轮主预算内，可用于判断是否值得加预算。' : '没有拿到可追踪的预算内接近项。', limitedMode),
+    rowsTable('预算内最接近', near, near.length ? (budget.unlimited ? '以下候选尚未满足全部硬条件，价格与资产仅供比较。' : '这些账号仍有明确硬条件缺口，但价格在本轮主预算内，可用于判断是否值得加预算。') : '没有拿到可追踪的预算内接近项。', limitedMode),
     '',
-    rowsTable('预算范围外完整满足', breakthrough, breakthrough.length ? '这些账号只作为扩价对照；增加预算是否值得，要看价差实际补齐了什么，而不是只看总分。' : '本轮扩价搜索没有复核到完整满足项。', limitedMode),
+    rowsTable('预算范围外完整满足', breakthrough, budget.unlimited ? '本轮没有价格上限，所有价格均归入同一比较范围。' : breakthrough.length ? '这些账号只作为扩价对照；增加预算是否值得，要看价差实际补齐了什么，而不是只看总分。' : '本轮扩价搜索没有复核到完整满足项。', limitedMode),
   ];
-  const comparison = budgetComparisonLine(artifact);
+  const comparison = budget.unlimited ? null : budgetComparisonLine(artifact);
   if (comparison) lines.push('', comparison);
   return lines.join('\n');
 }
@@ -294,7 +297,7 @@ function bestValueLine(artifact, limitedMode = false) {
   return `跨平台性价比第一：${platformName(row.platform)} ${link}，${price == null ? '价格未披露' : `¥${price.toLocaleString('zh-CN')}`}；${collectionText(row, limitedMode)}；${combatText(row)}。`;
 }
 
-export function renderSelectionReport(artifact, { perPlatform = 5 } = {}) {
+export function renderSelectionReport(artifact, { perPlatform = 10 } = {}) {
   const shortlists = artifact.platform_shortlists ?? {};
   const selfImprove = artifact.self_improve ?? {};
   const candidateState = knowledgeState(artifact.knowledge_update_candidates, repoRoot);
@@ -310,6 +313,7 @@ export function renderSelectionReport(artifact, { perPlatform = 5 } = {}) {
     '',
     bestValueLine(artifact, limitedMode),
     '',
+    ...(artifact.selection_summary ? [text(artifact.selection_summary), ''] : []),
     budgetLayerReport(artifact, limitedMode),
     '',
     tableFor('pxb7', shortlists.pxb7, perPlatform, limitedMode),
@@ -340,9 +344,9 @@ export function renderSelectionReport(artifact, { perPlatform = 5 } = {}) {
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
   const input = readArg('--input');
   const output = readArg('--out');
-  const perPlatform = Math.max(1, Math.min(number(readArg('--per-platform', 5)) ?? 5, 15));
+  const perPlatform = Math.max(1, Math.min(number(readArg('--per-platform', 10)) ?? 10, 15));
   if (!input) {
-    console.error('Usage: render-selection-report.mjs --input <artifact.json> [--out <report.md>] [--per-platform 5]');
+    console.error('Usage: render-selection-report.mjs --input <artifact.json> [--out <report.md>] [--per-platform 10]');
     process.exit(2);
   }
   const artifact = JSON.parse(fs.readFileSync(path.resolve(input), 'utf8'));

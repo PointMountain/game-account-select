@@ -28,6 +28,7 @@ function walk(directory) {
   const files = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     if (['.git', 'node_modules'].includes(entry.name)) continue;
+    if (directory === repoRoot && entry.name === '.harness') continue;
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...walk(absolute));
     else files.push(absolute);

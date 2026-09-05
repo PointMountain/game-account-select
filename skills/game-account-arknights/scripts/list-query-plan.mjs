@@ -8,8 +8,8 @@ export function buildListQueryPlan({ platform, limit, batchCount, displayCount, 
   const normalizedBatchCount = Math.min(3, positiveInteger(batchCount, 1));
   const candidateFloor = Math.max(
     5,
-    positiveInteger(displayCount, 5),
-    positiveInteger(detailCount, 5),
+    positiveInteger(displayCount, 10),
+    positiveInteger(detailCount, 10) * 2,
   );
 
   if (platform === 'pzds') {

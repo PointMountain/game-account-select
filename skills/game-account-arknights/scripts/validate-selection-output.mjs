@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { renderSelectionReport, selectPlatformRows } from './render-selection-report.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
@@ -14,6 +15,55 @@ const budgetDeliveryFixturePath = path.join(repoRoot, 'skills', 'game-account-sk
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arknights-selection-output-'));
 
 try {
+  const expanded = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  for (const [platform, section] of Object.entries(expanded.platform_shortlists)) {
+    const source = section.display_candidates[0];
+    section.display_candidates = Array.from({ length: 12 }, (_, index) => {
+      const id = platform === 'pxb7' ? String(9100000000000000000n + BigInt(index)) : `MRDEFAULT${index}`;
+      return { ...source, listing_id: id, url: platform === 'pxb7' ? `https://www.pxb7.com/product/${id}/1` : `https://www.pzds.com/goodsDetails/${id}/6` };
+    });
+    assert.equal(selectPlatformRows(section).length, 10);
+  }
+  const defaultReport = renderSelectionReport(expanded);
+  assert.match(defaultReport, /### 螃蟹候选（10 个）/);
+  assert.match(defaultReport, /### 盼之候选（10 个）/);
+  for (const section of Object.values(expanded.platform_shortlists)) {
+    assert.ok(defaultReport.includes(section.display_candidates[9].listing_id));
+    assert.ok(!defaultReport.includes(section.display_candidates[10].listing_id));
+  }
+  const defaultPath = path.join(tempDir, 'default-counts.json');
+  fs.writeFileSync(defaultPath, JSON.stringify(expanded));
+  const defaultRun = spawnSync(process.execPath, [path.join(__dirname, 'finalize-selection-run.mjs'), '--input', defaultPath],
+    { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 32 * 1024 * 1024 });
+  assert.equal(defaultRun.status, 0, defaultRun.stderr || defaultRun.stdout);
+  const defaultArtifact = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+  assert.equal(defaultArtifact.presentation.per_platform_requested, 10);
+  assert.deepEqual(defaultArtifact.presentation.per_platform_rendered, { pxb7: 10, pzds: 10 });
+  assert.deepEqual(defaultArtifact.presentation.candidate_shortage_platforms, []);
+  const cliReportPath = path.join(tempDir, 'renderer-default.md');
+  const cliRun = spawnSync(process.execPath, [path.join(__dirname, 'render-selection-report.mjs'), '--input', defaultPath, '--out', cliReportPath],
+    { cwd: repoRoot, encoding: 'utf8' });
+  assert.equal(cliRun.status, 0, cliRun.stderr || cliRun.stdout);
+  assert.equal(fs.readFileSync(cliReportPath, 'utf8'), defaultArtifact.final_response);
+
+  expanded.platform_shortlists.pxb7.display_candidates.length = 7;
+  fs.writeFileSync(defaultPath, JSON.stringify(expanded));
+  const shortageRun = spawnSync(process.execPath, [path.join(__dirname, 'finalize-selection-run.mjs'), '--input', defaultPath],
+    { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 32 * 1024 * 1024 });
+  assert.equal(shortageRun.status, 0, shortageRun.stderr || shortageRun.stdout);
+  const shortageArtifact = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+  assert.deepEqual(shortageArtifact.presentation.per_platform_rendered, { pxb7: 7, pzds: 10 });
+  assert.deepEqual(shortageArtifact.presentation.candidate_shortage_platforms, ['pxb7']);
+  assert.match(shortageArtifact.final_response, /### 螃蟹候选（7 个）/);
+  assert.equal(shortageArtifact.presentation.status, 'candidate_shortage');
+
+  const unlimitedReport = renderSelectionReport({
+    selection_profile: { budget: { primary_min: 0, primary_max: null, interpretation: 'explicit_unlimited' } },
+    selection_summary: '本轮尚未证实全图鉴，候选均需补充名单。',
+  });
+  assert.match(unlimitedReport, /本轮主预算：无上限/);
+  assert.match(unlimitedReport, /本轮尚未证实全图鉴，候选均需补充名单。/);
+  assert.doesNotMatch(unlimitedReport, /突破预算|值得加预算|突破项比预算/);
   const artifactPath = path.join(tempDir, 'run.json');
   const reportPath = path.join(tempDir, 'run.md');
   fs.copyFileSync(fixturePath, artifactPath);

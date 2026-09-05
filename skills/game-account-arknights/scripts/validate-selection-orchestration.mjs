@@ -82,7 +82,7 @@ console.log(JSON.stringify({ ok: !failed, ego_task_spaces_requested: [taskSpace]
 process.exit(failed ? 1 : 0);
 `);
 
-function runScenario(name, extraEnv = {}, extraArgs = []) {
+function runScenario(name, extraEnv = {}, extraArgs = [], { useDefaultCounts = false } = {}) {
   const artifactPath = path.join(temporaryRoot, `${name}.json`);
   const reportPath = path.join(temporaryRoot, `${name}.md`);
   const statePath = path.join(temporaryRoot, `${name}.state`);
@@ -94,10 +94,9 @@ function runScenario(name, extraEnv = {}, extraArgs = []) {
     '--out', artifactPath,
     '--report-out', reportPath,
     '--task-space', `fixture-${name}`,
-    '--limit', '10',
+    ...(useDefaultCounts ? [] : ['--limit', '10']),
     '--batches', '1',
-    '--details-per-platform', '2',
-    '--display-per-platform', '3',
+    ...(useDefaultCounts ? [] : ['--details-per-platform', '2', '--display-per-platform', '3']),
     '--recommendations', '3',
     '--backups', '1',
     ...extraArgs,
@@ -133,12 +132,32 @@ function assertHandoffStopsImmediately(scenario, beforeCleanup, expectedLastOper
 }
 
 try {
+  const defaults = runScenario('default-counts', {}, [], { useDefaultCounts: true });
+  assert.equal(defaults.result.status, 0, defaults.result.stderr || defaults.result.stdout);
+  const defaultArtifact = JSON.parse(fs.readFileSync(defaults.artifactPath, 'utf8'));
+  assert.equal(defaultArtifact.coverage_plan.completeness_gates.detail_required_for_top_n_per_platform, 10);
+  assert.equal(defaultArtifact.coverage_plan.completeness_gates.min_display_candidates_per_platform, 10);
+  assert.equal(defaultArtifact.presentation.per_platform_requested, 10);
+  assert.deepEqual(defaultArtifact.presentation.per_platform_rendered, { pxb7: 10, pzds: 10 });
+  for (const attempt of defaultArtifact.platform_attempts) {
+    assert.equal(attempt.result_count, 20, `${attempt.platform} must retain spare list candidates`);
+    assert.equal(attempt.detail_attempts.length, 10, `${attempt.platform} must check ten details by default`);
+    assert.ok(attempt.detail_attempts.every((detail) => detail.status === 'success'));
+    assert.equal(new Set(attempt.detail_attempts.map((detail) => detail.listing_id)).size, 10);
+    const rows = defaultArtifact.platform_shortlists[attempt.platform].display_candidates;
+    assert.equal(new Set(rows.map((row) => row.listing_id)).size, 10);
+    for (const row of rows) assert.ok(defaultArtifact.final_response.includes(row.listing_id));
+  }
+  assert.equal(defaultArtifact.quality_gate.redo_required, false);
+
   const fallback = runScenario('pzds-fallback', { GAME_ACCOUNT_FAKE_PZDS_FAIL_ONCE: '1' });
   assert.equal(fallback.result.status, 0, fallback.result.stderr || fallback.result.stdout || 'fixture orchestration failed');
   const artifact = JSON.parse(fs.readFileSync(fallback.artifactPath, 'utf8'));
   assert.equal(artifact.schema_version, '3.0');
   assert.equal(artifact.quality_gate.redo_required, false);
   assert.equal(artifact.cleanup_reports[0].ok, true);
+  assert.equal(artifact.presentation.per_platform_requested, 3, 'explicit display overrides must remain supported');
+  assert.ok(artifact.platform_attempts.every((attempt) => attempt.detail_attempts.length === 2), 'explicit detail overrides must remain supported');
   assert.ok(artifact.platform_attempts.every((attempt) => attempt.operation_verified === true));
   assert.deepEqual(artifact.platform_attempts.map((attempt) => attempt.operation), ['pxb7/arknights-list', 'pzds/arknights-list']);
   assert.ok(artifact.platform_attempts.every((attempt) => attempt.operations.length === 2));

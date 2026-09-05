@@ -88,7 +88,7 @@ function finalizeResponseContract(value, perPlatform) {
 
 const input = readArg('--input');
 if (!input) {
-  console.error('Usage: finalize-selection-run.mjs --input <artifact.json> [--report-out <report.md>] [--per-platform 5]');
+  console.error('Usage: finalize-selection-run.mjs --input <artifact.json> [--report-out <report.md>] [--per-platform 10]');
   process.exit(2);
 }
 
@@ -101,7 +101,7 @@ if (new Set(outputPaths).size !== outputPaths.length) {
   console.error('Artifact, report, optimizer, and evaluator paths must be distinct');
   process.exit(1);
 }
-const perPlatform = Math.max(1, Math.min(Number(readArg('--per-platform', 5)) || 5, 15));
+const perPlatform = Math.max(1, Math.min(Number(readArg('--per-platform', 10)) || 10, 15));
 const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
 const requestProvenance = artifact.request_provenance;
 const inputIssues = [
