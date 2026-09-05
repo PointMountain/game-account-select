@@ -206,7 +206,7 @@ node skills/game-account-select/scripts/create-run-artifact.mjs --game "<game>" 
 4. 每条平台路径必须有等待预算：列表页通常 10-15 秒，详情页通常 15-20 秒；单个平台同一意图连续失败后立即降级，不让无输出命令长期挂起。
 5. 对每个平台记录：查询词、开始/结束时间、耗时、等待预算、结果数、失败文本、是否进入详情页、是否使用列表卡片/截图/用户文本降级。
 6. 平台 capability 未支持或页面不可读时，请用户提供截图/链接/复制文本；链接本身不授权绕过矩阵动态读取。已验证列表卡片可读但详情 capability 不可用时，可保留为 `source_status: partial`，不能假装已验明详情。
-7. 盼之详情 URL 末尾的分类段不能反推列表页游戏 ID。例如绝区零详情页 `goodsDetails/<id>/6` 中的 `/6` 不是绝区零列表 ID；当前 ZZZ/PZDS list/detail 都是 `unsupported`，不要自然导航、构造或复用 `goodsList/<id>` 来冒充覆盖。历史候选 `goodsList/275` 只属于维护者探索证据，不是 verified 入口。
+7. 盼之详情 URL 末尾的分类段不能反推列表页游戏 ID。例如绝区零详情页 `goodsDetails/<id>/6` 中的 `/6` 不是绝区零列表 ID；绝区零的已验证列表入口是 `pzds/zzz-list` 指向的 `goodsList/275`。其它游戏同样从 operation manifest 获取入口，并复核当前页面游戏身份。
 8. 每次完成已验证的盼之列表或详情 operation 后，运行 `npm run pzds:health -- --json` 做只读健康复验。若页面缺少盼之游戏入口、出现阻断文本或卡在加载，记录 `operation_drift` / `pzds_browser_state_unhealthy` 并停止，不清理 cookie、缓存或登录态。
 9. 每个平台先读取 support matrix 与 ego-ops 目标 operation；任一不满足 verified 条件都记录 `knowledge_status: exploration_required` / capability gap 并 fail closed。只有维护者显式 `--allow-exploration` 的流程可探索和回写，失败不得刷新验证日期。
 10. 运行记录保留 `query_governance: ego_ops`、`operation`、`knowledge_status`、`operation_reference`、实时页面复核和 task space；operation 失效时在同一空间重观察，不切换查询软件。

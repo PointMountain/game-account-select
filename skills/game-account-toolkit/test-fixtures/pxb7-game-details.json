@@ -1,0 +1,22 @@
+{
+  "zzz": {
+    "url": "https://www.pxb7.com/product/9000000000000000001/1",
+    "title": "绝区零账号交易_【JJTEST1】60级",
+    "primaryText": "绝区零 商品详情\n￥129.50\n找回包赔\n官方验号\n【JJTEST1】60级；菲林底片：10；菲林：750；加密母带：3；S级代理人：满命雅，2命仪玄；S级音擎：精1霰落星殿；时装：测试时装\n米哈游官服 未绑定TAP 未绑定PSN\n3小时内发布\n验号报告\n该账号于2026年09月05日完成验号",
+    "agentCards": [{ "section": "S级角色", "text": "6+1\nLv. 60\n雅" }, { "section": "S级角色", "text": "2\nLv. 60\n仪玄" }],
+    "wEngineCards": [{ "section": "S级武器", "text": "1\nLv. 60\n霰落星殿" }, { "section": "", "text": "测试时装" }],
+    "titleNodes": []
+  },
+  "wuthering-waves": {
+    "url": "https://www.pxb7.com/product/9000000000000000002/1",
+    "title": "鸣潮账号交易_【MCTEST2】80级",
+    "primaryText": "鸣潮 商品详情\n￥300\n官方验号 找回包赔\n【MCTEST2】80级，星声：7000；2个五星角色：3命爱弥斯,2命安可；1个五星武器：精2千古洑流；时装：测试时装\n官服 未绑定TAP 未绑Wegame\n验号报告",
+    "assetCards": [{ "section": "五星角色", "text": "3+1\nLv. 90\n爱弥斯" }, { "section": "五星角色", "text": "2\nLv. 90\n安可" }, { "section": "四星角色", "text": "6\nLv. 90\n散华" }, { "section": "五星武器", "text": "2\nLv. 90\n千古洑流" }]
+  },
+  "neverness-to-everness": {
+    "url": "https://www.pxb7.com/product/9000000000000000003/1",
+    "title": "异环账号交易_【YHTEST3】猎人等级55级",
+    "primaryText": "异环 商品详情\n￥65\n找回包赔 官方验号\n【YHTEST3】猎人等级：55级，环石数量510；S级角色：5觉醒小吱,2觉醒浔；S级弧盘：4阶思考喵，1阶茶花会\n完美账号 未绑定TAP\n验号报告",
+    "assetCards": [{ "section": "S级角色", "text": "5+4\nLv. 70\n小吱" }, { "section": "S级角色", "text": "2+1\nLv. 80\n浔" }, { "section": "A级角色", "text": "6\nLv. 70\n阿德勒" }, { "section": "S级武器", "text": "4\nLv. 70\n思考喵" }, { "section": "S级武器", "text": "1\nLv. 70\n茶花会" }]
+  }
+}

@@ -1,4 +1,5 @@
 import { normalizePzdsList } from './arknights-parsers.mjs';
+import { normalizePxb7GameList, parsePxb7GameDetail } from './pxb7-parsers.mjs';
 
 const clean = (value) => String(value ?? '').replace(/\u00a0/g, ' ').replace(/[ \t]+/g, ' ').trim();
 
@@ -43,6 +44,8 @@ function parsePzdsDetail(raw) {
 }
 
 export function parseGenericGameOperation(operation, raw, options = {}) {
+  if (/^pxb7\/(wuthering-waves|neverness-to-everness)-list$/.test(operation)) return normalizePxb7GameList(raw, options);
+  if (/^pxb7\/(wuthering-waves|neverness-to-everness)-detail$/.test(operation)) return parsePxb7GameDetail(operation, raw);
   if (operation.startsWith('pzds/') && operation.endsWith('-list')) return normalizePzdsList(raw, options);
   if (operation.startsWith('pzds/') && operation.endsWith('-detail')) return parsePzdsDetail(raw);
   throw new Error(`Unsupported generic game operation: ${operation}`);

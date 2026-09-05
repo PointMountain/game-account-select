@@ -23,8 +23,10 @@ export function normalizeOperationUrl(operation, input, entry) {
   throw new Error(`Unsupported operation: ${operation}`);
 }
 
-function pxb7ArknightsList(options) {
+function pxb7List(options, gameId, query) {
   const config = {
+    gameId,
+    query,
     apiUrl: 'https://api-pc.pxb7.com/api/search/product/v2/selectSearchPageList',
     minPrice: Math.max(0, Number(options.minPrice) || 0),
     maxPrice: Math.max(0, Number(options.maxPrice) || 0),
@@ -42,7 +44,7 @@ function pxb7ArknightsList(options) {
         filterDTOList.push({ attrId: 'price', attrType: 3, attrValList: [String(config.minPrice || 0), String(config.maxPrice || 99999999)] });
       }
       const payload = {
-        query: '明日方舟', gameId: '10053', pageIndex: config.startPage + offset, pageSize: 20,
+        query: config.query, gameId: config.gameId, pageIndex: config.startPage + offset, pageSize: 20,
         bizProd: 1, type: '2', posType: 1, filterDTOList,
         ...(pageToken ? { pageToken } : {})
       };
@@ -51,7 +53,9 @@ function pxb7ArknightsList(options) {
       });
       if (!response.ok) throw new Error('PXB7 list HTTP ' + response.status);
       const data = await response.json();
-      const list = Array.isArray(data?.data?.list) ? data.data.list : [];
+      if (!Array.isArray(data?.data?.list)) throw new Error('PXB7 list response missing data.list');
+      const list = data.data.list;
+      if (list.some((item) => item?.gameId != null && String(item.gameId) !== config.gameId)) throw new Error('PXB7 list response contains a different game');
       if (!list.length) break;
       rows.push(...list);
       pageToken = data?.data?.properties?.pageToken ?? null;
@@ -67,10 +71,11 @@ function pxb7ArknightsList(options) {
       ].filter((entry) => entry[1] != null).map((entry) => entry[0] + '：' + entry[1]);
       return {
         productId: item?.productId,
+        gameId: item?.gameId,
         price: item?.price,
         guarantee: item?.guarantee,
         attrNameList: Array.isArray(item?.attrNameList) ? item.attrNameList.slice(0, 12) : [],
-        showTitle: [withoutSkinNames, ...scalarFacts].filter(Boolean).join('；'),
+        showTitle: config.gameId === '10053' ? [withoutSkinNames, ...scalarFacts].filter(Boolean).join('；') : rawTitle,
       };
     });
     return { rows: compactRows };
@@ -153,33 +158,37 @@ function pzdsList(options) {
 }
 
 function pxb7Detail() {
-  return `(() => ({
+  return `(() => {
+    const nodes = Array.from(document.querySelectorAll('body *'));
+    const recommendation = nodes.find((node) => node.children.length === 0 && node.textContent.trim() === '商品推荐');
+    const isPrimary = (node) => !recommendation || (!node.contains(recommendation) && Boolean(node.compareDocumentPosition(recommendation) & Node.DOCUMENT_POSITION_FOLLOWING));
+    const primaryText = (document.body?.innerText || '').split(/商品推荐/)[0]
+      .split('\\n').filter((line) => !/^\\*\\*/.test(line)).join('\\n');
+    const assetCards = Array.from(document.querySelectorAll('.ReportCharacter,.ReportWeapon')).filter(isPrimary).flatMap((section) => {
+      const label = (section.innerText || '').split('\\n')[0].trim();
+      return Array.from(section.querySelectorAll('[class*="cursor-pointer"]')).map((card) => ({ section: label, text: card.innerText || '' }));
+    });
+    return {
     url: location.href,
     title: document.title || '',
-    text: document.body ? document.body.innerText || '' : '',
-    primaryText: document.body ? (document.body.innerText || '').split(/商品推荐/)[0] : '',
+    text: primaryText,
+    primaryText,
     primaryTitleText: (() => {
-      const candidates = Array.from(document.querySelectorAll('body *'))
+      const candidates = nodes.filter(isPrimary)
         .filter((el) => el.children.length === 0)
         .map((el) => (el.innerText || '').trim())
-        .filter((value) => /【[A-Z0-9]+】/i.test(value) && /S级(?:角色|代理人)[：:]/.test(value));
+        .filter((value) => /^【[A-Z0-9]+】/i.test(value));
       return candidates.sort((left, right) => right.length - left.length)[0] || '';
     })(),
-    titleNodes: Array.from(document.querySelectorAll('[title]')).map((el) => ({ title: el.getAttribute('title') || '', text: el.innerText || '' })),
-    agentCards: Array.from(document.querySelectorAll('.ReportCharacter')).flatMap((section) => {
-      const sectionText = section.innerText || '';
-      const sectionLabel = (sectionText.match(/S级(?:角色|代理人)|A级(?:角色|代理人)/) || [])[0] || '';
-      return Array.from(section.querySelectorAll('[class*="cursor-pointer"]')).map((card) => ({ section: sectionLabel, text: card.innerText || '' }));
-    }),
-    wEngineCards: Array.from(document.querySelectorAll('.ReportCharacter')).flatMap((section) => {
-      const sectionText = section.innerText || '';
-      const sectionLabel = (sectionText.match(/S级(?:音擎|武器)|A级(?:音擎|武器)/) || [])[0] || '';
-      return Array.from(section.querySelectorAll('[class*="cursor-pointer"]')).map((card) => ({ section: sectionLabel, text: card.innerText || '' }));
-    }),
-    images: Array.from(document.images || []).map((image) => ({
+    titleNodes: Array.from(document.querySelectorAll('[title]')).filter(isPrimary).map((el) => ({ title: el.getAttribute('title') || '', text: el.innerText || '' })),
+    assetCards,
+    agentCards: assetCards.filter((card) => /S级(?:角色|代理人)/.test(card.section)),
+    wEngineCards: assetCards.filter((card) => /S级(?:音擎|武器)/.test(card.section)),
+    images: Array.from(document.images || []).filter(isPrimary).map((image) => ({
       src: image.currentSrc || image.src || '', width: image.naturalWidth || 0, height: image.naturalHeight || 0
     })).filter((image) => image.width >= 600 || image.height >= 600)
-  }))()`;
+    };
+  })()`;
 }
 
 function pzdsDetail() {
@@ -294,9 +303,18 @@ function semanticSearch(options) {
 }
 
 export function buildBrowserScript(operation, options = {}) {
-  if (operation === 'pxb7/arknights-list') return pxb7ArknightsList(options);
+  const pxb7Games = {
+    arknights: ['10053', '明日方舟'],
+    zzz: ['10312', '绝区零'],
+    'wuthering-waves': ['10302', '鸣潮'],
+    'neverness-to-everness': ['10630', '异环'],
+  };
+  if (operation.startsWith('pxb7/') && operation.endsWith('-list')) {
+    const game = pxb7Games[operation.slice(5, -5)];
+    if (game) return pxb7List(options, ...game);
+  }
   if (operation.startsWith('pzds/') && operation.endsWith('-list')) return pzdsList(options);
-  if (operation === 'pxb7/arknights-detail' || operation === 'pxb7/zzz-detail') return pxb7Detail();
+  if (operation.startsWith('pxb7/') && pxb7Games[operation.slice(5, -7)] && operation.endsWith('-detail')) return pxb7Detail();
   if (operation.startsWith('pzds/') && operation.endsWith('-detail')) return pzdsDetail();
   if (operation === 'generic/semantic-search') return semanticSearch(options);
   throw new Error(`Unsupported operation: ${operation}`);

@@ -14,11 +14,11 @@
       "query_governance": "ego_ops",
       "browser_transport": "ego_browser",
       "query_session_id": "zzz-asset-status",
-      "operation": "pxb7/zzz-detail",
+      "operation": "pxb7/zzz-unregistered-detail",
       "knowledge_status": "verified_operation_available",
-      "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-detail.md",
+      "operation_reference": "ego-ops/references/sites/pxb7/operations/zzz-unregistered-detail.md",
       "operation_verified": true,
-      "evidence": "verified detail operation returned binding/resources/counts/voidHunters but the recommendation discarded asset-card agentStatuses"
+      "evidence": "Run claims an unregistered detail operation is verified and returned asset-card data"
     }
   ],
   "community_attempts": [
@@ -56,7 +56,7 @@
       "process_audit_after": []
     }
   ],
-  "final_response": "已读取主体详情，但报告遗漏角色卡片的 agentStatuses，应由资产完整性检查指出缺口。",
+  "final_response": "未注册的 operation 必须先被拒绝，不能继续进入角色或音擎完整性检查。",
   "user_feedback": [
     "螃蟹详情页下面有商品图片，角色右上角数字 x+y 可以直接预览，之后 skill 查询要一起看一下"
   ]

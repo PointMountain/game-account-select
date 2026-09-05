@@ -197,19 +197,32 @@ assert.deepEqual(mentionedPlatformArtifact.selection_profile.platforms, ['pxb7',
 assert.deepEqual(overrideArtifact.selection_profile.clarification_required, []);
 assert.equal(overrideArtifact.profile_confirmation.status, 'confirmed');
 
-const unsupportedGameRun = spawnSync(process.execPath, [
+for (const [game, slug] of [['绝区零', 'zzz'], ['鸣潮', 'wuthering-waves'], ['异环', 'neverness-to-everness']]) {
+  const run = spawnSync(process.execPath, [artifactScript, '--game', game, '--user-request', '1000元左右，战力优先，比较螃蟹和盼之', '--json'], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
+  assert.equal(run.status, 0, run.stderr);
+  const artifact = JSON.parse(run.stdout);
+  for (const platform of ['pxb7', 'pzds']) {
+    const task = artifact.coverage_plan.source_tasks.find((task) => task.id === `platform-${platform}-list`);
+    assert.equal(task.start_path, 'ego_ops_verified_operation', `${game}/${platform} must enter the normal query route`);
+    assert.equal(task.operation, `${platform}/${slug}-list`);
+    assert.deepEqual(task.fallback_order, ['verified_operation_recheck', 'user_material']);
+    assert.ok(!artifact.coverage_gaps.some((gap) => gap.task_id === task.id && gap.reason === 'unsupported_operation'));
+  }
+}
+
+const unsupportedPlatformRun = spawnSync(process.execPath, [
   artifactScript,
   '--game', '绝区零',
-  '--user-request', '1000元左右，战力优先，只查螃蟹',
-  '--platforms', 'pxb7',
+  '--user-request', '1000元左右，战力优先，只查交易猫',
+  '--platforms', 'jiaoyimao',
   '--json',
 ], { encoding: 'utf8', cwd: path.resolve(__dirname, '..', '..', '..') });
-assert.equal(unsupportedGameRun.status, 0, unsupportedGameRun.stderr);
-const unsupportedArtifact = JSON.parse(unsupportedGameRun.stdout);
-const unsupportedTask = unsupportedArtifact.coverage_plan.source_tasks.find((task) => task.id === 'platform-pxb7-list');
+assert.equal(unsupportedPlatformRun.status, 0, unsupportedPlatformRun.stderr);
+const unsupportedArtifact = JSON.parse(unsupportedPlatformRun.stdout);
+const unsupportedTask = unsupportedArtifact.coverage_plan.source_tasks.find((task) => task.id === 'platform-jiaoyimao-list');
 assert.equal(unsupportedTask.start_path, 'unsupported_fail_closed');
 assert.equal(unsupportedTask.operation, null);
 assert.deepEqual(unsupportedTask.fallback_order, ['user_material']);
-assert.ok(unsupportedArtifact.coverage_gaps.some((gap) => gap.task_id === 'platform-pxb7-list' && gap.reason === 'unsupported_operation'));
+assert.ok(unsupportedArtifact.coverage_gaps.some((gap) => gap.task_id === 'platform-jiaoyimao-list' && gap.reason === 'unsupported_operation'));
 
 console.log('Validation passed: run artifacts freeze a run-only selection profile without durable preference updates.');

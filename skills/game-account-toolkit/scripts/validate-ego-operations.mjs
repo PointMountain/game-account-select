@@ -10,6 +10,7 @@ import { parseArknightsOperation } from '../ego-operations/arknights-parsers.mjs
 import { buildBrowserScript } from '../ego-operations/browser-scripts.mjs';
 import { parseGenericGameOperation } from '../ego-operations/generic-game-parsers.mjs';
 import { parseZzzOperation } from '../ego-operations/zzz-parsers.mjs';
+import './validate-pxb7-game-operations.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const runner = path.join(__dirname, 'run-ego-operation.mjs');
@@ -343,7 +344,7 @@ try {
     '--input', 'https://www.pxb7.com/product/123/1',
     '--json',
   ], spawnOptions);
-  assert.equal(explorationBlocked.status, 1, 'an exploration-only operation must fail closed by default');
+  assert.equal(explorationBlocked.status, 1, 'a verified operation without matching external knowledge must fail closed');
   const explorationReport = JSON.parse(explorationBlocked.stdout);
   assert.ok(explorationReport.reasons.includes('ego_ops_operation_not_verified'), 'unverified operation reason must be explicit');
   assert.deepEqual(
@@ -353,7 +354,7 @@ try {
   );
   assert.equal(explorationReport.execution.command, 'ego-browser not started', 'fail-closed validation must not open ego-browser');
   assert.equal(explorationReport.completion, null, 'fail-closed validation must not start a cleanup browser process');
-  assert.equal(explorationReport.ego_ops.manifest_availability, 'exploration_only');
+  assert.equal(explorationReport.ego_ops.manifest_availability, 'verified');
   assert.equal(explorationReport.ego_ops.exploration_authorized, false);
 } finally {
   fs.rmSync(temporaryRoot, { recursive: true, force: true });

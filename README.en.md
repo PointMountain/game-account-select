@@ -1,230 +1,249 @@
 <p align="center">
-  <img src="assets/readme-banner-en.svg" alt="Game Account Select - community-grounded game account valuation skill pack" width="100%" />
+  <img src="assets/readme-avatar.png" width="112" height="112" alt="Game Account Select mascot: a mint-haired anime character holding a character card" />
 </p>
 
-# Game Account Select
+<h1 align="center">Game Account Select</h1>
 
 <p align="center">
-  <img src="assets/readme-icon.svg" width="92" height="92" alt="Game Account Select icon" />
-</p>
-
-<p align="center">
-  <em>Agent skills for anime-game account screening, valuation, and purchase-risk review.</em>
+  <strong>Find an account that feels like yours.</strong><br />
+  Give your AI a wishlist. Let it find listings, compare prices, and check teams.
 </p>
 
 <p align="center">
-  <a href="README.md">简体中文</a>
-  ·
-  <strong>English</strong>
+  <a href="README.md">简体中文</a> · <strong>English</strong><br />
+  <a href="#project-status">Status</a> · <a href="#install">Install</a> · <a href="#try-a-prompt">Usage</a> · <a href="#supported-games">Games</a> · <a href="#project-architecture">Architecture</a> · <a href="https://github.com/PointMountain/game-account-select/issues">Feedback</a>
 </p>
 
 <p align="center">
-  <a href="#install"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="Install with npx skills add" /></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/skills-11-f0c96a?style=for-the-badge&labelColor=101624" alt="11 agent skills" /></a>
-  <a href="#design-philosophy"><img src="https://img.shields.io/badge/philosophy-evidence%20first-f0c96a?style=for-the-badge&labelColor=101624" alt="Evidence first" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=for-the-badge&labelColor=101624" alt="MIT License" /></a>
+  <a href="skills/"><img src="https://img.shields.io/badge/Agent_Skills-11-42766B?style=flat-square" alt="11 Agent Skills" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-D9795D?style=flat-square" alt="MIT License" /></a>
 </p>
 
-Game Account Select helps you turn seller descriptions, screenshots/OCR, account assets, and community guide consensus into a comparable shortlist before buying a game account. It cares less about raw five-star, six-star, or S-rank counts, and more about whether those assets are actually valuable in the current version, whether the team is usable, whether resources are sufficient, and whether binding/recovery risk is clear.
+<p align="center">
+  <img src="assets/readme-hero.png" width="100%" alt="Anime illustration of the mascot choosing a character card beside a magnifying glass and comparison notebook" />
+</p>
 
-It is not a trading platform and does not place orders. It is built to remove risky listings quickly, surface the accounts worth checking further, and make the reasoning and uncertainty behind every recommendation visible.
+Game Account Select is a set of game-account skills for tools that support Agent Skills, such as Codex and Claude Code. Share your game, budget, and favorite characters to get a comparison with listing links, prices, recommendations, and questions to ask the seller.
 
-<p align="center"><sub><a href="#install">Install</a> · <a href="#what-it-helps-with">Capabilities</a> · <a href="#account-screening-flow">Flow</a> · <a href="#skills">Skills</a> · <a href="#design-philosophy">Philosophy</a> · <a href="#maintenance">Maintenance</a> · <a href="#safety">Safety</a> · <a href="#license">License</a></sub></p>
+## Project Status
+
+<p align="center">
+  <img src="assets/readme-status.png" width="100%" alt="The mascot pins a completed card onto a studio progress board" />
+</p>
+
+The project is available as an **Agent Skills pack**, with repository version **v0.1.0** and four games integrated. Follow development through the links below.
+
+[![CI on main](https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml/badge.svg?branch=main)](https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml)
+[![Last commit](https://img.shields.io/github/last-commit/PointMountain/game-account-select?style=flat-square&color=42766B)](https://github.com/PointMountain/game-account-select/commits/main/)
+[![Open issues](https://img.shields.io/github/issues/PointMountain/game-account-select?style=flat-square&color=D9795D)](https://github.com/PointMountain/game-account-select/issues)
+
+- [x] All 11 skills available in one install.
+- [x] Account evaluation and comparison for Arknights, ZZZ, Wuthering Waves, and NTE.
+- [x] Searches guided by your budget and preferences, with sources for each candidate.
+- [x] Community refreshes, new-game skill generation, run reviews, and regression checks.
+- [x] Listing search, detail reads, and comparisons across PXB7 and PZDS for all four games.
+
+See the [changelog](changelogs/), [project activity](https://github.com/PointMountain/game-account-select/pulse), and [issues](https://github.com/PointMountain/game-account-select/issues) for ongoing work.
 
 ## Install
 
-Recommended: install the full pack so the selector, preflight check, shared toolkit, community refresh, and every supported game skill are available together:
+<p align="center">
+  <img src="assets/readme-install.png" width="100%" alt="The mascot unpacks skill cards and prepares her computer and tools" />
+</p>
+
+With **Node.js 22+** installed, run this command and choose your agent when prompted:
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select --skill '*'
 ```
 
-Without `--skill`, `npx skills` opens an interactive selector:
+This installs all 11 skills. Start a new agent session after installation.
+
+**For online searches**, set up the [ego lite](https://lite.ego.app/) browser and install or link the `ego-browser` and `ego-ops` skills, including the relevant platform operations. Start with this prompt to check what you need:
+
+```text
+Use game-account-preflight to check my account-search setup, including
+Node.js, git, gh, ego-ops, and ego-browser. Tell me what to prepare next.
+```
+
+The [matching ego-ops version](https://github.com/PointMountain/jacky-skills/tree/98cd060110c630c78d7e1282e7834dd359aa171b/harness/ego-ops) includes both-platform operations for all four games. Ask your agent to check that these operations are present when installing or updating.
+
+<details>
+<summary>Choose individual skills / update</summary>
+
+Open the interactive installer:
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-If you only want one game, select these items in the interactive selector:
+For one game's account evaluations, select its game skill along with `game-account-toolkit`, `game-account-preflight`, `game-account-skill-optimizer`, `game-account-skill-evaluator`, and `game-account-community-updater`. Add `game-account-select` for finding listings.
 
-- The game skill you need, for example `game-account-zenless-zone-zero`
-- `game-account-toolkit`
-- `game-account-preflight`
-- `game-account-skill-optimizer`
-- `game-account-skill-evaluator`
-- `game-account-community-updater`
-
-You can also use a bundle command:
+Update your installed skills:
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select \
-  --skill "game-account-toolkit" \
-  --skill "game-account-preflight" \
-  --skill "game-account-skill-optimizer" \
-  --skill "game-account-skill-evaluator" \
-  --skill "game-account-community-updater" \
-  --skill "game-account-zenless-zone-zero"
+npx skills update
 ```
 
-From a local checkout, generate full commands for common install profiles:
+</details>
 
-| Goal | Command |
+## Try a prompt
+
+### Find me an account
+
+<p align="center">
+  <img src="assets/readme-search.png" width="100%" alt="The mascot explores account cards with a wishlist and magnifying glass" />
+</p>
+
+Include your **game, budget, server, and priorities**:
+
+```text
+Use game-account-select to find an Arknights account on the official
+CN server for up to CNY 1,500. I care most about limited and collab
+operators; enough progression for daily play is fine.
+Compare listings on PXB7 and PZDS. Include prices, highlights, links,
+and questions I should ask each seller.
+```
+
+### Is this one worth a look?
+
+<p align="center">
+  <img src="assets/readme-evaluate.png" width="100%" alt="The mascot reviews one account card with its characters, equipment, and resources" />
+</p>
+
+Attach screenshots or paste the listing link or seller's description:
+
+```text
+Use game-account-zenless-zone-zero to review this ZZZ account at CNY 800.
+I'd like two playable teams and some pulls saved for later.
+Check the team options, signature W-Engines, and account bindings.
+Is it worth considering at this price?
+
+Account details: <paste a link or description, or attach screenshots>
+```
+
+### Help me choose between these
+
+<p align="center">
+  <img src="assets/readme-compare.png" width="100%" alt="The mascot compares three account dossiers and marks her favorite" />
+</p>
+
+```text
+Use game-account-wuthering-waves to compare these three accounts.
+Jinhsi is my favorite, so prioritize her team and signature weapon,
+then look at the remaining pulls. Rank them for me and explain
+the tradeoffs.
+
+Account A: <link or details>
+Account B: <link or details>
+Account C: <link or details>
+```
+
+## What you get
+
+<p align="center">
+  <img src="assets/readme-report.png" width="100%" alt="The mascot presents an organized recommendation report with cards and a checklist" />
+</p>
+
+A comparison built around what matters to you:
+
+| Your question | What the report includes |
 | --- | --- |
-| Core helpers only | `node scripts/list-skills.js --profile core` |
-| Optimizer only | `node scripts/list-skills.js --profile optimization` |
-| Zenless Zone Zero only | `node scripts/list-skills.js --profile zenless-zone-zero` |
-| Wuthering Waves only | `node scripts/list-skills.js --profile wuthering-waves` |
-| New game generation and evaluation | `node scripts/list-skills.js --profile new-game-authoring` |
+| How much, and where? | Listing price, platform, and original link |
+| Does it fit my wishlist? | Characters, teams, equipment, progression, and pulls |
+| Which should I pick? | Ranking, each account's strengths, and price differences |
+| What should I ask the seller? | Bindings, identity verification, inspection details, and missing screenshots or data |
 
-List all install names and profiles from a local checkout:
+Keep the conversation going with “raise my budget to CNY 2,000,” “I care more about skins,” or “take a closer look at the second one.”
+
+## Supported games
+
+<p align="center">
+  <img src="assets/readme-games.png" width="100%" alt="Four adventure field guides surround the mascot, representing four game worlds" />
+</p>
+
+All four games support finding accounts, reading listing details, and comparing candidates on **both PXB7 and PZDS**. You can also provide account details for a direct review.
+
+| Game | What it checks | Online search |
+| --- | --- | --- |
+| **Arknights** | Limited and collab operators, progression, masteries, modules, skins, resources | PXB7, PZDS |
+| **Zenless Zone Zero** | Agents, Mindscapes, signature W-Engines, teams, Polychrome and tapes | PXB7, PZDS |
+| **Wuthering Waves** | Resonators, Resonance Chains, signature weapons, teams, pulls | PXB7, PZDS |
+| **Neverness to Everness** | S characters, S Arcs, awakenings, resources, account type | PXB7, PZDS |
+
+For another game, try:
+
+```text
+Use game-account-skill-generator to create an account evaluation skill
+for <game>. Gather community references and pass the quality checks,
+then help me review some accounts.
+```
+
+## Project Architecture
+
+<p align="center">
+  <img src="assets/readme-architecture.png" width="100%" alt="The mascot connects request cards, game field guides, and report cards into a workflow" />
+</p>
+
+Think of the 11 skills as a small team: the entry skill understands your request, browser tools gather details, game skills evaluate each account, and the final review prepares your recommendations.
+
+```mermaid
+flowchart TD
+    Request["Your request and account details"] --> Select["game-account-select · Organize the search"]
+    Select --> Runtime["preflight + toolkit · Prepare and gather details"]
+    Runtime --> Browser["ego-ops → ego-browser · Platforms and community"]
+    Runtime -. "Provided account details" .-> Games
+    Browser --> Games["Four game skills · Assets, teams, resources, and risks"]
+    Extend["generator + community-updater · New games and fresh references"] -.-> Games
+    Games --> Finalizer["Game finalizer · Assemble the report"]
+    Finalizer --> Review["optimizer + evaluator · Review results and the run"]
+    Review --> Report["Recommendations with sources and seller questions"]
+    Review -. "Gather more evidence when needed" .-> Select
+    classDef mint fill:#e8f3ed,stroke:#42766b,color:#183b34
+    classDef coral fill:#fcece4,stroke:#d9795d,color:#643c2e
+    class Select,Runtime,Browser,Games,Extend mint
+    class Request,Finalizer,Review,Report coral
+```
+
+| Curious about… | Start here |
+| --- | --- |
+| How a search starts and delivers results | [The selector skill](skills/game-account-select/SKILL.md) |
+| How each game evaluates accounts | [Arknights](skills/game-account-arknights/SKILL.md) · [ZZZ](skills/game-account-zenless-zone-zero/SKILL.md) · [Wuthering Waves](skills/game-account-wuthering-waves/SKILL.md) · [NTE](skills/game-account-neverness-to-everness/SKILL.md) |
+| How browser tools, references, and modules work together | [Architecture notes](docs/development/architecture.md) |
+| How to edit and validate skills | [Development workflow](docs/development/workflow.md) · [Learning loop](skills/game-account-skill-optimizer/references/learning-loop.md) |
+
+<details>
+<summary>More: refresh game advice / local development</summary>
+
+To revisit character and equipment value after an update:
+
+```text
+Use game-account-community-updater to refresh the ZZZ community
+references, then check whether my earlier account ranking changes.
+```
+
+From a local checkout, list skills and install bundles, or link your edits:
 
 ```bash
 npm run list:skills
 npm run list:profiles
+npm run link:skills
 ```
 
-For local development, symlink this checkout into `~/.agents/skills` so your local agent reads the latest workspace copy:
+Validate changes with the first two commands. Use the last one when you want to remove local links:
 
 ```bash
-npm run link:skills
+npm run dev:check
+npm run verify:skills
 npm run unlink:skills
 ```
 
-## What It Helps With
+See the [development workflow](docs/development/workflow.md) and [setup checklist](skills/game-account-preflight/references/preflight-checklist.md) for details.
 
-| Scenario | What Game Account Select focuses on |
-| --- | --- |
-| A listing looks rare but you cannot tell whether it is valuable | Separates limited/core assets from standard-pool traps and low-value dupes. |
-| Seller text is messy and screenshots are incomplete | Normalizes characters, weapons/engines/arcs, resources, server, binding, and verification fields. |
-| Each game has different account-value logic | Maintains separate game rules instead of applying one generic rarity rule to every game. |
-| Community meta changes quickly | Uses evidence snapshots and refresh reports to show version context, coverage gaps, and confidence. |
-| Real-name, binding, and recovery risk matter | Makes risk deductions visible and lists fields that must be confirmed with the seller. |
+</details>
 
-## Account Screening Flow
+---
 
-<p align="center">
-  <img src="assets/readme-flow-en.svg" alt="Game Account Select account screening flow" width="100%" />
-</p>
+Have a question or a game you'd like to add? [Open an issue](https://github.com/PointMountain/game-account-select/issues) with the game, what you're looking for, and what happened.
 
-| Node | Meaning |
-| --- | --- |
-| Buyer intent | Capture game, budget, server, target assets, and risk appetite so the shortlist has a real goal. |
-| Listing read | Accept platform pages, screenshots, OCR text, or seller descriptions and normalize loose claims into comparable fields. |
-| Guide signal | Use high-signal community content from Bilibili, Douyin, Xiaohongshu, guide sites, and search surfaces to build version context. |
-| Value + risk | Score assets, resources, price fit, binding risk, recovery risk, and verification gaps together. |
-| Recommendation | Return ranked candidates, rejection reasons, missing fields, manual checks, and rule-update suggestions. |
-
-## Skills
-
-| Install name | Role | Use when |
-| --- | --- | --- |
-| `game-account-select` | Main selector | You want the full account screening workflow from user requirements to ranked recommendations. |
-| `game-account-preflight` | Readiness check | The workflow needs clear guidance when browser access, network access, or local tools are missing. |
-| `game-account-toolkit` | Shared toolkit | A game skill needs shared fields, platform boundaries, community research protocol, or reusable templates. |
-| `game-account-skill-generator` | Game skill generator | The requested game is not supported yet and needs a conservative baseline buying skill. |
-| `game-account-skill-evaluator` | Quality gate | A generated, edited, or optimizer-produced skill must be checked before real account recommendations; low scores are sent back for redo. |
-| `game-account-skill-optimizer` | Run optimizer | Analyzes screening and repository-skill runs for slow paths, empty results, source coverage gaps, output-format issues, valuation misses, user feedback, and quality-gate failures. |
-| `game-account-community-updater` | Evidence refresh | Current community consensus is stale, missing, or version-sensitive. |
-| `game-account-wuthering-waves` | Wuthering Waves / Mingchao | Listings need limited-character value, signature weapons, pull resources, and TAP/Wegame/PS5 binding risk. |
-| `game-account-arknights` | Arknights | Listings need limited/collab operators, key progression, mastery/modules, resources, collection value, and real-name recovery risk. |
-| `game-account-neverness-to-everness` | Neverness to Everness | Listings need named S characters, S arc plates, awakening, resources, protagonist/account type, and early-market risk. |
-| `game-account-zenless-zone-zero` | Zenless Zone Zero / ZZZ | Listings need limited S agents, signature W-Engines, team completeness, Polychrome/tapes/Boopons, and HoYoverse/PSN/TAP binding risk. |
-
-## Design Philosophy
-
-**Goal-driven, not asset-count driven.** Start from what the buyer actually wants, then map account evidence to that goal. Raw rarity counts are only supporting signals; they should not override team completeness, version value, or risk state.
-
-**Evidence before scoring.** Build the current-version context first: guide consensus, combat environment, character/weapon value, and buyer-risk anecdotes. When evidence is weak, confidence should drop instead of turning gaps into certainty.
-
-**Transparent and reviewable.** Every recommendation should explain why an account is worth checking and why it might be a bad buy. Missing screenshots, missing resources, unclear verification, and binding risk are visible manual-check items.
-
-**One lifecycle, evidence-published capabilities.** All four game skills provide reusable scoring, run-only profiles, raw run artifacts, deterministic finalization, request provenance, self-improvement sidecars, and a delivery-hash gate. A parser alone does not make a platform route supported: normal runs require the support matrix and external `ego-ops` knowledge to agree that an operation is verified; everything else fails closed.
-
-**Self-evolving harness.** Every run leaves a diagnosable artifact: platform attempts, timings, failure text, output, user feedback, and evaluator results. The optimizer handles troubleshooting and target-file routing; the evaluator enforces the quality gate. Low scores, blocking issues, or `redo_required: true` must loop back into redo before the skill is used for real recommendations.
-
-**Safety boundaries first.** This pack only supports pre-purchase judgment. It does not bypass platform limits, run high-frequency scraping, or automate trades. Evidence and rules can evolve, but rule changes should be explainable, verifiable, and traceable.
-
-## Standard I/O
-
-All account skills share the contract in `skills/game-account-toolkit/references/skill-io-contract.md`.
-
-- Inputs: `<game_account_request>`, `<account_listing>`, `<community_evidence>`, `<skill_generation_request>`
-- Outputs: `<game_account_evaluation>`, `<recommendations>`, `<skill_quality_report>`, `<community_refresh_report>`, `<skill_optimization_report>`
-
-This keeps each skill thin: `SKILL.md` defines entry behavior, `references/` stores rules and evidence, `scripts/` stores repeatable validation, and `test-fixtures/` stores offline samples.
-
-## Generate A New Game Skill
-
-Ask the installed skill to generate a buying skill for a new game:
-
-```text
-Use game-account-skill-generator to create an account-buying skill for <game>, then evaluate it before using it for recommendations.
-```
-
-Maintainers can run the deterministic generator script from a checkout:
-
-```bash
-node skills/game-account-skill-generator/scripts/generate-game-skill.mjs --game "Test Frontier" --out /tmp/game-account-generator-test --force
-node /tmp/game-account-generator-test/skills/game-account-test-frontier/scripts/validate-sample.mjs
-```
-
-Generated skills start with low confidence until their community evidence, scoring rules, fixtures, and evaluator report pass the quality gate.
-
-## Maintenance
-
-Current platform-query capabilities:
-
-| Game | PXB7 list/detail | PZDS list/detail | Normal-run behavior |
-| --- | --- | --- | --- |
-| Arknights | `verified` / `verified` | `verified` / `verified` | Governed by `ego-ops` and executed by `ego-browser`. |
-| Zenless Zone Zero | `unsupported` / `unsupported` | `unsupported` / `unsupported` | Use user-supplied links, screenshots, or text; two detail parsers are maintainer-only exploration candidates. |
-| Wuthering Waves | `unsupported` / `unsupported` | `unsupported` / `unsupported` | Record the coverage gap; do not switch to another web tool. |
-| Neverness to Everness | `unsupported` / `unsupported` | `unsupported` / `unsupported` | Record the coverage gap; do not fabricate platform coverage. |
-
-These commands are for repository maintainers and CI-style verification:
-
-```bash
-npm run list:skills
-npm run verify:skills
-npm run verify:frontmatter
-npm run verify:query-stack
-npm run verify:operation-support
-npm run verify:game-finalizers
-node skills/game-account-preflight/scripts/preflight.mjs --json
-npm run query:ego -- --operation generic/semantic-search --url https://www.pzds.com/gameList --expected 请选择要购买的游戏 --json
-node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
-node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
-node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-run.json --json
-node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=skills/game-account-skill-optimizer/test-fixtures/optimizer-report-sample.json --json
-node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
-```
-
-All dynamic queries are governed by `ego-ops`: it defines the task card, loads one site operation, revalidates access, and sets observable success criteria. `ego-browser` then executes the read-only work in one isolated task space. The repository manifest stores parser and execution metadata only; it never stores login material or complete private responses. `exploration_only` does not mean supported: the browser starts in a normal run only when both the manifest and external operation knowledge are verified. Maintainers may opt into controlled exploration with `--allow-exploration`, but promotion still requires knowledge writeback, a matrix update, offline validation, and a live smoke check.
-
-Community evidence can refresh in two ways:
-
-- Execution-time refresh when the listing mentions assets missing from the local snapshot, a major version changes, or the user asks for current community coverage.
-- Maintainer refresh through `game-account-community-updater` when curated evidence JSON should be written into a game skill before future runs.
-
-Evidence refresh updates `community-evidence.md` and the refresh report. It should not silently rewrite valuation weights; rule changes should be proposed, reviewed, and then recorded in the game skill changelog.
-
-The optimizer can run after a real screening session or from a maintainer-provided JSON artifact. It reports recommended improvements by default; it does not silently rewrite skills unless the user explicitly asks to apply the changes and the corresponding validation scripts and evaluator gate pass. Optimized skills below the quality threshold must be redone.
-
-## Development and verified learning
-
-Start from [AGENTS.md](AGENTS.md) and the [development workflow](docs/development/workflow.md). Use `npm run dev:context`, `npm run dev:plan` (see `node scripts/dev.mjs --help` for arguments), and `npm run dev:check`; run `npm run verify:skills` before delivery. Existing skill names and executable paths remain compatible, and install profiles include required runtime dependencies.
-
-Collect a raw run before editing with `npm run learn:collect -- --input /absolute/path/run.json`. Inspect recurring findings with `npm run learn:status`, implement a fix and regression, then run `npm run learn:verify -- --id <id>` and `npm run learn:apply -- --id <id> --reason 'verified fix'`. The ignored local `.harness/` store deduplicates observations and reopens recurring findings. Applied improvements require changed targets and a passing current verification receipt; editing files invalidates it. See the [learning loop](skills/game-account-skill-optimizer/references/learning-loop.md).
-
-## Safety
-
-- Do not automate purchases or trading decisions.
-- Do not bypass captcha, login restrictions, platform rate limits, or anti-bot controls.
-- Do not treat publicly visible listings as permission for broad scraping.
-- Do not rank accounts highly from raw rare-asset counts alone.
-- Do not hide binding, real-name, PSN/TAP/Wegame/HoYoverse, recovery, guarantee, or verification gaps.
-- Do not silently modify valuation rules after user feedback; propose the exact rule update first.
-
-## License
-
-[MIT License](LICENSE) © 2026 PointMountain
+[MIT License](LICENSE) · Made for your next adventure.

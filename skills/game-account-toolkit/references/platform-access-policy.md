@@ -48,26 +48,21 @@
 - 某个平台无精确符合项时显示明确标注的近似项和覆盖缺口；不得删除该平台段，也不得把未验详情的列表卡片冒充合格推荐。
 - PZDS 的 `onStandTime` 映射为 `published_at`；`verifyTime` 才映射为 `platform_verified_at`。`verifyTime` 为 null 时显示“未披露”，即使 `shotTypeName` 表示官方验号也不能反推验号时间。
 
-### PXB7/PZDS 绝区零详情解析候选（仅受控探索）
+### 绝区零、鸣潮与异环双平台覆盖
 
-当前 support matrix 将绝区零的 PXB7/PZDS list/detail 全部标为 `unsupported`；仓库内两个详情解析器仅为 `exploration_only`，外部 `ego-ops` 尚无对应 verified operation。正常筛选不得启动这些解析器，应保留用户链接并请求截图或文本。以下内容只是维护者验证解析候选时需要检查的历史页面语义：
+| 游戏 | 螃蟹列表入口 | 盼之列表入口 | operation 名称 |
+| --- | --- | --- | --- |
+| 绝区零 | `/buy/10312/1` | `/goodsList/275` | `pxb7/zzz-list`、`pxb7/zzz-detail`、`pzds/zzz-list`、`pzds/zzz-detail` |
+| 鸣潮 | `/buy/10302/1` | `/goodsList/303` | 两平台的 `wuthering-waves-list`、`wuthering-waves-detail` |
+| 异环 | `/buy/10630/1` | `/goodsList/1546` | 两平台的 `neverness-to-everness-list`、`neverness-to-everness-detail` |
 
-- 仅在 `--allow-exploration` 维护流程中测试 `pxb7/zzz-detail` 或 `pzds/zzz-detail`，不得在正常筛选复用。
-- 解析候选需要隔离主体商品区与推荐卡片；若页面确有角色卡片，应输出浅层 `agentStatuses`，若确有 `S级音擎` / `S级武器` 名称清单，应输出浅层 `sWEngineNames`。
-- 候选升级为 `verified` 之前，必须完成外部 `ego-ops` operation 回写、manifest 与 support matrix 升级、离线回归和真实 smoke。
-- 升级后才可把字段标准化到 `game_assets.agent_statuses`、`game_assets.s_w_engine_names` 或 `game_assets.w_engines[].name`，并记录证据来源。
-- 如果只能读到标题里的 S 数量、黄数或几命描述，不能据此确认专属音擎归属；如果角色角标只有 `x` 且没有可匹配的 S 音擎名称，也应降级为 `source_status: partial` 并列为人工确认项。
-
-### PZDS 绝区零列表路由候选（未验证）
-
-PZDS 详情页和列表页的数字段含义不同，不要从详情 URL 反推列表 URL。绝区零详情页通常形如 `https://www.pzds.com/goodsDetails/<listingId>/6`，其中末尾 `/6` 不能当作 `goodsList` 的游戏 ID；直接访问 `https://www.pzds.com/goodsList/6` 可能进入错误游戏或错误频道。
-
-当前没有 `pzds/zzz-list` operation，正常筛选不得读取或声称覆盖 PZDS 绝区零列表。维护者受控探索时：
-
-- 从 `https://www.pzds.com/gameList` 自然导航到绝区零并保留最终 URL，不把历史候选路径当事实。
-- 若观察到 `https://www.pzds.com/goodsList/275`，仍必须以页面标题、面包屑、筛选项与商品卡交叉确认；该路径当前不是 verified operation。
-- 如果页面标题、面包屑、筛选项或商品卡文本显示为其它游戏，例如英雄联盟，记录 `wrong_game` / `platform-pzds-zzz-list-route-mismatch`，不要把这次尝试计为 PZDS 覆盖。
-- 即使候选页面可打开，也只能作为 operation 验证材料；正常筛选继续降级到用户提供的链接、截图或复制文本，不构造其它未验证 `goodsList/<id>` 反复重试。
+- 与明日方舟一样，主动找号先对两个平台做列表发现，再对各自短名单读取详情。平台顺序和覆盖要求沿用上方双平台规则。
+- 螃蟹的数字 product ID 是详情 URL 和查询的主键；标题中的展示编号单独保留为 `productCode`。接口列表价格以分计，结构化输出 `priceCny` 以人民币元计。
+- 螃蟹详情在“商品推荐”之前提取主体文本、角色和装备卡片；无标签卡片不计入音擎，A级或四星角色不计入 S 级或五星资产。
+- 绝区零保留 `agentStatuses` 和 `sWEngineNames`。角色角标的 `x+y` 与具名音擎分别作为证据，由游戏 skill 的专武表核对归属。
+- 鸣潮与异环输出 `assets`，分别标明 `kind`（character / weapon / arc）、`advancement`、`cornerMark` 和 `evidenceSource`。异环验号报告里的“S级武器”卡片对应弧盘；缺少养成数值时保持未知。
+- 盼之详情末尾 `/6` 是目录段，不能反推列表游戏 ID。只使用 operation 的已验证入口；页面身份、目标商品或权限发生变化时保留明确失败原因。
+- `npm run verify:live-game-skills` 按游戏读取两平台列表、详情，调用游戏估值器与 finalizer，核对两个平台的报告及质量门禁，并完成精确清理。
 
 ### PZDS ego-ops 健康复验
 

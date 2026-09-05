@@ -36,7 +36,10 @@
       "list_operation_status": "verified_operation_available",
       "detail_operation_status": "verified_operation_available",
       "operation": "pzds/zzz-detail",
-      "operations": ["pzds/zzz-list", "pzds/zzz-detail"],
+      "operations": [
+        "pzds/zzz-list",
+        "pzds/zzz-detail"
+      ],
       "knowledge_status": "verified_operation_available",
       "operation_reference": "ego-ops/references/sites/pzds/operations/zzz-detail.md",
       "operation_verified": true,
@@ -86,6 +89,6 @@
       "process_audit_after": []
     }
   ],
-  "final_response": "PZDS 已复用 verified zzz-list 和 zzz-detail operation；PXB7 仍缺少 verified ZZZ 列表与详情能力。",
+  "final_response": "两平台详情操作已经注册；本轮 PXB7 列表操作知识缺失，必须记录列表覆盖缺口。",
   "user_feedback": []
 }
