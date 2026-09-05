@@ -38,7 +38,7 @@ description: 明日方舟账号的通用动态估值与筛选能力。把限定/
 9. 默认先查本轮预算主区间和浮动区间；没有硬条件完整项时，两平台自动向更低价和更高价逐档扩展，各自在首个精确满足价档停止。只有用户明确要求严格预算才禁用；同时保留预算附近近似项，按收藏补齐与推图提升分别解释差价。
 10. 用户给出明确资源数值时，将它冻结为本轮硬条件而不只是提高资源权重。例如“合成玉 10 万左右”解析为 `orundum:80000-120000`，“合成玉 10 万以上”解析为 `orundum:100000+`；未满足者只能进入近似候选并标明缺口。
 11. 平台文本缺少低练度联动干员、但详情提供公开验号图时，调用 `scripts/verify-collab-images.mjs` 对干员页 OCR 复核；图中未找到仍只能记为未确认，不能把文本缺失直接等同于账号缺失。
-12. 每个平台默认详情复核 5 个、表格展示 5 个；完全符合项不足时用明确标注的接近项或列表待复核项补足比较视野。候选确实不足 5 个时展示全部并说明覆盖缺口，不得把 artifact 中已有候选手工删成 1–2 个。
+12. 每个平台默认详情复核 10 个、表格展示 10 个；完全符合项不足时用明确标注的接近项或列表待复核项补足比较视野。候选确实不足 10 个时展示全部并说明覆盖缺口，不得把 artifact 中已有候选手工删成 1–2 个。
 13. 数据采集结束必须由 `scripts/finalize-selection-run.mjs` 收尾：先用 `scripts/render-selection-report.mjs` 生成“预算内完整满足数量 → 预算内接近项 → 预算外完整满足项 → 双平台候选”的 Markdown 表格，再运行 optimizer 和 raw-artifact evaluator，并把 `request_provenance`、`self_improve`、`presentation`、`quality_gate`、`delivery_contract`、完整 `final_response` 和 sidecar 报告落盘。最终答复逐字使用 `final_response`，禁止绕过收尾器手写另一份推荐。
 14. 任何非 info optimizer finding 或 evaluator `redo_required` 都要继续修复/降级，不得口头声称“已总结经验”后仍把坏结果当完成态。
 15. “不要陈年老号/断代仓库号”等账号级描述进入 `soft_preferences.account_recency` 和付款前人工复核，不得进入干员 `exclusions`；干员排除只允许精确名或至少两个字符的稳定别名匹配，禁止单字干员名反向命中整句描述。

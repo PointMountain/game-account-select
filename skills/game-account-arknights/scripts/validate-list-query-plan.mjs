@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import { buildListQueryPlan } from './list-query-plan.mjs';
 
+assert.equal(buildListQueryPlan({ platform: 'pzds' })[0].limit, 20, 'the default scan must leave spare candidates for ten detail checks');
+
 const pxb7Plan = buildListQueryPlan({
   platform: 'pxb7',
   limit: 20,
@@ -27,7 +29,7 @@ const pzdsPlan = buildListQueryPlan({
 assert.equal(pzdsPlan.length, 1, 'PZDS batches must share one browser scan instead of restarting the page per batch');
 assert.deepEqual(pzdsPlan[0], {
   page: 1,
-  limit: 30,
+  limit: 60,
   logical_batch_count: 3,
   strategy: 'single_accumulating_scan',
 });
