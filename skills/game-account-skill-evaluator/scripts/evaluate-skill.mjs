@@ -329,17 +329,17 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const evidence = (zzzVerifiedOperationReport?.findings ?? []).flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
     const hasReuseFinding = findingIds.has('platform-ego-ops-operation-reuse');
-    const preservesUnsupportedClaim = /pxb7\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    const preservesVerifiedPxb7Claim = /pxb7\/zzz-detail|zenless-zone-zero/i.test(evidence);
     const preservesVerifiedPzdsClaim = /pzds\/zzz-detail/i.test(evidence);
-    if (hasMismatchFinding && hasReuseFinding && preservesUnsupportedClaim && preservesVerifiedPzdsClaim) addScore(4);
+    if (!hasMismatchFinding && hasReuseFinding && preservesVerifiedPxb7Claim && preservesVerifiedPzdsClaim) addScore(4);
     else {
-      if (!hasMismatchFinding) issue('Optimizer did not reject ZZZ operations that are absent from the verified support matrix');
+      if (hasMismatchFinding) issue('Optimizer rejected verified dual-platform ZZZ operations');
       if (!hasReuseFinding) issue('Optimizer did not reuse the verified PZDS ZZZ operation');
-      if (!preservesUnsupportedClaim) issue('Optimizer did not preserve the unsupported ZZZ operation claim evidence');
+      if (!preservesVerifiedPxb7Claim) issue('Optimizer did not preserve the verified PXB7 ZZZ operation evidence');
       if (!preservesVerifiedPzdsClaim) issue('Optimizer did not preserve the verified PZDS ZZZ operation evidence');
     }
   } else {
-    issue('Missing ZZZ unsupported-operation-claim optimizer fixture');
+    issue('Missing ZZZ verified-operation optimizer fixture');
   }
 
   for (const [label, fixturePath, evidencePattern] of [
@@ -369,10 +369,10 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const hasReuseFinding = findingIds.has('platform-ego-ops-operation-reuse');
     const gapIsListSpecific = /pxb7[\s\S]*(?:list_operation_status=operation_missing|ego_ops_exploration_for_list)/i.test(evidence);
     const preservesDetailClaims = /pxb7\/zzz-detail|pzds\/zzz-detail/i.test(evidence);
-    if (hasGapFinding && hasMismatchFinding && hasReuseFinding && gapIsListSpecific && preservesDetailClaims) addScore(4);
+    if (hasGapFinding && !hasMismatchFinding && hasReuseFinding && gapIsListSpecific && preservesDetailClaims) addScore(4);
     else {
       if (!hasGapFinding) issue('Optimizer did not report missing list operation capability');
-      if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ detail-operation claims');
+      if (hasMismatchFinding) issue('Optimizer rejected a verified ZZZ detail operation while reporting missing runtime list knowledge');
       if (!hasReuseFinding) issue('Optimizer did not reuse the verified PZDS ZZZ list/detail operations');
       if (!gapIsListSpecific) issue('Optimizer did not distinguish list-operation gaps from detail-operation reuse');
       if (!preservesDetailClaims) issue('Optimizer did not preserve the claimed ZZZ detail operations');
@@ -387,13 +387,13 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
-    const avoidsAssetStatusFinding = !findingIds.has('platform-agent-status-asset-cards-missing');
-    const preservesUnsupportedOperationEvidence = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
-    if (hasMismatchFinding && avoidsAssetStatusFinding && preservesUnsupportedOperationEvidence) addScore(4);
+    const hasAssetStatusFinding = findingIds.has('platform-agent-status-asset-cards-missing');
+    const preservesOperationEvidence = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    if (!hasMismatchFinding && hasAssetStatusFinding && preservesOperationEvidence) addScore(4);
     else {
-      if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ asset-card operation claims');
-      if (!avoidsAssetStatusFinding) issue('Optimizer ran asset-card completeness checks on an unsupported ZZZ operation');
-      if (!preservesUnsupportedOperationEvidence) issue('Optimizer did not preserve unsupported ZZZ asset-card operation evidence');
+      if (hasMismatchFinding) issue('Optimizer rejected a verified ZZZ asset-card operation');
+      if (!hasAssetStatusFinding) issue('Optimizer missed discarded asset-card statuses from a verified ZZZ operation');
+      if (!preservesOperationEvidence) issue('Optimizer did not preserve ZZZ asset-card operation evidence');
     }
   } else {
     issue('Missing ZZZ asset-status optimizer fixture');
@@ -406,16 +406,28 @@ function evaluateOptimizerFixtures(root, addScore, issue) {
     const findingIds = new Set(findings.map((finding) => finding.id));
     const evidence = findings.flatMap((finding) => finding.evidence ?? []).join('\n');
     const hasMismatchFinding = findingIds.has('platform-operation-support-claim-mismatch');
-    const avoidsSignatureNameFinding = !findingIds.has('platform-signature-engine-name-list-missing');
-    const preservesUnsupportedOperationEvidence = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
-    if (hasMismatchFinding && avoidsSignatureNameFinding && preservesUnsupportedOperationEvidence) addScore(4);
+    const hasSignatureNameFinding = findingIds.has('platform-signature-engine-name-list-missing');
+    const preservesOperationEvidence = /pxb7\/zzz-detail|pzds\/zzz-detail|zenless-zone-zero/i.test(evidence);
+    if (!hasMismatchFinding && hasSignatureNameFinding && preservesOperationEvidence) addScore(4);
     else {
-      if (!hasMismatchFinding) issue('Optimizer did not reject unsupported ZZZ signature-engine operation claims');
-      if (!avoidsSignatureNameFinding) issue('Optimizer ran signature-engine completeness checks on an unsupported ZZZ operation');
-      if (!preservesUnsupportedOperationEvidence) issue('Optimizer did not preserve unsupported ZZZ signature-engine operation evidence');
+      if (hasMismatchFinding) issue('Optimizer rejected a verified ZZZ signature-engine operation');
+      if (!hasSignatureNameFinding) issue('Optimizer missed absent W-Engine names from a verified ZZZ operation');
+      if (!preservesOperationEvidence) issue('Optimizer did not preserve ZZZ signature-engine operation evidence');
     }
   } else {
     issue('Missing ZZZ signature-engine-name optimizer fixture');
+  }
+
+  const unregisteredFixture = path.join(fixtureDir, 'zenless-zone-zero-unregistered-operation-run.json');
+  if (fs.existsSync(unregisteredFixture)) {
+    const report = runFixture(unregisteredFixture);
+    const ids = new Set((report?.findings ?? []).map((finding) => finding.id));
+    const mismatch = report?.findings?.find((finding) => finding.id === 'platform-operation-support-claim-mismatch');
+    const evidence = (mismatch?.evidence ?? []).join('\n');
+    if (!mismatch || !/zzz-unregistered-detail/.test(evidence)) issue('Optimizer did not reject an unregistered ZZZ operation or lost its evidence');
+    if (ids.has('platform-agent-status-asset-cards-missing') || ids.has('platform-signature-engine-name-list-missing')) issue('Optimizer checked asset completeness before rejecting an unregistered operation');
+  } else {
+    issue('Missing unregistered ZZZ operation regression fixture');
   }
 
   if (fs.existsSync(zzzPzdsRouteMismatchFixture)) {

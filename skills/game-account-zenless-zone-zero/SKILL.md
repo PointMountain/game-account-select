@@ -29,7 +29,7 @@ argument-hint: "[listing json, account description, or run artifact]"
 
 1. 调用 `game-account-preflight` 并展示 `<preflight_report>`。
 2. 真实买号评估先检查 `community-evidence.md`：快照满 7 天、跨版本、或出现未覆盖代理人/音擎时，调用 `game-account-community-updater` 或社区调研协议刷新。
-3. 平台访问只复用 operation support matrix 中已验证的 `ego-ops` operation，并由 `ego-browser` 执行。PZDS 列表和详情已发布为 `pzds/zzz-list`、`pzds/zzz-detail`，主动找号时必须先由列表取得唯一商品编号，再在同一 task space 抽详情；PXB7 仍为 unsupported，`pxb7/zzz-detail` 仅是 `exploration_only` 候选，正常筛选不得调用。任何抽取都只采主体商品区，不得把推荐卡片混入资产。
+3. 平台查询由 `ego-ops` 治理、`ego-browser` 执行，查询前读取 operation support matrix。螃蟹使用 `pxb7/zzz-list`、`pxb7/zzz-detail`，盼之使用 `pzds/zzz-list`、`pzds/zzz-detail`；主动找号时在同一 task space 依次读取两边列表，并对各自短名单做详情复核。只采主体商品区，保留平台清单、来源和覆盖缺口。
 4. 标准化时分别保留 `published_at`、`listed_at_raw` 与 `platform_verified_at`；相对时间不能伪装成绝对时间，缺失写 `null` / “未披露”。“满命”固定解析为影画 6，不得写成角色名或 0 命。
 5. 用 `scripts/evaluate-listing.mjs` 调用可复用评分器；`scripts/validate-sample.mjs` 只负责回归，不再是唯一评分入口。
 6. 当前“全部虚狩”按版本化名单检查；3.1 为星见雅、仪玄、叶瞬光、蕾米埃尔。旧“三虚狩”样本只作为历史兼容，必须明确缺少当前虚狩，不能继续声称“全虚狩”。
@@ -44,6 +44,8 @@ argument-hint: "[listing json, account description, or run artifact]"
 node skills/game-account-zenless-zone-zero/scripts/evaluate-listing.mjs \
   --input skills/game-account-zenless-zone-zero/test-fixtures/pxb7-jjbol4373.json
 
+node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pxb7/zzz-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
+node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pxb7/zzz-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
 node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/zzz-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
 node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/zzz-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
 

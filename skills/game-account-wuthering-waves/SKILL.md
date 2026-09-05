@@ -45,11 +45,13 @@ Wuthering Waves（鸣潮）账号不能把总黄数、五星角色数量、五�
 ## 执行流程
 
 1. 将用户请求冻结为 run-only `selection_profile`，原始请求另存于 `request_provenance` 并保留 SHA-256。
-2. 平台查询前读取 operation support matrix。PZDS 主动找号使用已验证的 `pzds/wuthering-waves-list` 与 `pzds/wuthering-waves-detail`，同一 task space 内先列表后详情；PXB7 仍标为 unsupported，不得声称已覆盖。
+2. 平台查询前读取 operation support matrix。螃蟹使用 `pxb7/wuthering-waves-list`、`pxb7/wuthering-waves-detail`，盼之使用 `pzds/wuthering-waves-list`、`pzds/wuthering-waves-detail`；主动找号时在同一 task space 依次读取两边列表，并对各自短名单做详情复核。只采主体商品区，保留平台清单、来源和覆盖缺口。
 3. 标准化挂牌后运行可复用评分入口：
 
    ```bash
    node skills/game-account-wuthering-waves/scripts/evaluate-listing.mjs --input <listing.json> --out <evaluation.json>
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pxb7/wuthering-waves-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pxb7/wuthering-waves-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
    node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/wuthering-waves-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
    node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/wuthering-waves-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
    ```

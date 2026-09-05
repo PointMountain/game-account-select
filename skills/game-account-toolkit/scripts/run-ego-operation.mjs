@@ -209,7 +209,7 @@ function validateData(data) {
     if (ids.length !== data.length) reasons.push('listing_id_missing');
     if (new Set(ids).size !== ids.length) reasons.push('listing_id_not_unique');
     if (urls.length !== data.length) reasons.push('source_url_missing');
-    if (data.some((row) => !Number.isFinite(Number(row.priceCny)))) reasons.push('price_missing');
+    if (data.some((row) => !Number.isFinite(row.priceCny))) reasons.push('price_missing');
     return reasons;
   }
   if (operation.mode === 'detail') {
@@ -218,7 +218,7 @@ function validateData(data) {
     return [
       ...(!row?.listingId ? ['listing_id_missing'] : []),
       ...(expectedId && row?.listingId && String(row.listingId) !== String(expectedId) ? ['listing_id_mismatch'] : []),
-      ...(!Number.isFinite(Number(row?.priceCny)) ? ['price_missing'] : []),
+      ...(!Number.isFinite(row?.priceCny) ? ['price_missing'] : []),
       ...(!row?.url ? ['source_url_missing'] : []),
       ...(row?.status?.sourceStatus !== 'success' ? ['detail_source_partial'] : []),
     ];
@@ -316,6 +316,7 @@ if (payload?.page?.url) {
   } catch { reasons.push('page_url_invalid'); }
 }
 const observedText = `${payload?.page?.title ?? ''}\n${payload?.semantic ?? ''}\n${payload?.raw?.text ?? ''}`;
+if (!knowledgeBlocked && operation.expected_title_prefix && !String(payload?.page?.title ?? '').startsWith(operation.expected_title_prefix)) reasons.push('page_game_mismatch');
 if (!knowledgeBlocked && expectedSignals.length && !expectedSignals.every((signal) => observedText.includes(signal))) reasons.push('expected_page_signal_missing');
 if (!knowledgeBlocked && /(滑块验证|安全验证|人机验证|请完成验证|验证后继续|访问过于频繁|安全校验|captcha|403\s*forbidden|http\s*403|access\s+denied|forbidden\s+error)/i.test(observedText)) reasons.push('verification_or_blocker_detected');
 if (!knowledgeBlocked && (payload?.error_events?.length ?? 0) > 0) reasons.push('browser_error_events');

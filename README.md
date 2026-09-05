@@ -1,241 +1,244 @@
 <p align="center">
-  <img src="assets/readme-banner-zh.svg" alt="Game Account Select - 基于社区证据的游戏账号估值 Skill Pack" width="100%" />
+  <img src="assets/readme-avatar.png" width="112" height="112" alt="Game Account Select 看板娘：拿着角色卡的薄荷发少女" />
 </p>
 
-# Game Account Select
+<h1 align="center">Game Account Select</h1>
 
 <p align="center">
-  <img src="assets/readme-icon.svg" width="92" height="92" alt="Game Account Select 图标" />
-</p>
-
-<p align="center">
-  <em>面向二次元游戏买号场景的账号筛选、估值和避坑 Agent Skills。</em>
+  <strong>挑个合心意的号，开启下一场冒险。</strong><br />
+  给 AI 一份愿望清单，让它帮你找号、比价、看阵容。
 </p>
 
 <p align="center">
-  <strong>简体中文</strong>
-  ·
-  <a href="README.en.md">English</a>
+  <strong>简体中文</strong> · <a href="README.en.md">English</a><br />
+  <a href="#project-status">项目状态</a> · <a href="#安装">安装</a> · <a href="#试着这样问">用法</a> · <a href="#支持的游戏">支持的游戏</a> · <a href="#项目架构">架构</a> · <a href="https://github.com/PointMountain/game-account-select/issues">反馈</a>
 </p>
 
 <p align="center">
-  <a href="#安装"><img src="https://img.shields.io/badge/install-npx%20skills%20add-58d6b5?style=for-the-badge&labelColor=101624" alt="使用 npx skills add 安装" /></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/skills-11-f0c96a?style=for-the-badge&labelColor=101624" alt="11 个 Agent Skills" /></a>
-  <a href="#设计哲学"><img src="https://img.shields.io/badge/philosophy-evidence%20first-f0c96a?style=for-the-badge&labelColor=101624" alt="Evidence first" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8b5cf6?style=for-the-badge&labelColor=101624" alt="MIT License" /></a>
+  <a href="skills/"><img src="https://img.shields.io/badge/Agent_Skills-11-42766B?style=flat-square" alt="11 个 Agent Skills" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-D9795D?style=flat-square" alt="MIT License" /></a>
 </p>
 
-Game Account Select 帮你在购买游戏账号前，把卖家描述、截图/OCR、账号资产和社区攻略共识整理成可比较的候选清单。它关注的不是“五星/六星/S 角色总数”，而是这些资产在当前版本里是否真的有价值、队伍是否成型、资源是否够用、绑定和找回风险是否清楚。
+<p align="center">
+  <img src="assets/readme-hero.png" width="100%" alt="二次元介绍插画：看板娘从角色卡片中挑出心仪账号，旁边放着放大镜和比较清单" />
+</p>
 
-它不做交易撮合，也不替你自动下单。它适合用来快速排除高风险账号、发现真正值得继续核验的挂牌，并把每个推荐背后的依据和不确定性说清楚。
+Game Account Select 是一套给 Codex、Claude Code 等支持 Agent Skills 的工具使用的游戏账号挑选技能。告诉它你想玩什么、准备花多少、最想要哪些角色，就能拿到带链接、价格、推荐理由和待确认事项的比较清单。
 
-<p align="center"><sub><a href="#安装">安装</a> · <a href="#适合解决什么问题">功能</a> · <a href="#账号筛选流程">流程</a> · <a href="#skills">Skills</a> · <a href="#设计哲学">设计哲学</a> · <a href="#维护验证">维护验证</a> · <a href="#安全边界">安全边界</a> · <a href="#协议">协议</a></sub></p>
+## Project Status
+
+<p align="center">
+  <img src="assets/readme-status.png" width="100%" alt="看板娘在工作室的进度板上贴好已完成的卡片" />
+</p>
+
+目前以 **Agent Skills 技能包**的形式使用，仓库版本为 **v0.1.0**。四款游戏已经接入，进展和改动都可以在这里追踪。
+
+[![main 分支 CI](https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml/badge.svg?branch=main)](https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml)
+[![最近提交](https://img.shields.io/github/last-commit/PointMountain/game-account-select?style=flat-square&color=42766B)](https://github.com/PointMountain/game-account-select/commits/main/)
+[![待处理 Issues](https://img.shields.io/github/issues/PointMountain/game-account-select?style=flat-square&color=D9795D)](https://github.com/PointMountain/game-account-select/issues)
+
+- [x] 11 个技能，一次安装即可配齐。
+- [x] 明日方舟、绝区零、鸣潮、异环的账号评估与比较。
+- [x] 按预算和偏好找号，返回带来源的候选清单。
+- [x] 社区资料刷新、新游戏技能生成、运行复盘与回归检查。
+- [x] 四款游戏均支持螃蟹和盼之的列表搜索、详情读取与跨平台比较。
+
+想看最近在忙什么，可以翻翻 [更新记录](changelogs/)、[项目动态](https://github.com/PointMountain/game-account-select/pulse) 或 [待办与讨论](https://github.com/PointMountain/game-account-select/issues)。
 
 ## 安装
 
-推荐完整安装。这样主筛选、执行前检查、共享工具、社区刷新和所有已支持游戏都会一起可用：
+<p align="center">
+  <img src="assets/readme-install.png" width="100%" alt="看板娘拆开技能卡盒，准备好电脑与工具" />
+</p>
+
+准备好 **Node.js 22+**，在终端执行，按提示选择你使用的 Agent：
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select --skill '*'
 ```
 
-不带 `--skill` 时，`npx skills` 会打开交互式选择器：
+这会安装全部 11 个技能。完成后，新开一个 Agent 会话就可以使用。
+
+**第一次在线找号**，还需要配置 [ego lite](https://lite.ego.app/) 浏览器，并安装或链接 `ego-browser`、`ego-ops` 技能及对应平台的操作知识。可以先把这句话发给 Agent，按检查结果补齐环境：
+
+```text
+用 game-account-preflight 检查找号环境，包括 Node.js、git、gh、
+ego-ops 和 ego-browser，告诉我还需要准备什么。
+```
+
+四款游戏的双平台操作知识已收录在[配套 ego-ops 版本](https://github.com/PointMountain/jacky-skills/tree/98cd060110c630c78d7e1282e7834dd359aa171b/harness/ego-ops)。安装或更新时，让 Agent 一并检查这些操作是否齐全。
+
+<details>
+<summary>按需安装 / 更新技能</summary>
+
+使用交互式安装器选择技能：
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select
 ```
 
-如果只想装某一个游戏，在交互式选择器里同时勾选：
+单游戏评估请一起选择：对应游戏技能、`game-account-toolkit`、`game-account-preflight`、`game-account-skill-optimizer`、`game-account-skill-evaluator` 和 `game-account-community-updater`。要让 Agent 主动找号，再加上 `game-account-select`。
 
-- 你需要的游戏 skill，例如 `game-account-zenless-zone-zero`
-- `game-account-toolkit`
-- `game-account-preflight`
-- `game-account-skill-optimizer`
-- `game-account-skill-evaluator`
-- `game-account-community-updater`
-
-也可以直接使用组合命令：
+更新已安装的技能：
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select \
-  --skill "game-account-toolkit" \
-  --skill "game-account-preflight" \
-  --skill "game-account-skill-optimizer" \
-  --skill "game-account-skill-evaluator" \
-  --skill "game-account-community-updater" \
-  --skill "game-account-zenless-zone-zero"
+npx skills update
 ```
 
-如果已经 clone 本仓库，可以生成常用组合的完整安装命令：
+</details>
 
-| 目标 | 命令 |
+## 试着这样问
+
+### 帮我找个号
+
+<p align="center">
+  <img src="assets/readme-search.png" width="100%" alt="看板娘带着愿望清单和放大镜，在账号卡片中寻找合适的候选" />
+</p>
+
+把**游戏、预算、区服和最在意的东西**说清楚，剩下的交给 Agent。
+
+```text
+用 game-account-select 帮我找明日方舟国服官服号，预算 1500 元以内。
+我更在意限定和联动干员，练度够日常用就好。
+帮我比较螃蟹和盼之的候选，把价格、亮点、链接和需要问卖家的事列清楚。
+```
+
+### 帮我看看这个值不值
+
+<p align="center">
+  <img src="assets/readme-evaluate.png" width="100%" alt="看板娘仔细核对一张账号卡片的角色、装备和资源" />
+</p>
+
+把链接、截图或卖家描述一起发过去：
+
+```text
+用 game-account-zenless-zone-zero 看看这个绝区零账号，卖家报价 800 元。
+我想接手后就有两队能玩，也想留些抽卡资源。
+帮我看看阵容搭配、专属音擎和绑定情况，这个价格值得考虑吗？
+
+账号信息：<粘贴链接、卖家描述，或附上截图>
+```
+
+### 这几个号，我该挑哪个
+
+<p align="center">
+  <img src="assets/readme-compare.png" width="100%" alt="三份账号资料并排摆放，看板娘根据偏好挑选" />
+</p>
+
+```text
+用 game-account-wuthering-waves 比较下面三个鸣潮账号。
+我喜欢的角色是今汐，优先看她的队伍和专武，再看看剩余抽卡资源。
+按适合我的程度排个序，说说每个号的取舍。
+
+候选 A：<链接或账号信息>
+候选 B：<链接或账号信息>
+候选 C：<链接或账号信息>
+```
+
+## 你会拿到什么
+
+<p align="center">
+  <img src="assets/readme-report.png" width="100%" alt="看板娘递出整理好的推荐报告，卡片与核对清单放在一起" />
+</p>
+
+一份按你的偏好整理的候选清单，重点都放在一起：
+
+| 你关心的 | 清单里会写 |
 | --- | --- |
-| 只装核心工具 | `node scripts/list-skills.js --profile core` |
-| 只装优化器 | `node scripts/list-skills.js --profile optimization` |
-| 只装绝区零 | `node scripts/list-skills.js --profile zenless-zone-zero` |
-| 只装鸣潮 | `node scripts/list-skills.js --profile wuthering-waves` |
-| 新游戏 skill 生成与评估 | `node scripts/list-skills.js --profile new-game-authoring` |
+| 多少钱、去哪看 | 挂牌价格、平台、原始链接 |
+| 为什么适合我 | 目标角色、队伍搭配、装备、养成与抽卡资源 |
+| 几个号怎么选 | 推荐顺序、各自亮点和价格差异 |
+| 还要问卖家什么 | 绑定与实名情况、验号信息、需要补充的截图或数据 |
 
-在本地 checkout 中列出所有 skill 和安装组合：
+看到清单后，继续说“把预算提到 2000”“我更想要皮肤”或“重点看看第二个”，就能按新偏好接着比较。
+
+## 支持的游戏
+
+<p align="center">
+  <img src="assets/readme-games.png" width="100%" alt="四本不同主题的冒险图鉴围绕着看板娘，代表四款游戏" />
+</p>
+
+四款游戏都支持在**螃蟹和盼之**找号、读取详情和比较候选，也可以直接分析你提供的账号材料。
+
+| 游戏 | 会帮你看什么 | 在线找号 |
+| --- | --- | --- |
+| **明日方舟** | 限定与联动、练度、专精模组、皮肤、资源 | 螃蟹 PXB7、盼之 PZDS |
+| **绝区零** | 代理人、影画、专属音擎、配队、菲林母带 | 螃蟹 PXB7、盼之 PZDS |
+| **鸣潮** | 共鸣者、共鸣链、专武、配队、抽卡资源 | 螃蟹 PXB7、盼之 PZDS |
+| **异环** | S 角色、S 弧盘、觉醒、资源、账号类型 | 螃蟹 PXB7、盼之 PZDS |
+
+想找其他游戏，可以直接说：
+
+```text
+用 game-account-skill-generator 为 <游戏名> 创建账号评估技能，
+补齐社区资料并通过质量检查后，帮我看看账号。
+```
+
+## 项目架构
+
+<p align="center">
+  <img src="assets/readme-architecture.png" width="100%" alt="看板娘把需求卡、游戏图鉴与报告卡连接成一条协作流程" />
+</p>
+
+可以把这 11 个技能想成一支分工明确的小队：主入口听懂你的需求，浏览器工具找资料，游戏技能看懂账号，最后一起把推荐清单检查好。
+
+```mermaid
+flowchart TD
+    Request["你的需求与账号材料"] --> Select["game-account-select · 组织本轮筛选"]
+    Select --> Runtime["preflight + toolkit · 准备环境与整理资料"]
+    Runtime --> Browser["ego-ops → ego-browser · 读取平台与社区"]
+    Runtime -. "已有账号材料" .-> Games
+    Browser --> Games["四个游戏技能 · 角色、配队、资源与风险评估"]
+    Extend["generator + community-updater · 扩展游戏与更新资料"] -.-> Games
+    Games --> Finalizer["游戏 Finalizer · 组装报告"]
+    Finalizer --> Review["optimizer + evaluator · 检查结果与复盘"]
+    Review --> Report["带来源与待确认事项的推荐清单"]
+    Review -. "需要补证时" .-> Select
+    classDef mint fill:#e8f3ed,stroke:#42766b,color:#183b34
+    classDef coral fill:#fcece4,stroke:#d9795d,color:#643c2e
+    class Select,Runtime,Browser,Games,Extend mint
+    class Request,Finalizer,Review,Report coral
+```
+
+| 想了解哪一块 | 从这里看起 |
+| --- | --- |
+| 一次找号怎样开始、怎样交付 | [主筛选技能](skills/game-account-select/SKILL.md) |
+| 各个游戏如何评估账号 | [明日方舟](skills/game-account-arknights/SKILL.md) · [绝区零](skills/game-account-zenless-zone-zero/SKILL.md) · [鸣潮](skills/game-account-wuthering-waves/SKILL.md) · [异环](skills/game-account-neverness-to-everness/SKILL.md) |
+| 浏览器、资料和模块怎样配合 | [架构说明](docs/development/architecture.md) |
+| 怎样修改技能并验证效果 | [开发流程](docs/development/workflow.md) · [学习闭环](skills/game-account-skill-optimizer/references/learning-loop.md) |
+
+<details>
+<summary>更多用法：刷新版本评价 / 本地开发</summary>
+
+想结合新版本重新看角色和装备价值：
+
+```text
+用 game-account-community-updater 更新绝区零的社区资料，
+再看看前面几个账号的推荐顺序有没有变化。
+```
+
+在仓库中列出技能、查看安装组合，或链接本地修改：
 
 ```bash
 npm run list:skills
 npm run list:profiles
+npm run link:skills
 ```
 
-本地开发时，可以把当前 checkout 软链接到 `~/.agents/skills`，让本机 Agent 直接读取工作区里的最新 skill：
+完成修改后验证；需要移除本地链接时运行最后一行：
 
 ```bash
-npm run link:skills
+npm run dev:check
+npm run verify:skills
 npm run unlink:skills
 ```
 
-## 适合解决什么问题
+详细步骤见 [开发流程](docs/development/workflow.md) 与 [环境准备清单](skills/game-account-preflight/references/preflight-checklist.md)。
 
-| 场景 | Game Account Select 关注的重点 |
-| --- | --- |
-| 挂牌看起来“稀有很多”，但不知道值不值 | 区分限定核心、常驻陷阱、高命/高潜是否真的有购买价值。 |
-| 卖家描述很散，截图信息不完整 | 把角色、武器/音擎/弧盘、资源、区服、绑定、验号信息整理成统一字段。 |
-| 不同游戏价值逻辑完全不同 | 每个游戏独立维护估值规则，避免用一套泛化稀有度规则套所有游戏。 |
-| 社区版本评价变化快 | 用社区证据快照和刷新机制标注版本上下文、覆盖缺口和置信度。 |
-| 担心实名、绑定、找回风险 | 在推荐前显式扣风险，并列出必须向卖家确认的字段。 |
+</details>
 
-## 账号筛选流程
+---
 
-<p align="center">
-  <img src="assets/readme-flow-zh.svg" alt="Game Account Select 账号筛选流程图" width="100%" />
-</p>
+遇到问题，或想加一个你在玩的游戏，欢迎 [开个 Issue](https://github.com/PointMountain/game-account-select/issues)。带上游戏名、你的需求和遇到的情况，就更容易一起把它做好。
 
-| 节点 | 说明 |
-| --- | --- |
-| 说清目标 | 输入游戏、预算、区服、目标角色/资源和风险偏好，先定义什么样的账号算“值得看”。 |
-| 读取挂牌 | 接收平台页面、截图、OCR 文本或卖家描述，把松散信息整理成可比较字段。 |
-| 对齐社区 | 结合 B 站、抖音、小红书、攻略站等高信号内容形成版本上下文，不让过期强度印象主导排序。 |
-| 估值与扣风险 | 同时看资产价值、资源价值、价格适配和绑定/找回/验号风险。 |
-| 输出推荐 | 给出候选排序、排除理由、缺失字段、人工核验点和规则更新建议。 |
-
-## Skills
-
-| 安装名 | 角色 | 适用场景 |
-| --- | --- | --- |
-| `game-account-select` | 主筛选编排 | 从用户预算、游戏目标、风险偏好和账号来源出发，输出候选账号排序与解释。 |
-| `game-account-preflight` | 环境就绪检查 | 让账号筛选流程在缺少浏览器、网络访问或本地工具时给出清楚的补齐路径。 |
-| `game-account-toolkit` | 通用工具层 | 提供统一字段、平台访问边界、社区调研协议和共享模板。 |
-| `game-account-skill-generator` | 游戏 skill 生成器 | 为尚未支持的游戏生成保守的买号估值基线 skill。 |
-| `game-account-skill-evaluator` | 质量门禁 | 检查新生成、修改过或优化器产出的 skill 是否具备真实流程所需的结构、证据、规则和验证样例，低分时打回重做。 |
-| `game-account-skill-optimizer` | 执行优化器 | 分析筛选和仓库 skill 运行中的耗时、空结果、平台覆盖、输出格式、估值误判、用户反馈和质量门禁问题，生成可执行优化建议。 |
-| `game-account-community-updater` | 社区证据刷新 | 在版本变化、证据过期或资产未覆盖时更新社区证据快照。 |
-| `game-account-wuthering-waves` | 鸣潮 / Wuthering Waves | 评估限定角色、版本价值、专武、抽卡资源和 TAP/Wegame/PS5 绑定风险。 |
-| `game-account-arknights` | 明日方舟 | 评估限定/联动干员、关键练度、专精/模组、资源、收藏价值和实名找回风险。 |
-| `game-account-neverness-to-everness` | 异环 / Neverness to Everness | 评估命名 S 角色、S 弧盘、觉醒、资源、主角/账号类型和早期市场风险。 |
-| `game-account-zenless-zone-zero` | 绝区零 / ZZZ | 评估限定 S 代理人、专属音擎、队伍完整度、菲林/母带/邦布券和 HoYoverse/PSN/TAP 绑定风险。 |
-
-## 设计哲学
-
-**目标驱动，而不是资产堆分。** 先明确用户真正想买什么，再把账号信息映射到这个目标；总稀有度数量只是参考，不能压过队伍完整度、版本价值和风险状态。
-
-**证据先于评分。** 评分前先建立当前版本的社区语境：攻略共识、实战环境、角色/武器收益和玩家避坑经验。证据不足时应降低置信度，而不是把缺口填成确定答案。
-
-**过程透明，可复查。** 每个推荐都应该说明“为什么值得看”和“为什么可能不该买”。缺截图、缺资源、缺验号、绑定不清、平台保障不足，都应作为可见的人工确认点。
-
-**统一生命周期，能力按实证发布。** 四个游戏 skill 都具备可复用评分器、run-only 画像、原始 run artifact、确定性 finalizer、请求溯源、自我改进 sidecar 和交付哈希门禁；但平台查询能力不会因为“存在解析器”就被宣称可用。正常流程只调用 support matrix 与外部 `ego-ops` 知识同时验证过的 operation，其他组合一律 fail closed。
-
-**Harness 自我进化。** 每次运行都留下可诊断 artifact：平台尝试、耗时、失败文本、输出、用户反馈和 evaluator 结果。优化器负责 Troubleshooting 和定位目标文件，评估器负责质量门禁；低分、阻塞问题或 `redo_required: true` 必须打回重做，不能继续用于真实推荐。
-
-**安全边界优先。** 只做购买前决策辅助，不绕过平台限制，不做高频抓取，不自动交易。社区证据和估值规则可以迭代，但规则变化必须可解释、可验证、可回溯。
-
-## 标准输入输出
-
-所有账号 skill 共享 `skills/game-account-toolkit/references/skill-io-contract.md` 中的契约，推荐使用：
-
-- 输入：`<game_account_request>`、`<account_listing>`、`<community_evidence>`、`<skill_generation_request>`
-- 输出：`<game_account_evaluation>`、`<recommendations>`、`<skill_quality_report>`、`<community_refresh_report>`、`<skill_optimization_report>`
-
-这个结构让每个 skill 保持清晰：`SKILL.md` 写入口行为，`references/` 存规则和证据，`scripts/` 存可重复验证脚本，`test-fixtures/` 存离线样例。
-
-## 生成新游戏 Skill
-
-可以直接让已安装的 skill 为新游戏生成买号 skill：
-
-```text
-使用 game-account-skill-generator 为 <游戏名> 创建账号购买评估 skill，然后先评估质量再用于推荐。
-```
-
-维护者也可以在本地 checkout 中运行确定性生成脚本：
-
-```bash
-node skills/game-account-skill-generator/scripts/generate-game-skill.mjs --game "Test Frontier" --out /tmp/game-account-generator-test --force
-node /tmp/game-account-generator-test/skills/game-account-test-frontier/scripts/validate-sample.mjs
-```
-
-新生成的 skill 默认低置信度，直到社区证据、评分规则、验证样例和 evaluator 报告都通过质量门禁。
-
-## 维护验证
-
-当前平台查询能力：
-
-| 游戏 | PXB7 list/detail | PZDS list/detail | 正常流程行为 |
-| --- | --- | --- | --- |
-| 明日方舟 | `verified` / `verified` | `verified` / `verified` | 可由 `ego-ops` 治理、`ego-browser` 执行。 |
-| 绝区零 | `unsupported` / `unsupported` | `unsupported` / `unsupported` | 使用用户提供的链接、截图或文本；两个详情解析器仅供维护者受控探索。 |
-| 鸣潮 | `unsupported` / `unsupported` | `unsupported` / `unsupported` | 记录覆盖缺口，不切换到其他网页软件。 |
-| 异环 | `unsupported` / `unsupported` | `unsupported` / `unsupported` | 记录覆盖缺口，不伪造平台覆盖。 |
-
-下面命令面向仓库维护者和 CI 风格验证：
-
-```bash
-npm run list:skills
-npm run verify:skills
-npm run verify:frontmatter
-npm run verify:query-stack
-npm run verify:operation-support
-npm run verify:game-finalizers
-node skills/game-account-preflight/scripts/preflight.mjs --json
-npm run query:ego -- --operation generic/semantic-search --url https://www.pzds.com/gameList --expected 请选择要购买的游戏 --json
-node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs skills/game-account-wuthering-waves --json
-node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/wuthering-waves-77175988-run.json --json
-node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input skills/game-account-skill-optimizer/test-fixtures/zenless-zone-zero-run.json --json
-node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=skills/game-account-skill-optimizer/test-fixtures/optimizer-report-sample.json --json
-node skills/game-account-community-updater/scripts/update-community-evidence.mjs --skill skills/game-account-zenless-zone-zero --evidence skills/game-account-community-updater/test-fixtures/evidence-sample.json --out /tmp/community-refresh-test
-```
-
-所有动态查询统一由 `ego-ops` 建立任务卡、加载站点 operation、复核权限和定义成功标准，再由 `ego-browser` 在一个隔离 task space 中执行。仓库的 `ego-operations/manifest.json` 只保存解析与执行目录，不保存登录材料或完整业务响应；其中 `exploration_only` 不代表正常支持，只有 `verified` 且对应外部 operation 知识有效时才会启动浏览器。维护者可用 `--allow-exploration` 显式进行受控探索，但必须完成知识回写、矩阵升级、离线验证与真实 smoke 后才能发布。
-
-社区证据有两种刷新方式：
-
-- 执行时刷新：挂牌出现本地快照未覆盖的资产、版本发生大变化，或用户要求检查当前社区评价。
-- 维护者预刷新：通过 `game-account-community-updater` 把整理好的 evidence JSON 写入某个游戏 skill，减少后续执行时的 token 和网络成本。
-
-证据刷新只更新 `community-evidence.md` 和刷新报告。它不应静默改写估值权重；规则变化应先提出建议，经过确认后再写入游戏 skill changelog。
-
-执行优化器可在真实筛选结束后运行，也可由维护者手动传入 JSON 记录。它默认只输出优化报告，不静默改写 skill；当用户明确要求应用优化时，再修改对应规则、平台策略或输出格式，并运行验证脚本和 evaluator。优化后的 skill 低于质量门槛时必须重做。
-
-## 开发与 Self-improve
-
-从 [AGENTS.md](AGENTS.md) 进入开发流程；架构、Skill 分层和验证规则在 [开发文档](docs/development/workflow.md) 按需读取。11 个 skill 名称与脚本路径保持兼容，安装组合会检查完整的运行依赖。
-
-```bash
-npm run dev:context                         # 按 Git 改动选择上下文和测试
-npm run dev:plan -- --task fix-rule --goal '修复估值遗漏' --acceptance '正反例通过' --files skills/game-account-arknights/scripts/score-listings.mjs
-npm run dev:check                           # 执行选定离线门禁
-npm run verify:skills                      # 完整交付回归
-npm run learn:collect -- --input /absolute/path/run.json  # 改代码前记录基线
-npm run learn:status                       # 按严重度和复发次数查看队列
-npm run learn:verify -- --id <candidate-id> # 改责任文件和回归后验证
-npm run learn:apply -- --id <candidate-id> --reason '修复并通过回归'
-```
-
-学习记录保存在忽略的 `.harness/`，重复运行去重、复发重开。apply 登记已经实现且通过测试的改进，输出可放入 run artifact 的凭据引用；只有当前凭据才能计为“已应用”。`verified_existing`、待验证、延期各自保留状态。任何验证范围内文件变化都会使凭据过期，需重新验证；复制到另一个 checkout 后也需重新验证。详细操作见 [学习闭环](skills/game-account-skill-optimizer/references/learning-loop.md)。
-
-## 安全边界
-
-- 不自动购买账号，不替用户做交易决策。
-- 不绕过验证码、登录限制、平台频率限制或反自动化机制。
-- 不把公开可见挂牌等同于允许大规模抓取。
-- 不用稀有资产总数直接抬高账号排名。
-- 不隐藏绑定、实名、PSN/TAP/Wegame/HoYoverse、找回、包赔或验号缺口。
-- 不在用户反馈后静默修改估值规则；必须先提出具体规则更新建议。
-
-## 协议
-
-[MIT License](LICENSE) © 2026 PointMountain
+[MIT License](LICENSE) · Made for your next adventure.

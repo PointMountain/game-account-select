@@ -12,7 +12,9 @@
       "availability": "verified",
       "risk": "low",
       "entry": "https://www.pxb7.com/buy/10053/1?keyword=%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F&searchType=%E8%87%AA%E7%84%B6%E6%90%9C%E7%B4%A2",
-      "expected_signals": ["明日方舟"],
+      "expected_signals": [
+        "明日方舟"
+      ],
       "success": "returns unique listing ids, prices, source URLs, and structured list facts"
     },
     {
@@ -23,7 +25,10 @@
       "mode": "detail",
       "availability": "verified",
       "risk": "low",
-      "expected_signals": ["明日方舟", "商品"],
+      "expected_signals": [
+        "明日方舟",
+        "商品"
+      ],
       "success": "returns one matching listing with price, assets, risk facts, and source URL"
     },
     {
@@ -35,7 +40,9 @@
       "availability": "verified",
       "risk": "low",
       "entry": "https://www.pzds.com/goodsList/84/6/headerSearch?queryFrom=search&searchType=GAME_NAME",
-      "expected_signals": ["明日方舟"],
+      "expected_signals": [
+        "明日方舟"
+      ],
       "success": "returns unique listing ids, prices, source URLs, and structured list facts"
     },
     {
@@ -46,7 +53,10 @@
       "mode": "detail",
       "availability": "verified",
       "risk": "low",
-      "expected_signals": ["明日方舟", "账号"],
+      "expected_signals": [
+        "明日方舟",
+        "账号"
+      ],
       "success": "returns one matching listing with price, assets, risk facts, and source URL"
     },
     {
@@ -58,7 +68,9 @@
       "availability": "verified",
       "risk": "low",
       "entry": "https://www.pzds.com/goodsList/275",
-      "expected_signals": ["绝区零"],
+      "expected_signals": [
+        "绝区零"
+      ],
       "success": "returns unique live ZZZ listing ids, prices, source URLs, and list facts"
     },
     {
@@ -67,10 +79,14 @@
       "site": "pxb7",
       "domain": "www.pxb7.com",
       "mode": "detail",
-      "availability": "exploration_only",
+      "availability": "verified",
       "risk": "low",
-      "expected_signals": ["绝区零", "商品"],
-      "success": "returns one matching listing with price, binding state, named assets, and source URL"
+      "expected_signals": [
+        "绝区零",
+        "商品"
+      ],
+      "success": "returns one matching listing with price, binding state, named assets, and source URL",
+      "expected_title_prefix": "绝区零账号"
     },
     {
       "id": "pzds/zzz-detail",
@@ -80,7 +96,10 @@
       "mode": "detail",
       "availability": "verified",
       "risk": "low",
-      "expected_signals": ["绝区零", "账号"],
+      "expected_signals": [
+        "绝区零",
+        "账号"
+      ],
       "success": "returns one matching listing with price, binding state, named assets, and source URL"
     },
     {
@@ -92,7 +111,9 @@
       "availability": "verified",
       "risk": "low",
       "entry": "https://www.pzds.com/goodsList/303",
-      "expected_signals": ["鸣潮"],
+      "expected_signals": [
+        "鸣潮"
+      ],
       "success": "returns unique live Wuthering Waves listing ids, prices, source URLs, and list facts"
     },
     {
@@ -103,7 +124,10 @@
       "mode": "detail",
       "availability": "verified",
       "risk": "low",
-      "expected_signals": ["鸣潮", "账号"],
+      "expected_signals": [
+        "鸣潮",
+        "账号"
+      ],
       "success": "returns one matching listing with price, named assets, risk facts, and source URL"
     },
     {
@@ -115,7 +139,9 @@
       "availability": "verified",
       "risk": "low",
       "entry": "https://www.pzds.com/goodsList/1546",
-      "expected_signals": ["异环"],
+      "expected_signals": [
+        "异环"
+      ],
       "success": "returns unique live Neverness to Everness listing ids, prices, source URLs, and list facts"
     },
     {
@@ -126,7 +152,10 @@
       "mode": "detail",
       "availability": "verified",
       "risk": "low",
-      "expected_signals": ["异环", "账号"],
+      "expected_signals": [
+        "异环",
+        "账号"
+      ],
       "success": "returns one matching listing with price, named assets, risk facts, and source URL"
     },
     {
@@ -139,6 +168,81 @@
       "risk": "low",
       "expected_signals": [],
       "success": "returns page identity, a privacy-safe semantic digest, and unique visible links from the requested page"
+    },
+    {
+      "id": "pxb7/zzz-list",
+      "game": "zenless-zone-zero",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "list",
+      "availability": "verified",
+      "risk": "low",
+      "entry": "https://www.pxb7.com/buy/10312/1?keyword=%E7%BB%9D%E5%8C%BA%E9%9B%B6&searchType=%E8%87%AA%E7%84%B6%E6%90%9C%E7%B4%A2",
+      "expected_signals": [
+        "绝区零"
+      ],
+      "success": "returns unique listing ids, CNY prices, game-specific titles and source URLs",
+      "expected_title_prefix": "绝区零账号"
+    },
+    {
+      "id": "pxb7/wuthering-waves-list",
+      "game": "wuthering-waves",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "list",
+      "availability": "verified",
+      "risk": "low",
+      "entry": "https://www.pxb7.com/buy/10302/1?keyword=%E9%B8%A3%E6%BD%AE&searchType=%E8%87%AA%E7%84%B6%E6%90%9C%E7%B4%A2",
+      "expected_signals": [
+        "鸣潮"
+      ],
+      "success": "returns unique listing ids, CNY prices, game-specific titles and source URLs",
+      "expected_title_prefix": "鸣潮账号"
+    },
+    {
+      "id": "pxb7/wuthering-waves-detail",
+      "game": "wuthering-waves",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "detail",
+      "availability": "verified",
+      "risk": "low",
+      "expected_signals": [
+        "鸣潮",
+        "商品"
+      ],
+      "success": "returns one matching numeric product id, CNY price, subject-only named assets, risk facts and source URL",
+      "expected_title_prefix": "鸣潮账号"
+    },
+    {
+      "id": "pxb7/neverness-to-everness-list",
+      "game": "neverness-to-everness",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "list",
+      "availability": "verified",
+      "risk": "low",
+      "entry": "https://www.pxb7.com/buy/10630/1?keyword=%E5%BC%82%E7%8E%AF&searchType=%E8%87%AA%E7%84%B6%E6%90%9C%E7%B4%A2",
+      "expected_signals": [
+        "异环"
+      ],
+      "success": "returns unique listing ids, CNY prices, game-specific titles and source URLs",
+      "expected_title_prefix": "异环账号"
+    },
+    {
+      "id": "pxb7/neverness-to-everness-detail",
+      "game": "neverness-to-everness",
+      "site": "pxb7",
+      "domain": "www.pxb7.com",
+      "mode": "detail",
+      "availability": "verified",
+      "risk": "low",
+      "expected_signals": [
+        "异环",
+        "商品"
+      ],
+      "success": "returns one matching numeric product id, CNY price, subject-only named assets, risk facts and source URL",
+      "expected_title_prefix": "异环账号"
     }
   ]
 }

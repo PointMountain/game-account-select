@@ -39,11 +39,13 @@ argument-hint: "[listing json or account description]"
 ## 执行流程
 
 1. 将原始请求与派生画像分开记录到 `request_provenance` 和 run-only `selection_profile`。
-2. 查询前读取 operation support matrix。PZDS 主动找号使用已验证的 `pzds/neverness-to-everness-list` 与 `pzds/neverness-to-everness-detail`，同一 task space 内先列表后详情；PXB7 仍标为 unsupported，不得暗示已覆盖。
+2. 平台查询前读取 operation support matrix。螃蟹使用 `pxb7/neverness-to-everness-list`、`pxb7/neverness-to-everness-detail`，盼之使用 `pzds/neverness-to-everness-list`、`pzds/neverness-to-everness-detail`；主动找号时在同一 task space 依次读取两边列表，并对各自短名单做详情复核。只采主体商品区，保留平台清单、来源和覆盖缺口。
 3. 运行可复用评分入口：
 
    ```bash
    node skills/game-account-neverness-to-everness/scripts/evaluate-listing.mjs --input <listing.json> --out <evaluation.json>
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pxb7/neverness-to-everness-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
+   node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pxb7/neverness-to-everness-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
    node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/neverness-to-everness-list --task-space <run-id> --limit 20 --task-space-disposition keep --json
    node skills/game-account-toolkit/scripts/run-ego-operation.mjs --operation pzds/neverness-to-everness-detail --task-space <run-id> --input <listing-id> --task-space-disposition keep --json
    ```

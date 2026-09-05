@@ -6,6 +6,7 @@ import {
   parseWEngineNamesFromText,
 } from './zzz-title-parser.mjs';
 import { normalizePzdsList } from './arknights-parsers.mjs';
+import { normalizePxb7GameList, pxb7DetailIdentity } from './pxb7-parsers.mjs';
 
 const VOID_HUNTERS = [
   { names: ['星见雅', '雅'] },
@@ -62,7 +63,7 @@ function parseCardStatuses(cards) {
   const byName = new Map();
   for (const card of cards ?? []) {
     const section = cleanText(card.section);
-    if (section && !/S级(?:角色|代理人)/.test(section)) continue;
+    if (!/S级(?:角色|代理人)/.test(section)) continue;
     const lines = String(card.text ?? '').split(/\n+/).map(cleanText).filter(Boolean);
     const statusIndex = lines.findIndex((line) => /^\d+(?:\s*\+\s*\d+)?$/.test(line));
     const levelIndex = lines.findIndex((line) => /^Lv\.\s*\d+/i.test(line));
@@ -96,7 +97,7 @@ function parseWEngines(nodes, text, cards = []) {
   const candidates = [...parseWEngineNamesFromText(text), ...parseWEngineNamesFromText((nodes ?? []).map((item) => `${item.title}\n${item.text}`).join('\n'))];
   for (const card of cards ?? []) {
     const section = cleanText(card.section);
-    if (section && !/S级(?:音擎|武器)/.test(section)) continue;
+    if (!/S级(?:音擎|武器)/.test(section)) continue;
     const lines = String(card.text ?? '').split(/\n+/).map(cleanText).filter(Boolean);
     const name = cleanWEngineName(lines.find((line) => !/^\d+(?:\s*\+\s*\d+)?$/.test(line) && !/^Lv\./i.test(line) && !/^S级/.test(line)));
     if (name) candidates.push(name);
@@ -129,18 +130,19 @@ function formatStatuses(statuses) {
 }
 
 function parsePxb7(raw) {
-  const primaryText = cleanText(raw.primaryText || raw.primaryTitleText || raw.text).replace(/\n+/g, '\n');
+  const identity = pxb7DetailIdentity(raw);
+  const primaryText = identity.rawText;
   const title = cleanText(raw.primaryTitleText)
     || firstMatch(primaryText, [/(【[A-Z0-9]+】[^\n]+)/i, /\b([A-Z]{2,}[A-Z0-9]+[^\n]+)/i])
     || cleanText(raw.title);
   const statuses = parseAgentStatuses(raw.titleNodes, title, raw.agentCards);
   const engines = parseWEngines(raw.titleNodes, title, raw.wEngineCards);
-  const listingId = firstMatch(`${title}\n${raw.title}`, [/【([^】]+)】/, /\b([A-Z]{2,}[A-Z0-9]+)\b/i]);
   const polychromeText = primaryText.replace(/菲林底片[:：]?\s*\d+/g, '');
   const primaryDetailText = [title, raw.title].filter(Boolean).join('\n');
   return {
-    listingId,
-    priceCny: numberMatch(primaryText, [/￥\s*([0-9][0-9,]*(?:\.\d+)?)/]),
+    listingId: identity.listingId,
+    productCode: identity.productCode,
+    priceCny: identity.priceCny,
     title,
     binding: {
       server: scopedTokenMatch([primaryDetailText, primaryText], [/国际服/, /國際服/, /米哈游官服/, /B服/, /渠道服/]),
@@ -168,6 +170,11 @@ function parsePxb7(raw) {
     sellerNote: firstMatch(primaryText, [/卖家说\s*\*?卖家自主行为[^\n]*\n([^\n]+)/, /卖家说\s*([^\n]+)/]),
     listedAtRaw: firstMatch(primaryText, [/(\d+小时内发布)/, /(\d+天内发布)/, /(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}(?:日)?)/]),
     verifiedAt: firstMatch(primaryText, [/该账号于(\d{4}年\d{2}月\d{2}日)完成验号/]),
+    status: {
+      ...identity.status,
+      assetCount: statuses.length + engines.length,
+      sourceStatus: identity.listingId && identity.priceCny != null && statuses.length ? 'success' : 'partial',
+    },
     url: raw.url,
   };
 }
@@ -234,6 +241,7 @@ function parsePzds(raw) {
 }
 
 export function parseZzzOperation(operation, raw, options = {}) {
+  if (operation === 'pxb7/zzz-list') return normalizePxb7GameList(raw, options);
   if (operation === 'pzds/zzz-list') return normalizePzdsList(raw, options);
   if (operation === 'pxb7/zzz-detail') return [parsePxb7(raw)];
   if (operation === 'pzds/zzz-detail') return [parsePzds(raw)];
