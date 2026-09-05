@@ -2,11 +2,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dependencyClosure } from './lib/harness.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const skillsRoot = path.join(repoRoot, 'skills');
 const profilesPath = path.join(skillsRoot, 'install-profiles.json');
+const dependencies = JSON.parse(fs.readFileSync(path.join(skillsRoot, 'dependencies.json'), 'utf8'));
 
 function parseFrontmatter(content) {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
@@ -56,6 +58,8 @@ const profiles = profileData.profiles ?? [];
 const skillNames = new Set(rows.map((row) => row.name));
 
 function validateProfile(profile) {
+  const unbundled = dependencyClosure(profile.skills, dependencies).filter((skill) => !profile.skills.includes(skill));
+  if (unbundled.length) throw new Error(`Profile "${profile.name}" omits required dependencies: ${unbundled.join(', ')}`);
   const missing = profile.skills.filter((skill) => !skillNames.has(skill));
   if (missing.length > 0) {
     throw new Error(`Profile "${profile.name}" references missing skills: ${missing.join(', ')}`);

@@ -12,7 +12,7 @@ argument-hint: "[listing json or account description]"
 
 预算、区服、目标、权重、风险容忍度和硬条件只进入当次 `selection_profile` / run artifact，`persistence_scope` 必须为 `run_only`，不得固化为长期估值规则。
 
-## 必须读取
+## 按需读取
 
 - `../game-account-toolkit/references/skill-io-contract.md`
 - `../game-account-toolkit/references/game-skill-standard.md`
@@ -20,7 +20,7 @@ argument-hint: "[listing json or account description]"
 - `references/valuation-rules.md`
 - `references/asset-knowledge.md`
 - `references/community-evidence.md`
-- `references/changelog.md`
+- 追溯或修改规则时读 [changelog](references/changelog.md) 和 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md)。applied 需当前验证凭据。
 
 ## 执行前准备
 

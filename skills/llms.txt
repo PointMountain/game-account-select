@@ -8,3 +8,4 @@ game-account-wuthering-waves: Wuthering Waves account valuation skill focused on
 game-account-arknights: Arknights account valuation skill focused on limited/collab operators, impact operators, mastery/modules, resources, collection value, server, and real-name recovery risk.
 game-account-neverness-to-everness: Neverness to Everness account valuation skill focused on named S characters, S arc plates, awakening, resources, protagonist/account type, and early-market risk.
 game-account-zenless-zone-zero: Zenless Zone Zero account valuation skill focused on limited S agents, signature W-Engines, team completeness, Polychrome/tapes/Boopons, progression, and HoYoverse/PSN/TAP binding risk.
+game-account-skill-optimizer: Diagnoses raw runs, deduplicates recurring findings in a local learning queue, and verifies changed targets and regressions before recording applied improvements.

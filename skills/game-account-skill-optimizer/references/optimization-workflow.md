@@ -1,6 +1,6 @@
 # Skill 优化工作流
 
-updated_at: 2026-08-29
+updated_at: 2026-09-05
 
 ## 目标
 
@@ -33,6 +33,8 @@ updated_at: 2026-08-29
 7. 若本次运行已有用户明确要求实现优化，可由执行者按建议修改目标文件，并运行对应验证脚本和 `game-account-skill-evaluator`。
 
 ## 自我进化闭环
+
+跨运行去重、补丁基线、固定回归和 applied 凭据按 [学习闭环](learning-loop.md) 执行。已有实现授权继续有效，无需再次确认。
 
 1. Observe：记录输入、平台尝试、失败文本、输出和用户反馈。
 2. Diagnose：用优化器归因，不把慢、空、低分、误判混成一个笼统问题。
@@ -90,7 +92,7 @@ updated_at: 2026-08-29
 1. 运行记录保留 `query_governance: ego_ops`、`operation_verified: true`、`operation`、`operation_reference`、task-space 身份和页面对象标识；列表与详情能力分别记录。
 2. 执行前只读取对应 operation；执行时仍按当前页面重新确认前置条件和关键状态。
 3. operation 失效、页面漂移或字段缺失时，标记 `operation_drift`，回到只读探索；不要在游戏估值规则里补偿解析错误。
-4. 资产字段完整性门禁只对 support matrix 当前标为 `verified` 的 operation 生效。绝区零的 `pxb7/zzz-detail` / `pzds/zzz-detail` 目前仅为 `exploration_only`，任何成功/partial 声称先触发 `platform-operation-support-claim-mismatch`，不得输出 reuse；若未来正式升级，再要求保留 `agentStatuses` 与 `sWEngineNames`。
+4. 资产字段完整性门禁只对 support matrix 当前标为 `verified` 的 operation 生效。支持状态实时读取 support matrix；unsupported operation 的成功/partial 声称先触发 `platform-operation-support-claim-mismatch`，不得输出 reuse。verified 的绝区零详情保留 `agentStatuses` 与 `sWEngineNames`。
 
 ## 手动执行模式
 

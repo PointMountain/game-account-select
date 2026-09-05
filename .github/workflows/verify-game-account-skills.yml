@@ -7,6 +7,12 @@ on:
       - 'package.json'
       - 'scripts/**'
       - 'skills/**'
+      - 'docs/**'
+      - 'changelogs/**'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'CONTEXT.md'
+      - 'README*'
   push:
     branches: [main]
     paths:
@@ -14,6 +20,12 @@ on:
       - 'package.json'
       - 'scripts/**'
       - 'skills/**'
+      - 'docs/**'
+      - 'changelogs/**'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'CONTEXT.md'
+      - 'README*'
 
 permissions:
   contents: read

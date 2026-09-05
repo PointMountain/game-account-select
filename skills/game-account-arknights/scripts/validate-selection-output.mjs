@@ -44,6 +44,16 @@ try {
   assert.match(report, /本轮已应用 0 条；已有机制复核 0 条；待验证\/延期 1 条/);
   assert.doesNotMatch(report, /平台口径 0/);
 
+  const fakePath = path.join(tempDir, 'unverified-applied.json');
+  fs.writeFileSync(fakePath, JSON.stringify({ ...artifact, knowledge_update_candidates: [{ id: 'unverified', apply_status: 'applied' }] }));
+  const fake = spawnSync(process.execPath, [path.join(__dirname, 'finalize-selection-run.mjs'), '--input', fakePath],
+    { cwd: repoRoot, encoding: 'utf8', timeout: 180000, maxBuffer: 32 * 1024 * 1024 });
+  assert.equal(fake.status, 1, 'unverified applied must fail the Arknights finalizer');
+  const fakeArtifact = JSON.parse(fs.readFileSync(fakePath, 'utf8'));
+  assert.equal(fakeArtifact.self_improve.knowledge_candidates.applied, 0);
+  assert.ok(fakeArtifact.quality_gate.actionable_optimizer_findings.includes('self-improve-applied-evidence-missing'));
+  assert.match(fakeArtifact.final_response, /本轮已应用 0 条/);
+
   const budgetArtifactPath = path.join(tempDir, 'budget-delivery.json');
   const budgetReportPath = path.join(tempDir, 'budget-delivery.md');
   const budgetSourceArtifact = JSON.parse(fs.readFileSync(budgetDeliveryFixturePath, 'utf8'));

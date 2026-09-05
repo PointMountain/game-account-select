@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { appliedEvidence } from './lib/learning-store.mjs';
 
 const args = process.argv.slice(2);
 
@@ -384,6 +385,7 @@ if (looksLikeSelectionRun && !provenanceValid) {
       'skills/game-account-select/scripts/create-run-artifact.mjs',
       'skills/game-account-arknights/scripts/run-dual-platform-selection.mjs',
       'skills/game-account-toolkit/scripts/finalize-game-evaluation.mjs',
+      'skills/game-account-arknights/scripts/render-selection-report.mjs',
     ],
     autopatchSafe: true,
   });
@@ -441,6 +443,27 @@ if (looksLikeSelectionRun && hasKnowledgeSignals && knowledgeCandidates.length =
       'skills/game-account-skill-optimizer/references/optimization-knowledge.md'
     ],
     autopatchSafe: true
+  });
+}
+
+const unverifiedApplied = knowledgeCandidates.filter((candidate) => {
+  const evidence = appliedEvidence(repoRoot, candidate);
+  return evidence.claimed && !evidence.valid;
+});
+if (unverifiedApplied.length) {
+  addFinding({
+    id: 'self-improve-applied-evidence-missing',
+    severity: 'blocking',
+    category: 'quality_gate',
+    summary: 'Applied improvements require a current local learning record with changed targets and passing regressions',
+    evidence: unverifiedApplied.map((candidate) => String(candidate.id ?? 'unnamed')),
+    suggestedTargets: [
+      'skills/game-account-skill-optimizer/scripts/lib/learning-store.mjs',
+      'skills/game-account-select/references/knowledge-ledger.md',
+      'skills/game-account-toolkit/scripts/finalize-game-evaluation.mjs',
+      'skills/game-account-arknights/scripts/render-selection-report.mjs',
+    ],
+    autopatchSafe: false,
   });
 }
 

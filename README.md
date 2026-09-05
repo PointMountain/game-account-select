@@ -51,6 +51,7 @@ npx skills add https://github.com/PointMountain/game-account-select
 - `game-account-toolkit`
 - `game-account-preflight`
 - `game-account-skill-optimizer`
+- `game-account-skill-evaluator`
 - `game-account-community-updater`
 
 也可以直接使用组合命令：
@@ -60,6 +61,7 @@ npx skills add https://github.com/PointMountain/game-account-select \
   --skill "game-account-toolkit" \
   --skill "game-account-preflight" \
   --skill "game-account-skill-optimizer" \
+  --skill "game-account-skill-evaluator" \
   --skill "game-account-community-updater" \
   --skill "game-account-zenless-zone-zero"
 ```
@@ -207,6 +209,23 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 证据刷新只更新 `community-evidence.md` 和刷新报告。它不应静默改写估值权重；规则变化应先提出建议，经过确认后再写入游戏 skill changelog。
 
 执行优化器可在真实筛选结束后运行，也可由维护者手动传入 JSON 记录。它默认只输出优化报告，不静默改写 skill；当用户明确要求应用优化时，再修改对应规则、平台策略或输出格式，并运行验证脚本和 evaluator。优化后的 skill 低于质量门槛时必须重做。
+
+## 开发与 Self-improve
+
+从 [AGENTS.md](AGENTS.md) 进入开发流程；架构、Skill 分层和验证规则在 [开发文档](docs/development/workflow.md) 按需读取。11 个 skill 名称与脚本路径保持兼容，安装组合会检查完整的运行依赖。
+
+```bash
+npm run dev:context                         # 按 Git 改动选择上下文和测试
+npm run dev:plan -- --task fix-rule --goal '修复估值遗漏' --acceptance '正反例通过' --files skills/game-account-arknights/scripts/score-listings.mjs
+npm run dev:check                           # 执行选定离线门禁
+npm run verify:skills                      # 完整交付回归
+npm run learn:collect -- --input /absolute/path/run.json  # 改代码前记录基线
+npm run learn:status                       # 按严重度和复发次数查看队列
+npm run learn:verify -- --id <candidate-id> # 改责任文件和回归后验证
+npm run learn:apply -- --id <candidate-id> --reason '修复并通过回归'
+```
+
+学习记录保存在忽略的 `.harness/`，重复运行去重、复发重开。apply 登记已经实现且通过测试的改进，输出可放入 run artifact 的凭据引用；只有当前凭据才能计为“已应用”。`verified_existing`、待验证、延期各自保留状态。任何验证范围内文件变化都会使凭据过期，需重新验证；复制到另一个 checkout 后也需重新验证。详细操作见 [学习闭环](skills/game-account-skill-optimizer/references/learning-loop.md)。
 
 ## 安全边界
 

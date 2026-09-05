@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "required": {
+    "game-account-preflight": [],
+    "game-account-toolkit": ["game-account-preflight", "game-account-skill-optimizer", "game-account-skill-evaluator"],
+    "game-account-select": ["game-account-preflight", "game-account-toolkit", "game-account-skill-optimizer", "game-account-skill-evaluator"],
+    "game-account-skill-optimizer": ["game-account-preflight", "game-account-toolkit", "game-account-skill-evaluator"],
+    "game-account-skill-evaluator": ["game-account-preflight", "game-account-toolkit", "game-account-skill-optimizer"],
+    "game-account-skill-generator": ["game-account-preflight", "game-account-toolkit", "game-account-skill-optimizer", "game-account-skill-evaluator"],
+    "game-account-community-updater": ["game-account-preflight", "game-account-toolkit", "game-account-skill-optimizer", "game-account-skill-evaluator"]
+  },
+  "game_required": ["game-account-preflight", "game-account-toolkit", "game-account-skill-optimizer", "game-account-skill-evaluator"],
+  "conditional": {
+    "game-account-select": { "unsupported_game": "game-account-skill-generator", "stale_evidence": "game-account-community-updater" }
+  }
+}

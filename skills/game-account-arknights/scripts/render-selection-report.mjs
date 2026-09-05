@@ -2,6 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { knowledgeState } from '../../game-account-skill-optimizer/scripts/lib/learning-store.mjs';
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const args = process.argv.slice(2);
 
@@ -294,7 +297,7 @@ function bestValueLine(artifact, limitedMode = false) {
 export function renderSelectionReport(artifact, { perPlatform = 5 } = {}) {
   const shortlists = artifact.platform_shortlists ?? {};
   const selfImprove = artifact.self_improve ?? {};
-  const candidateState = selfImprove.knowledge_candidates ?? {};
+  const candidateState = knowledgeState(artifact.knowledge_update_candidates, repoRoot);
   const optimizerState = selfImprove.optimizer ?? {};
   const evaluatorState = selfImprove.evaluator ?? {};
   const coverageNotes = (Array.isArray(artifact.coverage_gaps) ? artifact.coverage_gaps : [])

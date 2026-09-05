@@ -1,164 +1,48 @@
 ---
 name: game-account-select
-description: 根据用户预算、游戏目标、平台偏好和风险偏好，先制定覆盖计划，再用单一 ego-browser task space 低频查询中国游戏账号平台候选，调用游戏专属 skill 估值，并把字段验证、平台缺口、社区证据、用户反馈和优化建议沉淀到可验证的 run artifact。任何主动找号或动态平台读取都应使用本 skill。
+description: 主动寻找、跨平台比较游戏账号；将预算与目标冻结为本轮画像，按覆盖计划调用已验证浏览器操作和游戏估值，再交付有来源、缺口与质量门禁的推荐。
 argument-hint: "[游戏] [预算] [偏好]"
 ---
 
-# Game Account Select Skill
+# Game Account Select
 
-## 作用
+负责需求、覆盖与交付编排。单账号资产评分交给对应游戏 skill；环境和平台事实交给 preflight/toolkit。预算、权重、区服与硬条件只保留在 run-only `selection_profile`，原始请求单独保留 `request_provenance`。
 
-这是游戏账号智能筛选体系的主编排 skill。它负责把用户需求转成查询条件，先调用 `game-account-preflight` 做执行前准备，再调用 `game-account-toolkit` 做工具和平台访问策略，最后调用对应游戏 skill 做资产估值。
+## 流程
 
-## 设计哲学
+1. 调用 `game-account-preflight`，展示可读摘要；后台加 `--unattended`。冻结 `browser_route: ego_browser`，由 ego-ops 治理，整个查询复用一个有明确归属的 task space，保存数字 id。
+2. 读 [需求与交付细则](references/request-and-delivery.md) 与 [覆盖计划](references/source-coverage-playbook.md)。输出 success_criteria、selection_profile、coverage_plan；完整复合目标使用 custom，只有关键缺项或真实冲突才补问。画像完整就继续。
+3. 读 [状态机](references/selection-state-machine.md)，按游戏路由评分。真实页面读取前通过 toolkit 检查 [support matrix](../game-account-toolkit/references/operation-support-matrix.json)；unsupported 记录 coverage_gaps 并降级。
+4. 保存标准化事实、平台/社区尝试、时间字段、缺失与来源到 raw run artifact。每步有明确输入、输出和停止条件；采集时间不能替代上架/验号时间。
+5. 按游戏 finalizer 生成报告、optimizer/evaluator sidecars、self_improve、quality_gate 和 delivery_contract。执行 POST_RUN_OPTIMIZE；非 info findings / redo_required 需补证、修复或按状态机降级。
+6. 交付通过门禁的 final_response，保留预算分层、平台清单、近似项、风险和 Self-improve 摘要；完成本轮 task-space 精确清理，记录 cleanup_reports。
 
-本 skill 采用证据优先的执行哲学：先定义成功标准，再选择最可能直达目标的起点；每一步结果都是证据，失败后换工作流而不是重复等待；完成后把可复用事实沉淀到 references、fixtures 或优化器知识库。
+## 游戏路由
 
-主入口只做策略编排：
+| 游戏 | Skill |
+| --- | --- |
+| 明日方舟 | game-account-arknights |
+| 鸣潮 | game-account-wuthering-waves |
+| 异环 | game-account-neverness-to-everness |
+| 绝区零 | game-account-zenless-zone-zero |
 
-- `SKILL.md` 负责入口、边界、必须读取文件和对外契约。
-- `references/selector-architecture.md` 负责层级边界、成功标准和停止条件。
-- `references/source-coverage-playbook.md` 负责平台与社区来源覆盖计划。
-- `references/knowledge-ledger.md` 负责把运行观察转成可验证的知识更新候选。
-- `references/selection-state-machine.md` 负责具体状态转换、字段、降级和门禁。
+未支持游戏使用 game-account-skill-generator；证据过期/跨版本/出现新资产使用 game-account-community-updater。生成或更新后必须运行 game-account-skill-evaluator。
 
-不要把一次搜索结果当成完整结论。默认先生成 `success_criteria` 和 `coverage_plan`，再进入平台读取；最终必须把成功、失败、降级和待沉淀知识写入 raw run artifact。
+## 按需上下文
 
-## 依赖
+- 确定编排边界、成功标准或停止条件：读 [selector architecture](references/selector-architecture.md)。
+- 首次真实页面操作：通过 toolkit 读 [ego-browser workflow](../game-account-toolkit/references/ego-browser-workflow.md) 和 [ego-ops contract](../game-account-toolkit/references/ego-ops-query-contract.md)。用户接管、inactive 或未分配状态暂停，等待明确恢复授权。
+- 组装 artifact 或跨 skill 交接：读 [skill I/O](../game-account-toolkit/references/skill-io-contract.md)。内部 `<recommendations>` / `<game_account_evaluation>` 标签不作为用户主文案。
+- 收尾记录知识候选：读 [knowledge ledger](references/knowledge-ledger.md)；包含 evidence、observed_in、suggested_targets、apply_status 和 source_scope。
+- 用户要求实现改进或问题复发：调用 game-account-skill-optimizer，按 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md) 收集、修复和验证。已有授权继续执行；applied 需要实际文件变化与当前回归凭据，verified_existing 仅为既有机制复核。
 
-必须引用：
-
-- `game-account-preflight`
-- `game-account-toolkit`
-- `game-account-skill-generator`（当游戏未支持时）
-- `game-account-skill-evaluator`（当生成、更新 skill 后，以及每次筛选的收尾质量门禁）
-- `game-account-community-updater`（当社区证据过期或用户要求刷新时）
-- `game-account-skill-optimizer`（筛选结束后分析慢路径、空结果、平台覆盖、输出格式、估值误判和质量门禁问题）
-
-按游戏引用：
-
-- Wuthering Waves（鸣潮） → `game-account-wuthering-waves`
-- 明日方舟 → `game-account-arknights`
-- Neverness to Everness（异环） → `game-account-neverness-to-everness`
-- Zenless Zone Zero（绝区零 / ZZZ） → `game-account-zenless-zone-zero`
-
-## 执行流程
-
-第一步必须运行 `game-account-preflight`，并先显示 `<preflight_report>`。后台或用户不在场时追加 `--unattended`。把报告中的 `browser_route` 写入 raw run artifact（创建时可传 `--browser-route-json`）并冻结为 `ego_browser`；随后为本轮目标创建一个 ego-browser task space，保存数字 id，在全部平台和社区步骤中复用。首次真实操作验证运行时；用户接管、inactive 或未分配状态必须暂停等待明确确认。若缺少必需依赖，停止筛选并给出补齐步骤；若只缺少可选能力，继续但在推荐中标注降级范围。
-
-执行前必须读取：
-
-- `references/selector-architecture.md`
-- `references/source-coverage-playbook.md`
-- `references/knowledge-ledger.md`
-- `references/selection-state-machine.md`
-- `../game-account-toolkit/references/ego-browser-workflow.md`
-- `../game-account-toolkit/references/ego-ops-query-contract.md`
-- `../game-account-toolkit/references/operation-support-matrix.json`
-- `../game-account-toolkit/references/skill-io-contract.md`
-
-按状态机执行，不要把流程写成泛泛建议；每一步都要有明确输入、输出和降级路径。每次真实查询都必须执行状态机里的 `POST_RUN_OPTIMIZE` 收尾阶段：先生成 raw run artifact，运行 `game-account-skill-optimizer`，再运行 `game-account-skill-evaluator --from-report=<run-artifact>`，根据门禁结果补查、降级、改写推荐或打回重做。
-
-## 标准输入输出
-
-优先接受 `<game_account_request>`，先解析并展示本轮 `selection_profile`。预算和主要目标缺失或用户明确表示尚未决定主目标时只补问关键项；“限定齐全、练度够且资源能抽下一池”这类并列要求是完整的 `custom` 复合画像，不是冲突，不得要求用户删减目标或先选择固定抽数。区服、风险等只有会显著改变结果时补问，非关键缺项写入 `assumptions`。画像完整时展示后自动冻结并开始查询，不要求用户在“严格预算/允许突破”之间先做选择；只有关键项缺失或真实冲突时才暂停等待确认。
-
-最终输出 `<recommendations>`。如果需要评价单个账号，游戏 skill 必须输出 `<game_account_evaluation>`。内部 run artifact 必须包含 `request_provenance`、`selection_profile`、`profile_confirmation`、`profile_isolation`、`success_criteria`、`coverage_plan`、`coverage_gaps` 和 `knowledge_update_candidates`，方便优化器与评估器复查。`user_request` 永远保留用户原话；推导出的资源阈值或标准化画像只能写入 `request_provenance.profile_input` 与冻结画像，不得覆盖原话。
-
-自然语言画像可用：
+## 常用入口
 
 ```bash
-node skills/game-account-select/scripts/parse-selection-profile.mjs --request "限定多、1000元左右"
-node skills/game-account-select/scripts/create-run-artifact.mjs --game "明日方舟" --user-request "限定多、1000元左右，螃蟹" --json
-```
-
-预算、权重、区服偏好、风险容忍度和用户硬条件只属于本轮。不得把它们沉淀为游戏 skill 默认值。
-
-预算只定义本轮“优先搜索区间”，不是隐含的绝对上限。默认先完成主区间和浮动区间筛选；没有硬条件完整项时，自动向更低价和更高价逐档扩展，两侧分别在首个详情复核合格价档停止，同时保留预算附近近似项并解释价格差买到的具体价值。用户明确说“绝不超预算、只看预算内”等严格口径时才关闭扩展。这个策略属于通用查询流程，本轮金额和扩展结果仍不得写入永久知识。
-
-## 默认筛选目标
-
-优先解决用户“大海捞针”的问题：主动找到符合条件的候选账号，而不是只分析用户粘贴的单个链接。
-
-默认支持条件：
-
-- 游戏
-- 预算
-- 平台范围
-- 官服/B服/渠道服
-- 绑定要求
-- 找回包赔/官方验号
-- 强度开荒
-- 抽卡资源
-- 收藏/皮肤
-- 性价比
-- 低风险
-
-## 平台优先级
-
-平台顺序以 `game-account-toolkit/references/platform-priority.json` 为准，实际可执行能力以 `operation-support-matrix.json` 为准。优先级不等于支持声明：某个 game/platform/list-or-detail 标为 `unsupported` 时，只记录覆盖缺口，不得切换其它浏览器实现。只有 `ego-ops` 受控探索通过 `ego-browser` 实证并回写 operation 后，才能升级为 `verified`。
-
-用户没有指定平台时，按以下顺序规划候选来源；执行时逐项受支持矩阵约束：
-
-1. 用户提供的链接、截图或指定平台。
-2. 螃蟹账号代售 `https://www.pxb7.com/`。
-3. 盼之代售 `https://www.pzds.com/`。
-4. 交易猫。
-5. 淘手游。
-6. 闲鱼仅作为补充来源；若出现登录推荐页、验证码、空卡片或长时间无输出，立即降级，不反复重试。
-
-不应声称已覆盖没有实际读取的平台。平台不可读时，把它列入“数据来源与限制”，并建议用户提供链接、截图或复制文本。
-
-## 输出格式
-
-```text
-1. 查询条件
-2. 数据来源与限制
-3. 入选账号 Top N
-4. 每个账号的上架时间 / 平台验号时间
-5. 每个账号的推荐理由
-6. 每个账号的风险/缺失字段
-7. 被排除账号与排除理由
-8. 需要用户人工确认的问题
-9. 本次规则是否需要更新
-```
-
-面向用户的最终答复必须先输出自然语言推荐结论、Top N、风险和人工确认项。`<game_account_evaluation>`、`<recommendations>` 等标签只用于内部契约、调试或用户明确要求结构化输出时展示，不要把原始标签作为主文案直接暴露。
-
-每个主推荐、备选和排除项都要分别展示“上架时间”和“平台验号时间”。前者取标准字段 `published_at`，后者取 `platform_verified_at`；平台未披露时明确写“未披露”。不得把 `extracted_at`、运行开始/结束时间或截图时间冒充其中任一项，也不得把验号时间写成上架时间。
-
-## 自我优化
-
-每次执行结束，如果用户反馈推荐错误，先判断错误类型：
-
-- 平台解析错误
-- 游戏估值权重错误
-- 当前版本强度知识过期
-- 用户偏好理解错误
-- 风险判断不足
-- 生成或优化后的 skill 未通过质量门禁
-
-只有在用户确认后，才能修改对应 skill 的规则文件。修改后写入该 skill 的 changelog。
-
-每次筛选完成后，应把本次运行摘要交给 `game-account-skill-optimizer`，至少包括：
-
-- 平台尝试、查询词、耗时、等待预算、结果数、失败文本、列表/详情 ego-ops operation 状态、降级路径。
-- 社区证据尝试、工具、等待预算、失败文本、正文/字幕/评论是否可读、降级路径。
-- 主推荐、价格浮动备选、风险备选和排除账号，全部保留 URL、价格、上架时间、平台验号时间、分层、降级原因；平台没有公开相应时间时保留 `null` 并在用户文案写“未披露”。
-- 启用自动价格扩展时，额外保留带 `expansion_direction: lower|higher` 的 `budget_breakthrough_listings`、`near_match_listings` 和 `budget_comparison`；比较硬条件补齐、实战、养成、资源、皮肤及风险，而不是只比较数量或总分。
-- 最终回复草稿是否用了结构化标签、是否包含自然语言结论、风险和人工确认项。
-- 用户反馈、规则更新建议和残留问题。
-- 目标 skill 的 evaluator 报告；若已有优化产物，还要包含 `score`、`passed`、`redo_required`、`mode`、`optimizer_findings` 和阻塞问题。
-
-自动优化阶段默认只产出优化报告、评估结果、`knowledge_update_candidates` 和用户可读摘要，不静默写入其它 skill。用户明确要求“实现/应用这些优化”时，才按报告修改对应文件并运行验证。
-
-即使用户要求应用优化，也只能沉淀稳定事实和经证据/回归验证的规则。由 `selection_profile` 直接派生的预算、权重、区服或硬条件不得写入 durable references；optimizer 发现这类写入时必须以 `selector-session-preference-leak` 阻塞本轮。
-
-每次筛选的收尾阶段都必须运行：
-
-```bash
+node skills/game-account-select/scripts/parse-selection-profile.mjs --request '明日方舟，限定多，1000元左右' --json
+node skills/game-account-select/scripts/create-run-artifact.mjs --game '明日方舟' --user-request '明日方舟，限定多，1000元左右' --json
 node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input <run-artifact.json> --json
 node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=<run-artifact.json> --json
 ```
 
-若 evaluator 对 raw run artifact 输出 `redo_required: true`，必须处理非 info `optimizer_findings`：能补查的回到对应状态补查；不能补查的平台/卖家/登录限制必须降置信并写入最终风险。应用优化后还必须运行目标 skill 的 `game-account-skill-evaluator`；若低于门槛、存在阻塞问题或 `redo_required: true`，本轮产物必须打回重做，不得继续用于真实账号推荐。
+单次筛选默认记录改进候选；实现改进仅在任务授权范围内。画像衍生预算/权重/区服/风险/硬条件不得写入 durable references，即使用户要求优化 skill 也不例外；selector-session-preference-leak 必须阻塞。

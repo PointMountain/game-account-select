@@ -328,3 +328,6 @@ updated_at: 2026-08-12
 - 不要继续把该 skill 用于真实推荐。
 - 把 evaluator 的阻塞问题转成优化器 finding，定位到目标 skill 的 `SKILL.md`、`references/`、`scripts/` 和 `test-fixtures/`。
 - 修完后重新运行目标验证脚本和 evaluator；仍低分则继续打回重做。
+## Applied 证据门禁
+
+`self-improve-applied-evidence-missing`（blocking / quality_gate）：candidate 声称 applied/accepted/merged，但缺少当前本地学习凭据，或试图把 run-only 画像沉淀为通用规则。先核对学习记录、修改目标、正反例与当前文件指纹；不能通过重跑 finalizer 补造凭据。未实施项恢复为 proposed，既有能力复核使用 verified_existing。

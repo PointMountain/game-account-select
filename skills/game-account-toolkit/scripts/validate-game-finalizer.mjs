@@ -66,6 +66,15 @@ export function validateGameFinalizer({ finalizerPath, fixturePath, expectedTarg
     assert.equal(blockedArtifact.self_improve.status, 'needs_revision');
     assert.ok(blockedArtifact.quality_gate.actionable_optimizer_findings.length > 0);
 
+    const fakePath = path.join(temporaryRoot, 'unverified-applied.json');
+    fs.writeFileSync(fakePath, JSON.stringify({ ...source, knowledge_update_candidates: [{ id: 'unverified', apply_status: 'applied' }] }));
+    const fake = runFinalizer(finalizerPath, fakePath, path.join(temporaryRoot, 'unverified-applied.md'));
+    assert.equal(fake.status, 1, 'a bare applied status must fail the complete finalizer chain');
+    const fakeArtifact = JSON.parse(fs.readFileSync(fakePath, 'utf8'));
+    assert.equal(fakeArtifact.self_improve.knowledge_candidates.applied, 0);
+    assert.equal(fakeArtifact.quality_gate.redo_required, true);
+    assert.ok(fakeArtifact.quality_gate.actionable_optimizer_findings.includes('self-improve-applied-evidence-missing'));
+
     assertRejected({
       temporaryRoot,
       finalizerPath,

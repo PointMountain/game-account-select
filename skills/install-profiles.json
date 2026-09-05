@@ -28,7 +28,8 @@
       "skills": [
         "game-account-toolkit",
         "game-account-preflight",
-        "game-account-skill-optimizer"
+        "game-account-skill-optimizer",
+        "game-account-skill-evaluator"
       ]
     },
     {
@@ -44,7 +45,8 @@
         "game-account-preflight",
         "game-account-community-updater",
         "game-account-skill-optimizer",
-        "game-account-wuthering-waves"
+        "game-account-wuthering-waves",
+        "game-account-skill-evaluator"
       ]
     },
     {
@@ -59,7 +61,8 @@
         "game-account-preflight",
         "game-account-community-updater",
         "game-account-skill-optimizer",
-        "game-account-arknights"
+        "game-account-arknights",
+        "game-account-skill-evaluator"
       ]
     },
     {
@@ -75,7 +78,8 @@
         "game-account-preflight",
         "game-account-community-updater",
         "game-account-skill-optimizer",
-        "game-account-neverness-to-everness"
+        "game-account-neverness-to-everness",
+        "game-account-skill-evaluator"
       ]
     },
     {
@@ -91,7 +95,8 @@
         "game-account-preflight",
         "game-account-community-updater",
         "game-account-skill-optimizer",
-        "game-account-zenless-zone-zero"
+        "game-account-zenless-zone-zero",
+        "game-account-skill-evaluator"
       ]
     },
     {
@@ -118,7 +123,8 @@
       "skills": [
         "game-account-toolkit",
         "game-account-preflight",
-        "game-account-skill-optimizer"
+        "game-account-skill-optimizer",
+        "game-account-skill-evaluator"
       ]
     }
   ]

@@ -51,6 +51,7 @@ If you only want one game, select these items in the interactive selector:
 - `game-account-toolkit`
 - `game-account-preflight`
 - `game-account-skill-optimizer`
+- `game-account-skill-evaluator`
 - `game-account-community-updater`
 
 You can also use a bundle command:
@@ -60,6 +61,7 @@ npx skills add https://github.com/PointMountain/game-account-select \
   --skill "game-account-toolkit" \
   --skill "game-account-preflight" \
   --skill "game-account-skill-optimizer" \
+  --skill "game-account-skill-evaluator" \
   --skill "game-account-community-updater" \
   --skill "game-account-zenless-zone-zero"
 ```
@@ -207,6 +209,12 @@ Community evidence can refresh in two ways:
 Evidence refresh updates `community-evidence.md` and the refresh report. It should not silently rewrite valuation weights; rule changes should be proposed, reviewed, and then recorded in the game skill changelog.
 
 The optimizer can run after a real screening session or from a maintainer-provided JSON artifact. It reports recommended improvements by default; it does not silently rewrite skills unless the user explicitly asks to apply the changes and the corresponding validation scripts and evaluator gate pass. Optimized skills below the quality threshold must be redone.
+
+## Development and verified learning
+
+Start from [AGENTS.md](AGENTS.md) and the [development workflow](docs/development/workflow.md). Use `npm run dev:context`, `npm run dev:plan` (see `node scripts/dev.mjs --help` for arguments), and `npm run dev:check`; run `npm run verify:skills` before delivery. Existing skill names and executable paths remain compatible, and install profiles include required runtime dependencies.
+
+Collect a raw run before editing with `npm run learn:collect -- --input /absolute/path/run.json`. Inspect recurring findings with `npm run learn:status`, implement a fix and regression, then run `npm run learn:verify -- --id <id>` and `npm run learn:apply -- --id <id> --reason 'verified fix'`. The ignored local `.harness/` store deduplicates observations and reopens recurring findings. Applied improvements require changed targets and a passing current verification receipt; editing files invalidates it. See the [learning loop](skills/game-account-skill-optimizer/references/learning-loop.md).
 
 ## Safety
 

@@ -40,6 +40,10 @@ The machine-readable instruction that binds the generated report body, SHA-256 h
 
 The combined optimizer and evaluator decision. Blocking provenance, coverage, scoring, or delivery failures set `redo_required`; only a passing gate is releasable.
 
+### Learning candidate and verification receipt
+
+A local learning candidate aggregates a target skill / optimizer finding across distinct runs. Its baseline captures pre-change file hashes. A verification receipt binds changed targets, changed regressions, the fixed offline suite outcome, and the current repository source digest. Only an applied candidate with a matching current receipt counts as a new improvement; a future run reproducing its finding reopens it. Local learning state lives in ignored `.harness/`; durable fixtures and decisions remain in Git.
+
 ## Invariants
 
 - All live page access and data acquisition route through `ego-ops` operations executed by `ego-browser`.

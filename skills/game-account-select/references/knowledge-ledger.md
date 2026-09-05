@@ -1,6 +1,6 @@
 # Knowledge ledger
 
-The selector should leave behind durable learning without silently rewriting business rules. Every real run can produce `knowledge_update_candidates`; applying those candidates requires the normal confirmation, changelog, validation, and evaluator gates.
+The selector should leave behind durable learning within the current task authorization. Every real run can produce `knowledge_update_candidates`; implementing those candidates requires evidence, changelog, validation, and evaluator gates. Follow the [executable learning loop](../../game-account-skill-optimizer/references/learning-loop.md) before changing files; existing implementation authorization need not be requested again.
 
 ## Candidate schema
 
@@ -24,9 +24,11 @@ knowledge_update_candidate:
   apply_status: proposed|applied|verified_existing|deferred|rejected
   source_scope: platform_fact|community_evidence|stable_game_fact|selection_profile
   preference_scope: durable|run_only
+  learning_candidate_id: string # required for applied; emitted by learning-loop apply
+  learning_receipt_digest: string # binds the current local verification receipt
 ```
 
-`verified_existing` means the run re-observed and validated a mechanism that was already present before the run. Count it as resolved evidence, but never as a newly applied self-improvement. Only `applied` means this run changed a durable target and passed its validation commands.
+`verified_existing` means the run re-observed and validated a mechanism that was already present before the run. Count it as resolved evidence, but never as a newly applied self-improvement. `applied` requires a changed target, changed regression and a matching current receipt in the local learning store. The runner executes the fixed repository suite, never commands supplied by the artifact. Bare applied/accepted/merged statuses fail with `self-improve-applied-evidence-missing`; finalizers count them as pending.
 
 ## Where knowledge belongs
 

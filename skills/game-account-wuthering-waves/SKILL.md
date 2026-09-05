@@ -12,15 +12,17 @@ argument-hint: "[listing json or account description]"
 
 预算、区服、目标、权重、风险容忍度和硬条件只能存在于当次 `selection_profile` / run artifact，且 `persistence_scope: run_only`。不得把任何一次用户画像写成长期估值默认值。
 
-## 必须读取
+## 按需读取
+
+评分与组装 `<game_account_evaluation>` 前读 [估值输出契约](references/evaluation-contract.md)；应用改进时读 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md)，applied 需当前验证凭据。
 
 - `../game-account-toolkit/references/skill-io-contract.md`
-- `../game-account-toolkit/references/game-skill-standard.md`
-- `../game-account-toolkit/references/operation-support-matrix.json`
+- 新增/修改规则时读 [game-skill-standard](../game-account-toolkit/references/game-skill-standard.md)。
+- 查询平台前读 [operation support matrix](../game-account-toolkit/references/operation-support-matrix.json)。
 - `references/valuation-rules.md`
 - `references/character-knowledge.md`
 - `references/community-evidence.md`
-- `references/changelog.md`
+- 修改规则或追溯决策时读 [changelog](references/changelog.md)。
 
 ## 执行前准备
 
@@ -67,38 +69,6 @@ Wuthering Waves（鸣潮）账号不能把总黄数、五星角色数量、五�
 接受标准化挂牌、卖家描述或截图 OCR 后文本。
 
 若输入没有包含社区证据快照，先读取 `references/community-evidence.md`。如果快照超过 30 天、跨大版本、或用户样本里出现快照没有覆盖的新角色/新武器，必须降低 `confidence` 并输出 `rule_update_suggestion`。
-
-## 输出
-
-必须输出 `<game_account_evaluation>`，同时保留下列字段：
-
-```yaml
-wuthering_waves_score:
-  asset_score: number
-  resource_score: number
-  team_score: number
-  risk_penalty: number
-  confidence_penalty: number
-  confidence: low|medium|high
-  community_comparison: string
-  highlights: string[]
-  concerns: string[]
-  missing_fields: string[]
-  rule_update_suggestion: string | null
-```
-
-示例：
-
-```xml
-<game_account_evaluation>
-  <game>Wuthering Waves</game>
-  <listing_id>来源账号编号</listing_id>
-  <score format="json">{}</score>
-  <confidence>low|medium|high</confidence>
-  <community_comparison>strong alignment|partial alignment|conflict</community_comparison>
-  <missing_fields format="json">[]</missing_fields>
-</game_account_evaluation>
-```
 
 ## 自我优化
 

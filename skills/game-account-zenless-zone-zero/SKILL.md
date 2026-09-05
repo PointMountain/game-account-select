@@ -12,16 +12,18 @@ argument-hint: "[listing json, account description, or run artifact]"
 
 永久知识只保存稳定事实、版本化社区证据和彼此独立的估值维度。预算、区服偏好、目标、权重、风险容忍度和硬条件只能进入当次 `selection_profile` / run artifact，`persistence_scope` 必须为 `run_only`，不得写成长期默认值。
 
-## 必须读取
+## 按需读取
+
+评分与组装 `<game_account_evaluation>` 前读 [估值输出契约](references/evaluation-contract.md)；应用改进时读 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md)，applied 需当前验证凭据。
 
 - `../game-account-toolkit/references/skill-io-contract.md`
-- `../game-account-toolkit/references/game-skill-standard.md`
-- `../game-account-toolkit/references/operation-support-matrix.json`
+- 新增/修改规则时读 [game-skill-standard](../game-account-toolkit/references/game-skill-standard.md)。
+- 查询平台前读 [operation support matrix](../game-account-toolkit/references/operation-support-matrix.json)。
 - `references/valuation-rules.md`
 - `references/agent-knowledge.md`
 - `references/signature-engines.json`
 - `references/community-evidence.md`
-- `references/changelog.md`
+- 修改规则或追溯决策时读 [changelog](references/changelog.md)。
 
 ## 执行流程
 
@@ -49,39 +51,6 @@ node skills/game-account-zenless-zone-zero/scripts/finalize-evaluation-run.mjs \
   --input /tmp/zzz-account-run.json \
   --report-out /tmp/zzz-account-run.md
 ```
-
-## 独立估值维度
-
-- `asset_score`：版本化限定核心、影画断点、免费/常驻供给折价；S 数量不是价值代理。
-- `engine_score`：逐名匹配 `signature-engines.json`；总 S 音擎数不能替代归属。
-- `team_score`：独立可用队伍与不重复占用关键队友；当前虚狩完整性单独核验。
-- `resource_score`：菲林与菲林底片按 160:1，加密/原装母带与邦布券按 1:1。
-- `progression_score`：绳匠等级、式舆/危局/零号空洞及养成披露。
-- `price_fit_score`：只表达本轮市场对比与价格效率，不改变账号固有资产质量。
-- `risk_penalty`：邮箱交付/实名、HoYoverse、PSN/TAP、区服区域、验号与找回保障。
-- `confidence_penalty`：未披露资源、平台验号、音擎归属、绝对挂牌时间等缺失事实。
-
-输出 `<game_account_evaluation>` 机器对象时至少保留：
-
-```yaml
-zenless_zone_zero_score:
-  asset_score: number
-  engine_score: number
-  team_score: number
-  resource_score: number
-  progression_score: number
-  price_fit_score: number
-  risk_penalty: number
-  confidence_penalty: number
-  final_score: number
-  confidence: low|medium|high
-  community_comparison: string
-  highlights: string[]
-  concerns: string[]
-  missing_fields: string[]
-```
-
-用户可见最终答复不得暴露原始 XML 标签；应使用自然语言或 Markdown 表格，并分开标明“挂牌价”“合理成交区间”“前置核验条件”。
 
 ## Self-improve 边界
 

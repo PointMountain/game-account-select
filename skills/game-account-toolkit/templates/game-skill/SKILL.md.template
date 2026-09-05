@@ -41,4 +41,4 @@ argument-hint: "[listing json or account description]"
 
 ## 自我优化
 
-如用户指出资产权重或风险判断错误，先写入 `knowledge_update_candidates`。只有用户确认且样例、finalizer 与 evaluator 全部通过后才修改 references 文件并追加 changelog。最终答复原样使用通过交付门禁的 report。
+如用户指出资产权重或风险判断错误，先写入 `knowledge_update_candidates`。在已有用户授权范围内修改 references 并追加 changelog；按 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md) 留存基线、回归和当前凭据后才标 applied。最终答复原样使用通过交付门禁的 report。

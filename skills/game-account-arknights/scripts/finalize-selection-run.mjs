@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { knowledgeState as verifiedKnowledgeState } from '../../game-account-skill-optimizer/scripts/lib/learning-store.mjs';
 
 import { renderSelectionReport, selectPlatformRows } from './render-selection-report.mjs';
 
@@ -47,18 +48,7 @@ function sidecarPath(inputPath, suffix) {
 }
 
 function knowledgeState(candidates) {
-  const rows = Array.isArray(candidates) ? candidates : [];
-  const statusOf = (item) => String(item?.apply_status ?? item?.status ?? '').trim().toLowerCase();
-  const appliedStatuses = new Set(['applied', 'accepted', 'merged']);
-  const verifiedExistingStatuses = new Set(['verified_existing', 'already_implemented', 'observed_existing']);
-  const applied = rows.filter((item) => appliedStatuses.has(statusOf(item))).length;
-  const verifiedExisting = rows.filter((item) => verifiedExistingStatuses.has(statusOf(item))).length;
-  return {
-    total: rows.length,
-    applied,
-    verified_existing: verifiedExisting,
-    pending: Math.max(0, rows.length - applied - verifiedExisting),
-  };
+  return verifiedKnowledgeState(candidates, repoRoot);
 }
 
 function sha256(value) {
