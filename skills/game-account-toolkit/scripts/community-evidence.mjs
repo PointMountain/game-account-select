@@ -53,6 +53,14 @@ export function validateEvidence(snapshot) {
     if (!claim || typeof claim !== 'object') { issues.push('claim must be an object'); continue; }
     if (!Array.isArray(claim.contexts) || !claim.contexts.length || claim.contexts.some((context) => !['story', 'roguelike', 'high_difficulty'].includes(context))) issues.push(`${claim.id}: invalid contexts`);
     if (!Array.isArray(claim.source_ids) || claim.source_ids.some((id) => !array(snapshot.sources).some((source) => source?.id === id))) issues.push(`${claim.id}: unknown source`);
+    if (!['operator_valuation', 'team_recommendation'].includes(claim.kind)) issues.push(`${claim.id}: unsupported claim kind`);
+    if (claim.kind === 'team_recommendation') {
+      if (!Array.isArray(claim.members) || claim.members.length < 2 || claim.members.some((name) => typeof name !== 'string' || !name.trim())
+        || new Set(claim.members).size !== claim.members.length) issues.push(`${claim.id}: distinct named team members required`);
+      if (!Array.isArray(claim.requirements) || claim.requirements.some((rule) => !rule || !array(claim.members).includes(rule.member)
+        || !['mindscape', 'resonance_chain', 'awakening'].includes(rule.field) || !Number.isInteger(rule.minimum) || rule.minimum < 0 || rule.minimum > 6)) issues.push(`${claim.id}: invalid progression requirements`);
+      if (!Array.isArray(claim.equipment) || claim.equipment.some((name) => typeof name !== 'string' || !name.trim())) issues.push(`${claim.id}: named equipment array required`);
+    }
     if (claim.kind === 'operator_valuation') {
       if (!claim.values || typeof claim.values !== 'object' || Array.isArray(claim.values) || !Object.keys(claim.values).length) issues.push(`${claim.id}: valuation values required`);
       for (const key of ['combat_value', 'story_value']) if (claim.values?.[key] != null && (!Number.isFinite(claim.values[key]) || claim.values[key] < 0 || claim.values[key] > 100)) issues.push(`${claim.id}: invalid ${key}`);

@@ -1,5 +1,7 @@
 # 绝区零（ZZZ）社区证据快照
 
+> 本文保留历史证据及当时的结论，以下“当前”均指记录日期。真实推荐使用 [机器证据](community-evidence.json) 与 [本轮核验流程](../../game-account-toolkit/references/current-evidence-workflow.md)；不得把历史3.1名单、配队或文件日期当作今日版本结论。
+
 updated_at: 2026-08-03
 
 ## 覆盖状态

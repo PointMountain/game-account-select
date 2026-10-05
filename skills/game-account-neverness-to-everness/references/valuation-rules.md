@@ -4,7 +4,7 @@ updated_at: 2026-05-16
 
 ## 社区证据要求
 
-评分前读取 `references/community-evidence.md` 和 `references/asset-knowledge.md`。由于异环账号市场和版本评价可能快速变化，若没有当次社区证据，`confidence` 最高为 `medium`；若资产只用泛称描述，`confidence` 必须为 `low`。
+评分前读取 community-evidence.json 与 [本轮核验流程](../../game-account-toolkit/references/current-evidence-workflow.md)。下文数值及 asset-knowledge 是历史初筛基线；当前队伍、弧盘和觉醒适用性需本轮版本和7天内独立来源。证据不足或资产只用泛称时进入 pending_verification，confidence 为 low，不能靠静态分成为主推荐。
 
 ## 最高优先级规则
 

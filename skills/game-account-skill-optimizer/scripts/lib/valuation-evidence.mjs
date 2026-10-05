@@ -7,7 +7,20 @@ export function verifyValuationEvidence(root, before, changed) {
   const skill = 'skills/game-account-arknights';
   const snapshotFile = `${skill}/references/community-evidence.json`;
   const mapFile = `${skill}/references/operator-value-map.json`;
-  if (!changed.includes(snapshotFile) && !changed.includes(mapFile)) return { checked: false };
+  const teamClaims = [];
+  let checked = false;
+  for (const game of ['zenless-zone-zero', 'wuthering-waves', 'neverness-to-everness']) {
+    const file = `skills/game-account-${game}/references/community-evidence.json`;
+    if (!changed.includes(file)) continue;
+    checked = true;
+    const evidence = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
+    if (evidence.game !== game || !validateEvidence(evidence).valid || evidence.claims.some((claim) => claim.kind !== 'team_recommendation')) throw new Error(`Invalid ${game} evidence`);
+    for (const claim of evidence.claims.filter((item) => item.status === 'supported')) {
+      if (!claim.contexts.every((context) => assessClaim(claim, evidence, {context}).eligible)) throw new Error(`Current independent valuation evidence missing: ${claim.id}`);
+      teamClaims.push(claim.id);
+    }
+  }
+  if (!changed.includes(snapshotFile) && !changed.includes(mapFile)) return { checked, supported_claim_ids: teamClaims, changed_subjects: [] };
   const snapshot = fs.existsSync(path.join(root, snapshotFile)) ? JSON.parse(fs.readFileSync(path.join(root, snapshotFile), 'utf8')) : null;
   const supported = (Array.isArray(snapshot?.claims) ? snapshot.claims : []).filter((claim) => claim?.kind === 'operator_valuation' && claim.status === 'supported');
   if (snapshot && !validateEvidence(snapshot).valid) throw new Error('Valuation evidence schema is invalid');
@@ -24,5 +37,5 @@ export function verifyValuationEvidence(root, before, changed) {
       if (!supported.some((claim) => claim.subject === name && changes.every((field) => JSON.stringify(claim.values?.[field]) === JSON.stringify(value[field])))) throw new Error(`Valuation change lacks matching current sources: ${name}`);
     }
   }
-  return { checked: true, supported_claim_ids: supported.map((claim) => claim.id), changed_subjects: changedSubjects };
+  return { checked: true, supported_claim_ids: [...supported.map((claim) => claim.id), ...teamClaims], changed_subjects: changedSubjects };
 }

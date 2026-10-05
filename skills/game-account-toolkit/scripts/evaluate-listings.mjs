@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { assessGameRecommendation, gameEvidenceConfig } from './game-evidence.mjs';
 
 function readArg(args, name, fallback = null) {
   const inline = args.find((arg) => arg.startsWith(`${name}=`));
@@ -9,7 +10,7 @@ function readArg(args, name, fallback = null) {
   return index === -1 ? fallback : args[index + 1] ?? fallback;
 }
 
-function normalizeListing(listing) {
+export function normalizeListing(listing) {
   return {
     id: listing.id ?? listing.listing_id ?? null,
     platform: listing.platform ?? listing.source ?? null,
@@ -54,7 +55,7 @@ function componentTotal(components, pattern) {
   ), 0);
 }
 
-export function evaluateListings({ game, scoreKey, scoreListing, inputValue }) {
+export function evaluateListings({ game, scoreKey, scoreListing, inputValue, profile = inputValue?.selection_profile ?? {}, evidence, now }) {
   const listings = Array.isArray(inputValue)
     ? inputValue
     : Array.isArray(inputValue?.listings)
@@ -63,6 +64,7 @@ export function evaluateListings({ game, scoreKey, scoreListing, inputValue }) {
 
   return listings.map((listing) => {
     const result = scoreListing(listing);
+    const gate = gameEvidenceConfig[game] ? assessGameRecommendation(game, listing, { profile, evidence, now }) : null;
     const dimensions = splitDimensions(result.components);
     const riskPenalty = result.risk_penalty
       ?? result.components?.riskPenalty
@@ -77,7 +79,13 @@ export function evaluateListings({ game, scoreKey, scoreListing, inputValue }) {
       schema_version: '3.0',
       game,
       listing: normalizeListing(listing),
+      ...(gate ? {
+        source_listing: structuredClone(listing),
+        evidence_policy: { version: 1 },
+        recommendation_gate: gate,
+      } : {}),
       [scoreKey]: {
+        ...(gate ? { score_basis: 'historical_baseline', recommendation_gate: gate } : {}),
         base_dimensions: dimensions.baseDimensions,
         profile_score: result.profile_score ?? dimensions.inferredProfileScore,
         asset_quality_score: assetQualityScore,
@@ -91,11 +99,11 @@ export function evaluateListings({ game, scoreKey, scoreListing, inputValue }) {
         missing_data_penalty: missingDataPenalty,
         confidence_penalty: result.confidence_penalty ?? missingDataPenalty,
         final_score: result.final_score,
-        confidence: result.confidence,
-        community_comparison: result.community_comparison,
+        confidence: gate && !gate.eligible ? 'low' : result.confidence,
+        community_comparison: gate ? (gate.eligible ? '当前队伍适用证据已核实；分数为历史基线' : '当前适用证据待核实；分数仅供历史初筛') : result.community_comparison,
         highlights: result.highlights ?? [],
-        concerns: result.concerns ?? [],
-        missing_fields: result.missing_fields ?? [],
+        concerns: [...(result.concerns ?? []), ...(gate?.gaps ?? [])],
+        missing_fields: [...new Set([...(result.missing_fields ?? []), ...(gate?.gaps ?? [])])],
         rule_update_suggestion: result.rule_update_suggestion ?? null,
       },
     };
@@ -110,7 +118,12 @@ export function runListingEvaluator({ game, scoreKey, scoreListing, args = proce
   }
 
   const raw = input === '-' ? fs.readFileSync(0, 'utf8') : fs.readFileSync(path.resolve(input), 'utf8');
-  const evaluations = evaluateListings({ game, scoreKey, scoreListing, inputValue: JSON.parse(raw) });
+  const evidencePath = readArg(args, '--evidence');
+  const profilePath = readArg(args, '--profile');
+  const evaluations = evaluateListings({ game, scoreKey, scoreListing, inputValue: JSON.parse(raw),
+    evidence: evidencePath ? JSON.parse(fs.readFileSync(path.resolve(evidencePath), 'utf8')) : undefined,
+    profile: profilePath ? JSON.parse(fs.readFileSync(path.resolve(profilePath), 'utf8')) : undefined,
+  });
   const output = evaluations.length === 1 ? evaluations[0] : { evaluations };
   const serialized = `${JSON.stringify(output, null, 2)}\n`;
   const outputPath = readArg(args, '--out');

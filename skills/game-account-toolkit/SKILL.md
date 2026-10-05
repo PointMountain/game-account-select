@@ -17,6 +17,7 @@ argument-hint: "[check|platform|extract|finalize]"
 | 平台受限、查询降级 | [platform access policy](references/platform-access-policy.md) |
 | 标准化字段或跨 skill 交接 | [shared listing schema](references/shared-listing-schema.md)、[skill I/O contract](references/skill-io-contract.md) |
 | 当前版本角色/装备评价 | [community research protocol](references/community-research-protocol.md) |
+| 绝区零、鸣潮、异环的当前推荐资格 | [当前证据与字段核验](references/current-evidence-workflow.md) |
 | 新游戏或修改评分接口 | [game skill standard](references/game-skill-standard.md)、templates/game-skill/ |
 | 实施与验证可复用改进 | [学习闭环](../game-account-skill-optimizer/references/learning-loop.md) |
 

@@ -3,8 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { playContexts, resolveContextKnowledge } from './community-evidence.mjs';
+import { planGameCommunityRefresh } from './game-evidence.mjs';
 
-export function planCommunityRefresh({ request = '', listings = [], evidence = null, knowledge = { operators: {} }, now = new Date().toISOString() }) {
+export function planCommunityRefresh({ game = 'arknights', request = '', listings = [], evidence, knowledge = { operators: {} }, now = new Date().toISOString() }) {
+  if (game !== 'arknights') return planGameCommunityRefresh({game, request, listings, evidence, now});
   const contexts = playContexts(request);
   const names = [...new Set(listings.flatMap((row) => (row.game_assets?.operators ?? []).map((operator) => operator.name)))];
   const labels = { story: '主线 活动 日常 阵容', roguelike: '集成战略 肉鸽 抓位 队伍', high_difficulty: '高难 合约 阵容 练度门槛' };
@@ -24,9 +26,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const args = process.argv.slice(2);
   const get = (key) => { const index = args.indexOf(key); return index < 0 ? null : args[index + 1]; };
   const artifact = get('--input') ? JSON.parse(fs.readFileSync(get('--input'), 'utf8')) : {};
-  const evidence = get('--evidence') && fs.existsSync(get('--evidence')) ? JSON.parse(fs.readFileSync(get('--evidence'), 'utf8')) : null;
+  const evidence = get('--evidence') ? JSON.parse(fs.readFileSync(get('--evidence'), 'utf8')) : undefined;
   const knowledge = get('--knowledge') ? JSON.parse(fs.readFileSync(get('--knowledge'), 'utf8')) : { operators: {} };
-  const result = planCommunityRefresh({ request: get('--request') ?? artifact.selection_profile?.source_text ?? artifact.user_request ?? '', listings: artifact.rankings ?? [], evidence, knowledge });
+  const result = planCommunityRefresh({ game: get('--game') ?? artifact.target_skill?.replace(/^skills\/game-account-/, '') ?? 'arknights', request: get('--request') ?? artifact.selection_profile?.source_text ?? artifact.user_request ?? '', listings: artifact.rankings ?? artifact.evaluations ?? artifact.listings ?? [], evidence, knowledge });
   const body = `${JSON.stringify(result, null, 2)}\n`;
   if (get('--out')) fs.writeFileSync(get('--out'), body); else process.stdout.write(body);
 }

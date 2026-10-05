@@ -15,6 +15,7 @@ argument-hint: "[listing json or account description]"
 ## 按需读取
 
 评分与组装 `<game_account_evaluation>` 前读 [估值输出契约](references/evaluation-contract.md)；应用改进时读 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md)，applied 需当前验证凭据。
+真实查询先读 [当前证据与字段核验](../game-account-toolkit/references/current-evidence-workflow.md)：按队伍、共鸣链和专武缺口定向取证，记录版本与字段来源。
 
 - `../game-account-toolkit/references/skill-io-contract.md`
 - 新增/修改规则时读 [game-skill-standard](../game-account-toolkit/references/game-skill-standard.md)。
@@ -57,7 +58,7 @@ Wuthering Waves（鸣潮）账号不能把总黄数、五星角色数量、五�
    ```
 
 4. `scripts/validate-sample.mjs` 只负责离线 trap 回归，不是唯一评分入口。
-5. 每次真实评估写 raw run artifact，至少包含 `selection_profile`、`request_provenance`、`coverage_plan`、`platform_attempts`、`coverage_gaps`、`knowledge_update_candidates` 与 evaluation。
+5. 每次真实评估写有唯一 `run_id` 的 raw artifact，保留 evaluator 的 `source_listing` / `evidence_policy`，以及 selection_profile、request_provenance、coverage_plan、platform_attempts、coverage_gaps、knowledge_update_candidates 与 evaluation。
 6. 使用 finalizer 收尾：
 
    ```bash
@@ -70,8 +71,8 @@ Wuthering Waves（鸣潮）账号不能把总黄数、五星角色数量、五�
 
 接受标准化挂牌、卖家描述或截图 OCR 后文本。
 
-若输入没有包含社区证据快照，先读取 `references/community-evidence.md`。如果快照超过 30 天、跨大版本、或用户样本里出现快照没有覆盖的新角色/新武器，必须降低 `confidence` 并输出 `rule_update_suggestion`。
+当前证据读取 `references/community-evidence.json`。主张或原始来源满7天、跨版本、或出现未覆盖角色/武器时，定向刷新；历史 Markdown 和静态分只用于初筛。缺版本、队伍适用性或关键字段证据的账号必须留在待核实，不能因静态分高进入主推荐。
 
 ## 自我优化
 
-如果用户指出某个角色/命座/队伍判断错误，不要立即改文件。先写入 `knowledge_update_candidates`；只有稳定事实或具备版本化证据的规则通过样例、finalizer 和 evaluator 后才能应用。用户本轮画像永远不得沉淀。最终答复必须原样交付通过门禁的 report，不得手写替换。
+真实运行 finalizer 自动 collect 并生成 `.repair-plan.json`；当前 Agent 按已有授权执行。反馈先记录为知识候选，以当前独立证据、固定旧回归、三类画像对比和当前验证凭据支持 applied。用户本轮画像不得沉淀。最终答复原样交付通过门禁的 report。

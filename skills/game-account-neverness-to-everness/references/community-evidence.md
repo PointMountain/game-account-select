@@ -1,5 +1,7 @@
 # Neverness to Everness（异环）社区证据快照
 
+> 本文是2026-05-16的历史基线，不代表今天的版本与市场阶段。真实推荐使用 [机器证据](community-evidence.json) 与 [本轮核验流程](../../game-account-toolkit/references/current-evidence-workflow.md)，队伍和觉醒结论缺当前证据时保持待核实。
+
 updated_at: 2026-05-16
 
 ## 覆盖状态

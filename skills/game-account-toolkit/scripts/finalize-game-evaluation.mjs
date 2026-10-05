@@ -5,6 +5,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { knowledgeState as verifiedKnowledgeState } from '../../game-account-skill-optimizer/scripts/lib/learning-store.mjs';
+import { assessGameRecommendation, loadGameEvidence, planGameCommunityRefresh, gameEvidenceConfig } from './game-evidence.mjs';
+import { evaluateListings, normalizeListing } from './evaluate-listings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
@@ -75,6 +77,7 @@ function evaluationRows(artifact, scoreKey) {
       missing_fields: score.missing_fields ?? row.missing_fields ?? [],
       highlights: score.highlights ?? row.highlights ?? [],
       concerns: score.concerns ?? row.concerns ?? [],
+      recommendation_gate: row.recommendation_gate ?? score.recommendation_gate,
     };
   });
 }
@@ -89,17 +92,20 @@ export function renderGameEvaluationReport(artifact, config) {
     '',
     '## 候选结果',
     '',
-    '| 账号 | 来源 | 价格 | 区服 | 评分 | 置信度 | 上架时间 | 平台验号时间 | 链接 |',
-    '|---|---|---:|---|---:|---|---|---|---|',
+    '评分为历史基线，仅供初筛；推荐资格按本轮版本、玩法和账号字段重新核验。',
+    '',
+    '| 账号 | 来源 | 价格 | 区服 | 历史评分 | 核验状态 | 置信度 | 上架时间 | 平台验号时间 | 链接 |',
+    '|---|---|---:|---|---:|---|---|---|---|---|',
   ];
   if (rows.length === 0) {
-    lines.push('| 无可交付候选 | 未披露 | 未披露 | 未披露 | 未评分 | low | 未披露 | 未披露 | 未提供 |');
+    lines.push('| 无可交付候选 | 未披露 | 未披露 | 未披露 | 未评分 | 待核实 | low | 未披露 | 未披露 | 未提供 |');
   } else {
     for (const row of rows) {
       const link = row.url ? `[查看](${row.url})` : '未提供';
-      lines.push(`| ${markdownCell(row.id)} | ${markdownCell(row.platform)} | ${row.price == null ? '未披露' : `¥${Number(row.price).toLocaleString('zh-CN')}`} | ${markdownCell(row.server)} | ${row.final_score ?? '未评分'} | ${markdownCell(row.confidence)} | ${markdownCell(row.published_at)} | ${markdownCell(row.platform_verified_at)} | ${link} |`);
+      lines.push(`| ${markdownCell(row.id)} | ${markdownCell(row.platform)} | ${row.price == null ? '未披露' : `¥${Number(row.price).toLocaleString('zh-CN')}`} | ${markdownCell(row.server)} | ${row.final_score ?? '未评分'} | ${row.recommendation_gate?.eligible ? '已核实' : '待核实'} | ${markdownCell(row.confidence)} | ${markdownCell(row.published_at)} | ${markdownCell(row.platform_verified_at)} | ${link} |`);
     }
   }
+  for (const row of rows) if (row.recommendation_gate?.gaps?.length) lines.push('', `${markdownCell(row.id)} 待核实：${row.recommendation_gate.gaps.map(markdownCell).join('、')}。`);
   lines.push('', '## 证据覆盖', '', '| 来源 | 状态 | 结果数 | Operation |', '|---|---|---:|---|');
   if (attempts.length === 0) lines.push('| 无 | 未执行 | 0 | 无 |');
   for (const attempt of attempts) {
@@ -108,12 +114,43 @@ export function renderGameEvaluationReport(artifact, config) {
   lines.push('', `覆盖缺口：${gaps.length ? gaps.map((gap) => typeof gap === 'string' ? gap : gap.summary ?? gap.id ?? JSON.stringify(gap)).join('；') : '无。'}`);
   lines.push('', '## 本轮复盘与 Self-improve', '');
   lines.push(`知识候选：已应用 ${knowledge.applied} 条，已验证既有能力 ${knowledge.verified_existing} 条，待验证 ${knowledge.pending} 条。`);
+  if (artifact.self_improve?.learning) lines.push(artifact.self_improve.learning.status === 'collected' ? '运行问题已进入改进队列，当前会话按修复清单继续处理。' : '改进队列写入失败，需修复后重试；本轮未声称已应用改进。');
   lines.push('本轮 selection_profile 仅用于本次排序，不写入永久估值知识；未知字段不获得隐含加分。');
   if (rows.length) {
     const missing = [...new Set(rows.flatMap((row) => row.missing_fields))];
     lines.push(`仍需人工核验：${missing.length ? missing.join('、') : '无额外字段。'}`);
   }
   return `${lines.join('\n')}\n`;
+}
+
+export function applyGameEvidenceGate(artifact, config, {now = new Date().toISOString()} = {}) {
+  const game = config.targetSkill.replace(/^skills\/game-account-/, '');
+  const evidence = artifact.community_evidence ?? loadGameEvidence(game);
+  const source = artifact.evaluations ?? (artifact.evaluation ? [artifact.evaluation] : artifact.recommendations ?? []);
+  artifact.evaluations = source.map((row) => {
+    const listing = row.source_listing ?? row.listing ?? row;
+    if (config.scoreListing) return evaluateListings({game, scoreKey: config.scoreKey, scoreListing: config.scoreListing,
+      inputValue: listing, profile: artifact.selection_profile, evidence, now})[0];
+    const gate = assessGameRecommendation(game, listing, {profile: artifact.selection_profile, evidence, now});
+    const score = row[config.scoreKey] ?? row.score ?? row.evaluation?.[config.scoreKey] ?? {};
+    return {...row, listing: normalizeListing(listing), recommendation_gate: gate, [config.scoreKey]: {
+      ...(typeof score === 'object' ? score : {final_score: score}),
+      score_basis: 'historical_baseline', recommendation_gate: gate,
+      confidence: gate.eligible ? score.confidence ?? 'medium' : 'low',
+    }};
+  });
+  artifact.evidence_policy = {version: 1};
+  if (artifact.evaluation) artifact.evaluation = artifact.evaluations[0] ?? null;
+  artifact.recommendations = artifact.evaluations.filter((row) => row.recommendation_gate.eligible);
+  artifact.pending_verification = artifact.evaluations.filter((row) => !row.recommendation_gate.eligible);
+  // Recompute every delivery surface; cached shortlist flags cannot bypass the gate.
+  artifact.backup_listings = [];
+  artifact.budget_breakthrough_listings = [];
+  artifact.best_value_listing = null;
+  if (artifact.platform_shortlists) delete artifact.platform_shortlists;
+  artifact.community_refresh_plan = planGameCommunityRefresh({game, request: artifact.user_request, contexts: artifact.selection_profile?.play_contexts,
+    listings: artifact.evaluations, evidence, now});
+  return artifact;
 }
 
 function ensureRunProvenance(artifact) {
@@ -203,6 +240,10 @@ export function finalizeGameEvaluation(config, args = process.argv.slice(2)) {
   delete artifact.evaluation_reports;
   delete artifact.quality_gate;
   ensureRunProvenance(artifact);
+  const inputRows = artifact.evaluations ?? (artifact.evaluation ? [artifact.evaluation] : artifact.recommendations ?? []);
+  // Historical fixtures predate v1 evidence; run_id alone cannot migrate their contract.
+  if (gameEvidenceConfig[config.targetSkill.replace(/^skills\/game-account-/, '')]
+    && (artifact.evidence_policy?.version === 1 || inputRows.some((row) => row.evidence_policy?.version === 1 || row.source_listing))) applyGameEvidenceGate(artifact, config);
   artifact.presentation = { format: 'markdown_table', table_output_required: true, report_path: reportPath, status: 'complete' };
   artifact.self_improve = {
     closeout_required: true,
@@ -266,6 +307,24 @@ export function finalizeGameEvaluation(config, args = process.argv.slice(2)) {
   fs.writeFileSync(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
   fs.mkdirSync(path.dirname(reportPath), { recursive: true });
   fs.writeFileSync(reportPath, artifact.final_response);
+
+  if (artifact.run_id && artifact.evidence_policy?.version === 1) {
+    const learningScript = path.join(repoRoot, 'skills/game-account-skill-optimizer/scripts/learning-loop.mjs');
+    const collected = runNode(learningScript, ['collect', '--input', artifactPath]);
+    const plan = collected.ok ? runNode(learningScript, ['repair-plan']) : null;
+    const planPath = sidecarPath(artifactPath, 'repair-plan.json');
+    if (plan?.ok) fs.writeFileSync(planPath, plan.stdout);
+    artifact.self_improve.learning = {status: plan?.ok ? 'collected' : 'needs_action',
+      execution: 'agent_in_current_session', repair_plan: plan?.ok ? planPath : null,
+      error: plan?.ok ? null : collected.stderr || plan?.stderr || 'learning collection failed'};
+    if (!plan?.ok) {
+      artifact.self_improve.status = 'needs_revision';
+      artifact.quality_gate.redo_required = true;
+    }
+    bindDeliveryContract(artifact, config);
+    fs.writeFileSync(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
+    fs.writeFileSync(reportPath, artifact.final_response);
+  }
 
   console.log(JSON.stringify({
     artifact: artifactPath,

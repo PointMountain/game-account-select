@@ -1,5 +1,7 @@
 # Wuthering Waves（鸣潮）社区证据快照
 
+> 本文是2026-05-16的历史快照，版本、卡池与配队均指当时。真实推荐使用 [机器证据](community-evidence.json) 与 [本轮核验流程](../../game-account-toolkit/references/current-evidence-workflow.md)；当前主张和原始来源须在7天内，历史30天复用口径停用。
+
 updated_at: 2026-05-16
 
 ## 版本上下文
@@ -70,4 +72,4 @@ community_confidence: medium
 - 本次未能稳定读取 B站字幕、小红书笔记、抖音公开视频或贴吧帖子正文。
 - 部分第三方强度榜之间存在差异，例如 WutheringLab 与 Wuthering.gg 对 Cartethyia、Shorekeeper、Denia 的相对位置不同；因此本快照采用“多来源共同高位/中位/低位”的区间判断。
 - 爱莫林、卡千夏、日月守等中文队伍标签来自执行反馈和样本归纳，尚未完成独立社区来源刷新；涉及这些标签时最高置信度为 `medium`，并应输出刷新建议。
-- 社区 meta 会随 3.3 下半、3.4 和深塔/Whimpering Wastes 环境变化，超过 30 天或出现大版本更新后必须刷新。
+- 社区 meta 随版本和玩法环境变化；真实推荐在来源满7天或版本变化时刷新，旧日期不延续来源有效性。

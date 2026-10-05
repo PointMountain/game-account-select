@@ -15,6 +15,7 @@ argument-hint: "[listing json, account description, or run artifact]"
 ## 按需读取
 
 评分与组装 `<game_account_evaluation>` 前读 [估值输出契约](references/evaluation-contract.md)；应用改进时读 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md)，applied 需当前验证凭据。
+真实查询先读 [当前证据与字段核验](../game-account-toolkit/references/current-evidence-workflow.md)：生成取证任务、记录本轮版本、逐字段补证，收尾执行修复清单。
 
 - `../game-account-toolkit/references/skill-io-contract.md`
 - 新增/修改规则时读 [game-skill-standard](../game-account-toolkit/references/game-skill-standard.md)。
@@ -28,15 +29,15 @@ argument-hint: "[listing json, account description, or run artifact]"
 ## 执行流程
 
 1. 调用 `game-account-preflight` 并展示 `<preflight_report>`。
-2. 真实买号评估先检查 `community-evidence.md`：快照满 7 天、跨版本、或出现未覆盖代理人/音擎时，调用 `game-account-community-updater` 或社区调研协议刷新。
+2. 真实买号评估先检查 `community-evidence.json`：主张或原始来源满7天、跨版本、或出现未覆盖代理人/音擎时，调用 updater 刷新。Markdown 和静态分仅为历史初筛依据；当前来源不足则待核实。
 3. 平台查询由 `ego-ops` 治理、`ego-browser` 执行，查询前读取 operation support matrix。螃蟹使用 `pxb7/zzz-list`、`pxb7/zzz-detail`，盼之使用 `pzds/zzz-list`、`pzds/zzz-detail`；主动找号时在同一 task space 依次读取两边列表，并对各自短名单做详情复核。只采主体商品区，保留平台清单、来源和覆盖缺口。
 4. 标准化时分别保留 `published_at`、`listed_at_raw` 与 `platform_verified_at`；相对时间不能伪装成绝对时间，缺失写 `null` / “未披露”。“满命”固定解析为影画 6，不得写成角色名或 0 命。
 5. 用 `scripts/evaluate-listing.mjs` 调用可复用评分器；`scripts/validate-sample.mjs` 只负责回归，不再是唯一评分入口。
-6. 当前“全部虚狩”按版本化名单检查；3.1 为星见雅、仪玄、叶瞬光、蕾米埃尔。旧“三虚狩”样本只作为历史兼容，必须明确缺少当前虚狩，不能继续声称“全虚狩”。
+6. “全部虚狩”先核实当次版本名单；3.1 四人名单和旧“三虚狩”均为历史参考。缺最新名单或独立队伍证据时，不声称“全虚狩”。
 7. 输出资产强项、缺专属音擎、独立队伍、资源/养成、服务器区域、邮箱/HoYoverse/PSN/TAP、平台验号和找回保障；卖家自述只作为 seller claim。
-8. 每次真实估值都写 run artifact，原始请求和派生画像分别进入 `request_provenance` 与 run-only `selection_profile`，并包含 `success_criteria`、`coverage_plan`、`coverage_gaps`、`platform_attempts`、`community_attempts`、`knowledge_update_candidates`、`experience_summary` 与 evaluation。
+8. 每次真实估值写有唯一 `run_id` 的 artifact，保留 evaluator 的 `source_listing` / `evidence_policy`。原始请求和画像分存 `request_provenance` 与 run-only `selection_profile`；保留 success_criteria、coverage_plan、coverage_gaps、platform_attempts、community_attempts、knowledge_update_candidates 与 evaluation。
 9. 必须由 `scripts/finalize-evaluation-run.mjs` 收尾：生成确定性 Markdown 报告，运行 `game-account-skill-optimizer` 和 raw-artifact evaluator，并将 optimizer/evaluator sidecar、`self_improve`、`quality_gate`、知识候选 applied/pending 状态和带 `final_response_sha256` 的 `delivery_contract` 回写 artifact。
-10. 任何非 `info` optimizer finding 或 evaluator `redo_required` 都要继续修复、补证或明确降级，不能以“已总结经验”代替闭环。
+10. finalizer 重算推荐资格，缺证据项留在 `pending_verification`，真实运行自动 collect 并生成 `.repair-plan.json`。当前 Agent 按授权执行；非 info finding 或 redo_required 继续修复、补证或明确降级。
 
 示例：
 

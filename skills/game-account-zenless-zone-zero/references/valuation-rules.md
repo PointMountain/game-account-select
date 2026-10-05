@@ -4,7 +4,7 @@ updated_at: 2026-08-03
 
 ## 社区证据要求
 
-评分前读取 `references/community-evidence.md` 和 `references/agent-knowledge.md`。真实买号筛选默认只信任 7 天内的社区证据；若快照已满 7 天、跨版本、或账号中出现未覆盖的新限定代理人/音擎，`confidence` 最高只能为 `medium`，并输出规则刷新建议。
+评分前读取 community-evidence.json 与 [本轮核验流程](../../game-account-toolkit/references/current-evidence-workflow.md)。下文角色、队伍、名单和静态分均为历史基线；出现“当前”时指原记录版本。真实推荐必须另有本轮版本、7天内独立来源与账号字段证据；缺口使候选进入 pending_verification，confidence 为 low。历史 Markdown、agent-knowledge 与分数不能自行提供当前资格。
 
 ## 最高优先级规则
 

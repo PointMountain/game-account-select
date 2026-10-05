@@ -14,6 +14,8 @@ argument-hint: "[listing json or account description]"
 
 ## 按需读取
 
+真实查询先读 [当前证据与字段核验](../game-account-toolkit/references/current-evidence-workflow.md)：核对命名角色、觉醒、弧盘适配与账号类型，并记录本轮版本和字段来源。
+
 - `../game-account-toolkit/references/skill-io-contract.md`
 - `../game-account-toolkit/references/game-skill-standard.md`
 - `../game-account-toolkit/references/operation-support-matrix.json`
@@ -51,7 +53,7 @@ argument-hint: "[listing json or account description]"
    ```
 
 4. `scripts/validate-sample.mjs` 只做离线 trap 回归。
-5. 真实评估的 raw run artifact 至少包含 `coverage_plan`、`platform_attempts`、`coverage_gaps`、`knowledge_update_candidates` 与 evaluation。
+5. 真实评估写唯一 `run_id`，保留 evaluator 的 `source_listing` / `evidence_policy`，以及 coverage_plan、platform_attempts、coverage_gaps、knowledge_update_candidates 与 evaluation。使用 community-evidence.json 的7天内独立来源；历史 Markdown 与静态分只供初筛。
 6. 使用 `scripts/finalize-evaluation-run.mjs` 生成确定性 Markdown、optimizer/evaluator sidecar、`self_improve`、`quality_gate` 和带 `final_response_sha256` 的 `delivery_contract`。任何非 info finding 或 `redo_required` 都不得交付为已完成结果。
 
 ## 输出
@@ -75,4 +77,4 @@ neverness_to_everness_score:
 
 ## 自我优化
 
-Neverness to Everness（异环）规则随游戏版本和市场成熟度变化较快。任何角色、弧盘、觉醒权重更新必须先进入 `knowledge_update_candidates`，通过样例、finalizer 和 evaluator 后才能应用；估值变化仍需用户确认。运行画像不得沉淀。最终答复必须原样交付通过门禁的 report。
+finalizer 重算资格，缺当前队伍或关键字段证据时进入 `pending_verification`；真实运行自动 collect 并生成 `.repair-plan.json`。当前 Agent 按已有授权执行改进；角色、弧盘、觉醒更新先进入候选，需独立当前证据、固定旧回归、三类画像对比与有效验证凭据才能 applied。运行画像不得沉淀，最终答复原样交付通过门禁的 report。
