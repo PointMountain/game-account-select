@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { captureBaseline, checkProtectedRegressions } from './learning-baseline.mjs';
+import { verifyValuationEvidence } from './valuation-evidence.mjs';
 
 export const verificationCommand = ['npm', 'run', 'verify:skills'];
 const rank = { blocking: 5, high: 4, medium: 3, low: 2, info: 1 };
@@ -70,6 +72,7 @@ export function updateStore(root, callback) {
 export function collectFindings(store, { root, artifact, artifactHash, report, now = new Date().toISOString() }) {
   const before = snapshot(root);
   const baselineId = digest(JSON.stringify(before));
+  const protection = captureBaseline(root, before);
   const runKey = digest(String(artifact.run_id ?? artifact.query_session_id ?? artifactHash));
   const collected = [];
   const targetSkill = String(report.target_skill).replace(/^\.\//, '').replace(/^skills\//, '');
@@ -97,6 +100,7 @@ export function collectFindings(store, { root, artifact, artifactHash, report, n
     // Hashes identify the local source without copying requests, seller data, URLs, or secrets.
     candidate.observations.push({ run_key: runKey, artifact_sha256: artifactHash, at: now });
     store.baselines[candidate.baseline_id] ??= before;
+    if (candidate.baseline_id === baselineId) candidate.baseline_protection = protection;
     collected.push(candidate.id);
   }
   return collected;
@@ -120,7 +124,7 @@ function changedFiles(before, after) {
 
 export function verifyCandidate(root, store, id, run = () => spawnSync(verificationCommand[0], verificationCommand.slice(1), {
   cwd: root, encoding: 'utf8', timeout: 600000, maxBuffer: 64 * 1024 * 1024, shell: false,
-})) {
+}), { comparisonFile = null } = {}) {
   const candidate = getCandidate(store, id);
   if (['rejected', 'deferred'].includes(candidate.status)) throw new Error('Resume the candidate before verification');
   const before = store.baselines[candidate.baseline_id];
@@ -129,7 +133,20 @@ export function verifyCandidate(root, store, id, run = () => spawnSync(verificat
   const changed = changedFiles(before, after);
   const targetChanges = candidate.targets.filter((target) => changed.includes(target));
   const regressions = changed.filter((file) => /(?:test-fixtures|\/tests\/|\/evals\/|\/validate[^/]*\.[cm]?js$)/.test(file) && after[file]);
+  const protectedBaseline = checkProtectedRegressions(before, after);
+  if (candidate.baseline_protection?.captured && !protectedBaseline.passed) throw new Error(`Existing regression expectations changed: ${protectedBaseline.changed.join(', ')}. Add a new regression or obtain explicit baseline review.`);
   if (!targetChanges.length || !regressions.length) throw new Error('Verification requires a changed suggested target and a changed regression fixture/test');
+  const valuationEvidence = verifyValuationEvidence(root, before, changed);
+  let comparison = null;
+  if (comparisonFile) {
+    const body = fs.readFileSync(path.resolve(root, comparisonFile), 'utf8');
+    const data = JSON.parse(body);
+    if (!Array.isArray(data.comparisons) || data.comparisons.length < 3 || data.comparisons.some((item) => !Array.isArray(item.before) || !Array.isArray(item.after) || !item.before.length
+      || new Set(item.before.map((row) => row.id)).size !== item.before.length || new Set(item.after.map((row) => row.id)).size !== item.after.length
+      || item.before.length !== item.after.length || item.before.some((row) => !item.after.some((afterRow) => afterRow.id === row.id)))) throw new Error('Comparison must cover the same candidates in at least three profiles');
+    comparison = { sha256: digest(body), path: path.resolve(root, comparisonFile), profile_count: data.comparisons.length };
+  }
+  if (valuationEvidence.supported_claim_ids?.length && !comparison) throw new Error('Automatic valuation updates require --comparison with the same candidates');
   const result = run();
   const passed = result.status === 0 && !result.error && JSON.stringify(after) === JSON.stringify(snapshot(root));
   const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}\n${result.error?.message ?? ''}`;
@@ -143,6 +160,9 @@ export function verifyCandidate(root, store, id, run = () => spawnSync(verificat
   candidate.receipt = { schema_version: 1, candidate_id: id, passed, command: verificationCommand,
     source_digest: digest(JSON.stringify(after)), baseline_id: candidate.baseline_id,
     changed_targets: targetChanges, regressions, exit_code: result.status,
+    protected_baseline: protectedBaseline, after_files: Object.fromEntries(targetChanges.map((file) => [file, after[file]])),
+    valuation_evidence: valuationEvidence,
+    comparison,
     output_sha256: digest(output), log_path: log, verified_at: new Date().toISOString() };
   candidate.history.push({ at: candidate.receipt.verified_at, status: candidate.status, reason: passed ? 'regressions_passed' : 'verification_failed_or_sources_changed' });
   return candidate.receipt;

@@ -15,7 +15,7 @@
 - 平台标题写法和游戏设定口径不一致，例如交易标题把多个角色统称为同一标签。
 - 多个候选在资产接近但风险/辅助/资源不同，排名需要当前版本配队共识支撑。
 
-找不到足够证据时允许继续筛选，但必须把相关排序降为 `community_confidence: low|medium`，并输出人工确认项。
+找不到足够证据时继续采集候选并输出缺口。明日方舟依赖当前强度的主推荐必须通过逐玩法证据门槛，缺项保留为待核实；快照总体置信度不能替代逐项依据。
 
 ## 证据等级
 
@@ -75,7 +75,7 @@ source_tasks:
 2. 读取搜索结果标题、作者、互动分、URL。
 3. 对代表性视频读取 metadata、字幕和少量高赞评论。
 4. 若字幕不可用，只能摘要标题/简介/评论，不得声称已理解完整视频内容。
-5. 若结构化命令超时或无输出，在同一 ego-browser task space 中先用 `snapshotText()` 读取标题、简介、合集/相关视频和可见评论，再用一次 `js()` IIFE 或截图补证。仍失败时记录 `fallback_used: ego_browser_or_metadata` 或 `failed`，不要继续等待同一命令。
+5. 若结构化命令超时或无输出，在同一 ego-browser task space 的 page 用 `snapshot()` 读取可见内容，再用一次 `evaluate()` 或截图补证。仍失败时记录 `fallback_used: ego_browser_or_metadata` 或 `failed`，不要继续等待同一命令。
 
 ### YouTube
 
@@ -125,7 +125,7 @@ source_tasks:
 
 同一来源同一意图超时一次后，不要换词反复追打；先换工具或换独立来源。只有标题、卡片或元数据时，结论必须标为低到中置信。
 
-如果调研中发现可复用知识，例如稳定配队、过时陷阱、来源不可读模式或工具降级路径，把它写成 `knowledge_update_candidate`，不要直接改估值权重。评分规则更新仍走用户确认、changelog、fixture 和 evaluator。
+可复用知识先写成 `knowledge_update_candidate`。用户已授权自动优化时，Agent 可基于同版本、同玩法的当前独立证据继续实施规则更新，保留固定回归、同批候选比较、changelog 和回滚凭据；只缺来源时 deferred，不重复请求已有授权。
 
 ## 证据快照字段
 

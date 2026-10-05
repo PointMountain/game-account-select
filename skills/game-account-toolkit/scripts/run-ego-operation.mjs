@@ -131,6 +131,9 @@ function resolveKnowledge(root) {
   const operationSlug = operation.id.split('/')[1];
   const reference = path.join(root, 'references', 'sites', operation.site, 'operations', `${operationSlug}.md`);
   const progressiveRead = [globalIndex, siteIndex, reference].filter((file) => fs.existsSync(file));
+  const bundledRoot = path.join(toolkitRoot, 'ego-operations', 'knowledge');
+  if (!fs.existsSync(reference) && !process.env.GAME_ACCOUNT_EGO_OPS_DIR && root !== bundledRoot
+    && fs.existsSync(path.join(bundledRoot, 'references', 'sites', operation.site, 'operations', `${operationSlug}.md`))) return resolveKnowledge(bundledRoot);
   if (!fs.existsSync(reference)) return {
     status: 'exploration_required', reference: null, site_index: fs.existsSync(siteIndex) ? siteIndex : null,
     progressive_read: progressiveRead, checkpoints: [], success: null, knowledge_sha256: null,
@@ -232,9 +235,9 @@ function completeTaskSpace(target) {
     `const target = ${JSON.stringify(target)}`,
     'const spaces = await listTaskSpaces()',
     'const matched = spaces.find((space) => String(space.id) === String(target) || String(space.taskId) === String(target) || String(space.name) === String(target))',
-    "if (!matched) cliLog(JSON.stringify({ done: true, already_closed: true }))",
-    "else if (matched.ownership !== 'agent') cliLog(JSON.stringify({ done: false, skipped: 'task-space-not-agent-owned', ownership: matched.ownership, id: matched.id, name: matched.name }))",
-    "else { const result = await completeTaskSpace(matched.id, { keep: false }); cliLog(JSON.stringify({ id: matched.id, name: matched.name, ...result })) }",
+    "if (!matched) console.log(JSON.stringify({ done: true, already_closed: true }))",
+    "else if (matched.ownership !== 'agent') console.log(JSON.stringify({ done: false, skipped: 'task-space-not-agent-owned', ownership: matched.ownership, id: matched.id, name: matched.name }))",
+    "else { const task = await taskSpace(matched.id ?? matched.spaceId); await task.finish({ keep: [] }); console.log(JSON.stringify({ id: matched.id ?? matched.spaceId, name: matched.name, done: true })) }",
   ].join('\n');
   const execution = run('ego-browser', ['nodejs'], { inputText: `${script}\n`, timeout: 30000 });
   const result = parseLastJson(`${execution.stdout}\n${execution.stderr}`);
@@ -286,19 +289,16 @@ if (fixturePath) {
   };
 } else {
   const browserScript = buildBrowserScript(operation.id, options);
-  const waitSeconds = Math.max(1, Math.min(Number(valueAfter('--wait', '3')) || 3, 10));
   const script = [
-    `const task = await useOrCreateTaskSpace(${JSON.stringify(taskSpace)})`,
-    'const tabs = await listTabs()',
-    `if (tabs.length) await gotoAndWait(${JSON.stringify(url)}, { timeout: 25, settle: 2 }); else await openOrReuseTab(${JSON.stringify(url)}, { wait: true, timeout: 25 })`,
-    `await wait(${waitSeconds})`,
-    'const page = await pageInfo()',
-    'const semanticValue = await snapshotText()',
-    `const raw = await js(${JSON.stringify(browserScript)})`,
-    'const events = await drainEvents()',
-    "const errorEvents = events.filter((event) => /error|fail|blocked/i.test(JSON.stringify(event))).slice(0, 20)",
+    `const task = await taskSpace(${JSON.stringify(/^\d+$/.test(taskSpace) ? Number(taskSpace) : taskSpace)})`,
+    'const browserPage = task.page("p1")',
+    `await browserPage.goto(${JSON.stringify(url)})`,
+    ...(operation.site === 'dynamic' ? [] : [`await browserPage.evaluate(${JSON.stringify(`(async () => { const expected = ${JSON.stringify(operation.expected_signals ?? [])}; const deadline = Date.now() + 12000; while (Date.now() < deadline) { const text = (document.title || '') + '\\n' + (document.body?.innerText || ''); if (expected.every(signal => text.includes(signal)) && document.title && ${operation.mode === 'detail' ? '/[￥¥]\\s*\\d|售价|价格/.test(text)' : 'true'}) return; if (/人机验证|访问过于频繁|安全校验/.test(text)) return; await new Promise(resolve => setTimeout(resolve, 250)); } })()` )})`]),
+    `const raw = await browserPage.evaluate(${JSON.stringify(browserScript)})`,
+    'const page = { url: await browserPage.url(), title: await browserPage.title() }',
+    'const semanticValue = await browserPage.snapshot()',
     "const semantic = String(typeof semanticValue === 'string' ? semanticValue : JSON.stringify(semanticValue)).slice(0, 4000)",
-    "cliLog(JSON.stringify({ task_space_id: task.id, task_space_name: task.name, page, semantic, raw, error_events: errorEvents }))",
+    "console.log(JSON.stringify({ task_space_id: task.spaceId, task_space_name: task.name, page, semantic, raw, error_events: [] }))",
   ].join('\n');
   execution = run('ego-browser', ['nodejs'], { inputText: `${script}\n`, timeout: 90000 });
   payload = parseLastJson(`${execution.stdout}\n${execution.stderr}`);

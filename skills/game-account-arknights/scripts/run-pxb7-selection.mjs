@@ -8,6 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { parseSelectionProfile } from '../../game-account-select/scripts/parse-selection-profile.mjs';
 import { buildListQueryPlan } from './list-query-plan.mjs';
 import { rankListings } from './score-listings.mjs';
+import { detailFieldEvidence } from './recommendation-evidence.mjs';
+import { mergeFieldReviews } from './field-reviews.mjs';
+import { playContexts, assessClaim } from '../../game-account-toolkit/scripts/community-evidence.mjs';
+import { createSelectionCheckpoint } from '../../game-account-toolkit/scripts/selection-checkpoint.mjs';
+import { planCommunityRefresh } from '../../game-account-toolkit/scripts/plan-community-refresh.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixtureMode = process.env.GAME_ACCOUNT_FIXTURE_MODE === '1';
@@ -85,6 +90,10 @@ function run(command, commandArgs, timeout = 90000) {
 }
 
 function runEgoOperation(taskSpace, platform, operation, options = {}, timeout = 90000) {
+  return checkpoint.execute({ platform, operation, options }, (remaining) => executeEgoOperation(checkpoint.state.task_space_id ?? taskSpace, platform, operation, options, Math.min(timeout, remaining)), { fresh: options.fresh === true });
+}
+
+function executeEgoOperation(taskSpace, platform, operation, options = {}, timeout = 90000) {
   const operationId = `${platform}/${operation}`;
   const commandArgs = [
     egoOperationScript,
@@ -187,7 +196,7 @@ function normalizeRow(row, detail = false, platform = row?.__platform ?? 'pxb7')
   const presentLimitedNames = (limitedRoster.operators ?? []).filter((name) => names.includes(name));
   const guarantee = row.status?.guarantee || /包赔/.test(riskText) ? 'retrieval_compensation' : 'unknown';
   const listingId = String(row.listingId ?? '');
-  return {
+  const listing = {
     listing_id: listingId,
     listing_key: `${platform}:${listingId || row.url || ''}`,
     platform,
@@ -213,8 +222,8 @@ function normalizeRow(row, detail = false, platform = row?.__platform ?? 'pxb7')
         };
       }),
       resources: {
-        orundum: Number(row.resources?.orundum ?? row.counts?.orundum ?? 0),
-        originite_prime: Number(row.resources?.originitePrime ?? row.counts?.originitePrime ?? 0),
+        orundum: row.resources?.orundum ?? row.counts?.orundum ?? null,
+        originite_prime: row.resources?.originitePrime ?? row.counts?.originitePrime ?? null,
       },
       skins: Array.isArray(row.skins) ? row.skins : [],
       collab_completion: {
@@ -230,6 +239,7 @@ function normalizeRow(row, detail = false, platform = row?.__platform ?? 'pxb7')
         count_mismatch: Number.isFinite(declaredCollabCount) && declaredCollabCount !== presentCollabNames.length,
         evidence: `${platform}_declared_count_plus_named_roster_vs_prts_collab_category`,
         reference_url: collabRoster.source,
+        reference_checked_at: collabRoster.checked_at ?? collabRoster.updated_at,
       },
       limited_completion: {
         named_count: presentLimitedNames.length,
@@ -267,6 +277,8 @@ function normalizeRow(row, detail = false, platform = row?.__platform ?? 'pxb7')
       },
     },
   };
+  listing.field_evidence = detail ? detailFieldEvidence(row, listing, row.__observed_at ?? new Date().toISOString()) : [];
+  return detail ? mergeFieldReviews(listing, fieldReviews) : listing;
 }
 
 function mergeDetail(listing, detailRow) {
@@ -343,6 +355,10 @@ function compactRecommendation(listing, tier) {
     + Number(resources.ten_pull_tickets ?? 0) * 10
     + Number(resources.single_pull_tickets ?? resources.headhunting_permits ?? 0);
   return {
+    game_assets: listing.game_assets,
+    field_evidence: listing.field_evidence ?? [],
+    recommendation_gate: listing.recommendation_gate,
+    context_scores: listing.context_scores,
     listing_id: listing.listing_id,
     listing_key: listingKey(listing),
     platform: listing.platform,
@@ -405,6 +421,7 @@ const expansionBandCount = Math.max(1, Math.min(Number(readArg('--expansion-band
 const expansionDetailCount = Math.max(1, Math.min(Number(readArg('--expansion-details', 6)) || 6, 10));
 const pinnedUrls = readArgs('--pinned-url');
 const reportOut = readArg('--report-out');
+const fieldReviews = readArg('--field-reviews') ? JSON.parse(fs.readFileSync(path.resolve(readArg('--field-reviews')), 'utf8')).reviews ?? [] : [];
 if (!request || !outPath) {
   console.error('Usage: node run-dual-platform-selection.mjs --request <raw-user-text> --out <artifact.json> [--profile-request <derived-runtime-profile-text>] [--profile-confirmed] [--task-space <name|id>] [--pinned-url <live-listing-url>] [--report-out <report.md>] [--limit 20] [--batches 1] [--details-per-platform 10] [--display-per-platform 10] [--recommendations 5] [--backups 3] [--breakthroughs 3] [--expansion-bands 6] [--expansion-details 6]');
   process.exit(2);
@@ -425,7 +442,12 @@ if (resolvedClarifications.length) {
 profile.clarification_required = [];
 profile.platforms = [...new Set([...REQUIRED_PLATFORMS, ...profile.platforms])];
 profile.confirmation_required = false;
+profile.play_contexts = playContexts(profileRequest);
 const runId = readArg('--task-space', `gas-arknights-dual-${new Date().toISOString().replace(/[-:.]/g, '')}`);
+const checkpoint = createSelectionCheckpoint({ file: `${path.resolve(outPath)}.checkpoint.json`,
+  identity: { profile, pinnedUrls, limit, batchCount, detailCount, displayCount }, resume: args.includes('--resume'),
+  budgetMs: Number(readArg('--time-budget-minutes', 25)) * 60000 });
+checkpoint.save();
 let cleanupCompleted = false;
 let cleanupInProgress = false;
 let cleanupReportCache = null;
@@ -451,7 +473,7 @@ function cleanupQueryTaskSpace() {
 }
 
 function runPzdsHealthCheck(taskSpace) {
-  const commandResult = runEgoOperation(taskSpace, 'pzds', 'arknights-list', { limit: 1, page: 1 }, 90000);
+  const commandResult = runEgoOperation(taskSpace, 'pzds', 'arknights-list', { limit: 1, page: 1, fresh: true }, 90000);
   stopForBrowserHandoff(commandResult, 'PZDS health check');
   const report = commandResult.operation_report;
   const matched = new Set(report?.evidence?.matched_signals ?? []);
@@ -496,7 +518,11 @@ function stopForBrowserHandoff(commandResult, context) {
   const report = commandResult?.operation_report;
   const reasons = Array.isArray(report?.reasons) ? report.reasons : [];
   if (report?.needs_user_action === true || reasons.includes('browser_control_handoff')) {
-    exitAfterQueryCleanup(`${context} stopped because browser control was handed to the user`);
+    checkpoint.stop('user_control');
+    // Record cleanup disposition without touching a user-owned browser space.
+    run(process.execPath, [cleanupScript, '--task-space', runId, '--dry-run', '--json'], 30000);
+    console.error(`${context} stopped because browser control was handed to the user; checkpoint preserved, no cleanup or retry`);
+    process.exit(1);
   }
 }
 const digest = crypto.createHash('sha256').update(JSON.stringify(profile)).digest('hex');
@@ -504,7 +530,10 @@ const evidenceDate = communityEvidenceText.match(/updated_at:\s*(\d{4}-\d{2}-\d{
 const evidenceAgeDays = evidenceDate == null
   ? null
   : Math.floor((Date.now() - new Date(`${evidenceDate}T00:00:00Z`).getTime()) / 86400000);
-const evidenceIsCurrent = evidenceAgeDays != null && evidenceAgeDays <= 7;
+const runtimeEvidencePath = path.join(__dirname, '../references/community-evidence.json');
+const runtimeEvidence = fs.existsSync(runtimeEvidencePath) ? JSON.parse(fs.readFileSync(runtimeEvidencePath, 'utf8')) : null;
+const activeClaims = (runtimeEvidence?.claims ?? []).filter((claim) => claim.kind === 'operator_valuation' && profile.play_contexts.some((context) => assessClaim(claim, runtimeEvidence, { context }).eligible));
+const evidenceIsCurrent = profile.play_contexts.every((context) => activeClaims.some((claim) => claim.contexts.includes(context)));
 const listCommands = [];
 const listRowsById = new Map();
 for (const platform of REQUIRED_PLATFORMS) {
@@ -542,9 +571,6 @@ for (const platform of REQUIRED_PLATFORMS) {
       listCommands.push(listCommand);
     }
     if (!listCommand.ok) {
-      if (planIndex === 0) {
-        exitAfterQueryCleanup(`${platform} list failed: ${listCommand.error_text || listCommand.stderr || listCommand.stdout || 'unknown error'}`);
-      }
       break;
     }
     const rows = rowsFrom(parseJsonOutput(listCommand.stdout));
@@ -553,7 +579,7 @@ for (const platform of REQUIRED_PLATFORMS) {
     for (const row of rows) {
       const id = String(row.listingId ?? row.url ?? '');
       const key = `${platform}:${id}`;
-      if (id) listRowsById.set(key, { ...row, __platform: platform });
+      if (id) listRowsById.set(key, { ...row, __platform: platform, __observed_at: listCommand.observed_at });
     }
   }
 }
@@ -571,6 +597,7 @@ for (const url of pinnedUrls) {
   if (commandResult.ok) {
     try {
       row = rowsFrom(parseJsonOutput(commandResult.stdout))[0] ?? null;
+      if (row) row.__observed_at = commandResult.observed_at;
       if (!row) errorText = 'pinned detail returned no row';
     } catch (error) {
       errorText = error instanceof Error ? error.message : String(error);
@@ -598,12 +625,7 @@ const pzdsPaginationPartial = listRows
   .some((row) => row.status?.paginationPartial === true);
 const platformCandidateCounts = Object.fromEntries(REQUIRED_PLATFORMS.map((platform) => [platform, listRows.filter((row) => row.__platform === platform).length]));
 const emptyPlatforms = REQUIRED_PLATFORMS.filter((platform) => platformCandidateCounts[platform] === 0);
-if (emptyPlatforms.length) {
-  exitAfterQueryCleanup(`Dual-platform coverage incomplete; no candidates from: ${emptyPlatforms.join(', ')}`);
-}
-if (listRows.length < 10) {
-  exitAfterQueryCleanup(`Expected at least 10 candidates, received ${listRows.length}`);
-}
+// Partial reads remain useful evidence; the finalizer labels coverage and withholds unsupported recommendations.
 
 const preliminary = rankListings(listRows.map((row) => normalizeRow(row, false, row.__platform)), profile);
 const detailAttempts = [];
@@ -635,6 +657,7 @@ for (const candidate of detailCandidates) {
   if (detailCommand.ok) {
     try {
       detailRow = rowsFrom(parseJsonOutput(detailCommand.stdout))[0] ?? null;
+      if (detailRow) detailRow.__observed_at = detailCommand.observed_at;
       if (detailRow) detailsById.set(listingKey(candidate), detailRow);
       else detailError = 'detail command returned no rows';
     } catch (error) {
@@ -764,6 +787,7 @@ if (eligibleInBudget.length === 0 && profile.budget_expansion?.enabled && Number
       if (detailCommand.ok) {
         try {
           detailRow = rowsFrom(parseJsonOutput(detailCommand.stdout))[0] ?? null;
+          if (detailRow) detailRow.__observed_at = detailCommand.observed_at;
           if (!detailRow) detailError = 'detail command returned no rows';
         } catch (error) {
           detailError = error instanceof Error ? error.message : String(error);
@@ -935,6 +959,8 @@ const pzdsHealthCheck = pzdsHealthFirst.ok
 const queryCleanupReport = cleanupQueryTaskSpace();
 
 const artifact = {
+  evidence_policy: { version: 1, critical_fields_only: true, unverified_destination: 'pending_verification' },
+  selection_execution: { checkpoint_path: `${path.resolve(outPath)}.checkpoint.json`, started_at: new Date(checkpoint.state.started_at).toISOString(), budget_ms: checkpoint.state.budget_ms, remaining_ms: checkpoint.remaining() },
   run_id: runId,
   started_at: new Date(Date.now() - listCommands.reduce((sum, item) => sum + item.duration_ms, 0) - detailAttempts.reduce((sum, item) => sum + item.duration_ms, 0)).toISOString(),
   finished_at: new Date().toISOString(),
@@ -1000,7 +1026,7 @@ const artifact = {
     ...(!pzdsHealthCheck.ok ? [{ source: 'pzds', task_id: 'platform-pzds-health', reason: 'blocked', evidence: `PZDS health revalidation failed after ${pzdsHealthCheck.attempts} attempt(s): ${pzdsHealthCheck.reasons.join(', ')}`, fallback_used: 'stop_after_single_reobservation', confidence_effect: 'PZDS recommendations require manual live-page confirmation', user_visible_note: '盼之列表与详情已读取，但结束前健康复验未通过，需人工确认页面当前无验证或风控阻断' }] : []),
     ...(!dualPlatformCoverage.complete ? [{ source: 'cross_platform_output', task_id: 'dual-platform-shortlists', reason: 'empty_result', evidence: `missing display candidates for ${dualPlatformCoverage.missing_platforms.join(', ')}`, fallback_used: 'do_not_claim_complete', confidence_effect: 'run is incomplete and cannot be presented as a dual-platform result', user_visible_note: '双平台候选未凑齐，本轮不得只展示单个平台后宣称完成' }] : []),
     ...(!dualPlatformCoverage.qualifying_complete ? [{ source: 'cross_platform_output', task_id: 'dual-platform-qualifying-shortlists', reason: 'empty_result', evidence: `no detail-verified qualifying account from ${dualPlatformCoverage.qualifying_missing_platforms.join(', ')}`, fallback_used: 'show_labeled_near_matches', confidence_effect: 'near matches are visible but remain non-qualifying', user_visible_note: '有平台暂未找到完全符合项，已保留明确标注的接近账号用于横向比较' }] : []),
-    ...(!evidenceIsCurrent ? [{ source: 'community_snapshot', task_id: 'community-current-snapshot', reason: 'not_checked', evidence: evidenceDate ? `snapshot age is ${evidenceAgeDays} days` : 'snapshot updated_at is missing', fallback_used: 'refresh', confidence_effect: 'live recommendations are capped at medium confidence', user_visible_note: '社区证据快照需要刷新' }] : []),
+    ...(!evidenceIsCurrent ? [{ source: 'community_snapshot', task_id: 'community-current-snapshot', reason: 'not_checked', evidence: `snapshot record age: ${evidenceAgeDays ?? 'unknown'} days; required play contexts lack supported current claims`, fallback_used: 'refresh', confidence_effect: 'unsupported conclusions stay pending verification', user_visible_note: '当前玩法的强度主张尚未核实，已生成定向补查清单' }] : []),
     ...(profile.budget_expansion?.enabled && eligibleInBudget.length === 0 && budgetBreakthroughListings.length === 0 ? [{ source: 'pxb7+pzds', task_id: 'dual-platform-budget-breakthrough', reason: expansionStopReason.includes('expansion_operation_failed') ? 'blocked' : 'empty_result', evidence: `bidirectional expansion ended with ${expansionStopReason}`, fallback_used: 'in_budget_near_matches', confidence_effect: 'no exact hard-condition match was verified inside the configured search horizon', user_visible_note: '已保留预算附近最接近账号，但双平台向低价和高价扩展后仍未复核到精确满足项' }] : []),
     { source: 'pxb7+pzds', task_id: 'operator-progression-detail', reason: 'field_missing', evidence: 'Current public reports expose E2/E1 membership and verification images but no dedicated per-operator mastery/module values', fallback_used: 'final_platform_verification', confidence_effect: 'unknown mastery/module receive zero credit and recommendations remain at most medium confidence', user_visible_note: '精二已由平台事实验证；专精和模组需在下单后的最终验号中逐项确认' },
   ],
@@ -1072,7 +1098,7 @@ const artifact = {
       },
     };
   }),
-  community_attempts: [{ source: 'local_current_snapshot', tool: 'local_evidence_snapshot', query: 'current Arknights general/story-map tiers, role coverage, progression and account-trade evidence', url: 'skills/game-account-arknights/references/community-evidence.md', duration_ms: null, wait_budget_ms: 15000, status: evidenceIsCurrent ? 'success' : 'limited', result_count: evidenceIsCurrent ? 7 : 0, error_text: evidenceIsCurrent ? null : 'community evidence snapshot is stale or undated', fallback_used: evidenceIsCurrent ? null : 'refresh' }],
+  community_attempts: [{ source: 'local_current_snapshot', tool: 'local_evidence_snapshot', query: 'current Arknights play-context claims', url: 'skills/game-account-arknights/references/community-evidence.json', duration_ms: null, wait_budget_ms: 15000, status: evidenceIsCurrent ? 'success' : 'limited', result_count: activeClaims.length, error_text: evidenceIsCurrent ? null : 'current contextual claims missing, stale or disputed', fallback_used: evidenceIsCurrent ? null : 'refresh' }],
   candidate_count: listRows.length + expansionAttempts.reduce((sum, attempt) => sum + attempt.result_count, 0),
   detail_verified_count: allDetailedIds.size,
   rankings: rankings.map((listing) => compactRecommendation(listing, allDetailedIds.has(listingKey(listing)) ? 'ranked_detail_verified' : 'ranked_list_only')),
@@ -1152,6 +1178,12 @@ const artifact = {
 const absoluteOut = path.resolve(outPath);
 fs.mkdirSync(path.dirname(absoluteOut), { recursive: true });
 fs.writeFileSync(absoluteOut, `${JSON.stringify(artifact, null, 2)}\n`);
+const evidenceJsonPath = path.join(__dirname, '../references/community-evidence.json');
+const refreshPlan = planCommunityRefresh({ request: profile.source_text, listings: rankings,
+  evidence: fs.existsSync(evidenceJsonPath) ? JSON.parse(fs.readFileSync(evidenceJsonPath, 'utf8')) : null,
+  knowledge: JSON.parse(fs.readFileSync(path.join(__dirname, '../references/operator-value-map.json'), 'utf8')) });
+fs.writeFileSync(`${absoluteOut}.refresh-plan.json`, `${JSON.stringify(refreshPlan, null, 2)}\n`);
+checkpoint.stop(queryCleanupReport?.ok ? 'completed' : 'cleanup_pending');
 const finalizeArgs = [
   path.join(__dirname, 'finalize-selection-run.mjs'),
   '--input', absoluteOut,
@@ -1159,6 +1191,13 @@ const finalizeArgs = [
   ...(reportOut ? ['--report-out', path.resolve(reportOut)] : []),
 ];
 const finalizeResult = run(process.execPath, finalizeArgs, 240000);
+// Capture actual findings even when delivery failed. The owning agent consumes this plan after delivery.
+const learningCli = path.join(__dirname, '../../game-account-skill-optimizer/scripts/learning-loop.mjs');
+const collected = run(process.execPath, [learningCli, 'collect', '--input', absoluteOut], 60000);
+if (collected.ok) {
+  const repairPlan = run(process.execPath, [learningCli, 'repair-plan'], 60000);
+  if (repairPlan.ok) fs.writeFileSync(`${absoluteOut}.repair-plan.json`, `${repairPlan.stdout}\n`);
+} else console.error(`Learning collection failed; raw artifact retained: ${collected.stderr}`);
 if (!finalizeResult.ok) {
   console.error(finalizeResult.stderr || finalizeResult.stdout || 'selection finalizer failed');
   process.exit(1);

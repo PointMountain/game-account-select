@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { knowledgeState as verifiedKnowledgeState } from '../../game-account-skill-optimizer/scripts/lib/learning-store.mjs';
 
 import { renderSelectionReport, selectPlatformRows } from './render-selection-report.mjs';
+import { applyRecommendationGate } from './apply-recommendation-gate.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
@@ -103,6 +104,7 @@ if (new Set(outputPaths).size !== outputPaths.length) {
 }
 const perPlatform = Math.max(1, Math.min(Number(readArg('--per-platform', 10)) || 10, 15));
 const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+applyRecommendationGate(artifact);
 const requestProvenance = artifact.request_provenance;
 const inputIssues = [
   ...(artifact.game !== 'Arknights' && artifact.game !== '明日方舟' ? ['game must identify Arknights'] : []),

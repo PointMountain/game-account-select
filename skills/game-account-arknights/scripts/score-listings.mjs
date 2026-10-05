@@ -4,6 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { normalizePriorities, parseSelectionProfile } from '../../game-account-select/scripts/parse-selection-profile.mjs';
+import { playContexts, resolveContextKnowledge } from '../../game-account-toolkit/scripts/community-evidence.mjs';
+import { assessRecommendation } from './recommendation-evidence.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const knowledge = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'references', 'operator-value-map.json'), 'utf8'));
@@ -15,9 +17,9 @@ function normalizeName(name) {
   return knowledge.aliases?.[clean] ?? clean;
 }
 
-function operatorKnowledge(operator) {
+function operatorKnowledge(operator, source = knowledge) {
   const name = normalizeName(operator?.name);
-  const known = knowledge.operators?.[name] ?? null;
+  const known = source.operators?.[name] ?? null;
   return {
     name,
     acquisition_type: known?.acquisition_type ?? operator?.acquisition_type ?? operator?.category ?? 'unknown',
@@ -67,13 +69,14 @@ const ROLE_GROUPS = {
   utility: ['control', 'fast_redeploy', 'support'],
 };
 
-function combatOperator(operator) {
-  const meta = operatorKnowledge(operator);
+function combatOperator(operator, source, context) {
+  const meta = operatorKnowledge(operator, source);
   const progression = progressRatio(operator);
-  const communityValue = meta.combat_value * 0.55 + meta.story_value * 0.45;
+  const communityValue = context === 'story' ? meta.combat_value * 0.55 + meta.story_value * 0.45 : meta.combat_value;
   return {
     operator,
     ...meta,
+    context_value: context === 'story' ? meta.story_value : meta.combat_value,
     progression,
     usable: isUsable(operator),
     effective_value: communityValue * (0.25 + progression * 0.75),
@@ -88,7 +91,7 @@ function roleCoverage(profiles) {
       .map((profile) => ({
         name: profile.name,
         usable: profile.usable,
-        quality: profile.usable ? profile.story_value * (0.4 + profile.progression * 0.6) : 0,
+        quality: profile.usable ? profile.context_value * (0.4 + profile.progression * 0.6) : 0,
       }))
       .sort((a, b) => b.quality - a.quality);
     const best = candidates[0] ?? null;
@@ -110,8 +113,8 @@ function roleCoverage(profiles) {
   };
 }
 
-function combatBreakdown(operators) {
-  const profiles = operators.map(combatOperator);
+function combatBreakdown(operators, source = knowledge, context = 'story') {
+  const profiles = operators.map((operator) => combatOperator(operator, source, context));
   const recommended = profiles
     .filter((profile) => ['apex', 'core', 'strong'].includes(profile.meta_tier))
     .sort((a, b) => b.effective_value - a.effective_value);
@@ -138,11 +141,11 @@ function progressionScore(profiles) {
   if (!profiles.length) return 0;
   const valuable = profiles
     .filter((profile) => ['apex', 'core', 'strong'].includes(profile.meta_tier))
-    .sort((a, b) => b.story_value - a.story_value)
+    .sort((a, b) => b.context_value - a.context_value)
     .slice(0, 12);
-  const valuableWeight = valuable.reduce((sum, profile) => sum + profile.story_value, 0);
+  const valuableWeight = valuable.reduce((sum, profile) => sum + profile.context_value, 0);
   const valuableScore = valuableWeight
-    ? valuable.reduce((sum, profile) => sum + profile.progression * profile.story_value, 0) / valuableWeight * 100
+    ? valuable.reduce((sum, profile) => sum + profile.progression * profile.context_value, 0) / valuableWeight * 100
     : 0;
   const general = profiles.map((profile) => profile.progression).sort((a, b) => b - a).slice(0, 12);
   const generalScore = general.reduce((sum, value) => sum + value, 0) / general.length * 100;
@@ -294,13 +297,23 @@ function riskMultiplier(tolerance) {
   return ({ low: 1.4, medium: 1, high: 0.5, unknown: 1 })[tolerance] ?? 1;
 }
 
-export function scoreListing(listing, inputProfile) {
+export function scoreListing(listing, inputProfile, options = {}) {
   const profile = typeof inputProfile === 'string' ? parseSelectionProfile(inputProfile) : inputProfile;
   const priorities = normalizePriorities(profile?.priorities);
   const assets = listing?.game_assets ?? {};
   const operators = Array.isArray(assets.operators) ? assets.operators : [];
   const budget = budgetTier(listing?.price, profile?.budget ?? {});
-  const combat = combatBreakdown(operators);
+  const snapshotPath = path.join(__dirname, '..', 'references', 'community-evidence.json');
+  const snapshot = options.evidence ?? (fs.existsSync(snapshotPath) ? JSON.parse(fs.readFileSync(snapshotPath, 'utf8')) : null);
+  const contexts = profile?.play_contexts?.length ? profile.play_contexts : playContexts(typeof inputProfile === 'string' ? inputProfile : profile?.source_text ?? '');
+  const source = options.knowledge ?? knowledge;
+  const contextScores = contexts.map((context) => {
+    const resolved = resolveContextKnowledge(source, snapshot, { now: options.now, context, game: 'Arknights' });
+    return { context, resolved, combat: combatBreakdown(operators, resolved.knowledge, context) };
+  });
+  // All requested play contexts must work; a strong story roster cannot conceal a high-difficulty gap.
+  const selectedContext = [...contextScores].sort((a, b) => a.combat.score - b.combat.score)[0];
+  const combat = selectedContext.combat;
   const progression = progressionScore(combat.profiles);
   const push = pushReadiness(combat, progression, operators);
   const namedRarity = rarityScore(operators);
@@ -337,7 +350,7 @@ export function scoreListing(listing, inputProfile) {
   if (combat.unready_meta_operators.length) concerns.push(`未确认可用练度的超大杯/核心：${combat.unready_meta_operators.join('、')}`);
   if (combat.role_coverage.missing_roles.length) concerns.push(`缺少已养成职能：${combat.role_coverage.missing_roles.join('、')}`);
 
-  return {
+  const scored = {
     ...listing,
     selection_profile: profile,
     base_dimensions: dimensions,
@@ -373,11 +386,16 @@ export function scoreListing(listing, inputProfile) {
     final_score: Number(finalScore.toFixed(4)),
     confidence: missing.penalty >= 14 || push.status === 'unverified' ? 'low' : missing.penalty > 0 || risk.penalty >= 15 || push.status !== 'ready' ? 'medium' : 'high',
   };
+  scored.context_scores = contextScores.map(({ context, resolved, combat: value }) => ({ context, score: Number(value.score.toFixed(4)), ready_recommended_operators: value.ready_recommended_operators, applied_claim_ids: resolved.applied_claim_ids, snapshot_digest: resolved.snapshot_digest }));
+  scored.recommendation_gate = assessRecommendation(scored, { ...profile, priorities, play_contexts: contexts }, source, snapshot, { now: options.now });
+  if (!scored.recommendation_gate.eligible) scored.highlights = scored.highlights.map((text) => text.replace('已养成社区推荐核心：', '已有规则识别的养成核心（当前证据待核实）：'));
+  if (!scored.recommendation_gate.eligible && scored.confidence === 'high') scored.confidence = 'medium';
+  return scored;
 }
 
-export function rankListings(listings, profile) {
+export function rankListings(listings, profile, options = {}) {
   return (Array.isArray(listings) ? listings : [])
-    .map((listing) => scoreListing(listing, profile))
+    .map((listing) => scoreListing(listing, profile, options))
     .sort((a, b) => Number(b.hard_filter_passed) - Number(a.hard_filter_passed) || b.final_score - a.final_score || b.asset_quality_score - a.asset_quality_score);
 }
 

@@ -17,6 +17,8 @@ const valueAfter = (flag, fallback = null) => {
 };
 const requestedGames = new Set(String(valueAfter('--games', 'arknights,zenless-zone-zero,wuthering-waves,neverness-to-everness')).split(',').map((value) => value.trim()).filter(Boolean));
 const taskPrefix = valueAfter('--task-prefix', `game-skill-live-${Date.now()}`);
+const suppliedTaskSpace = valueAfter('--task-space');
+if (suppliedTaskSpace && requestedGames.size !== 1) throw new Error('--task-space requires exactly one game');
 const keepArtifacts = args.includes('--keep-artifacts');
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'game-skill-live-regression-'));
 
@@ -192,7 +194,7 @@ const gameConfigs = {
 
 function runGenericGame(game, config) {
   const matrix = JSON.parse(fs.readFileSync(path.join(repoRoot, 'skills/game-account-toolkit/references/operation-support-matrix.json'), 'utf8'));
-  let taskSpace = `${taskPrefix}-${game}`;
+  let taskSpace = suppliedTaskSpace ?? `${taskPrefix}-${game}`;
   let cleanupReport = null;
   let needsUserAction = false;
   const platforms = ['pxb7', 'pzds'];
@@ -276,24 +278,25 @@ function runGenericGame(game, config) {
 }
 
 function runArknights() {
-  const taskSpace = `${taskPrefix}-arknights`;
+  const taskSpace = suppliedTaskSpace ?? `${taskPrefix}-arknights`;
   const artifactPath = path.join(temporaryRoot, 'arknights.run.json');
   const reportPath = path.join(temporaryRoot, 'arknights.md');
   const execution = run('skills/game-account-arknights/scripts/run-pxb7-selection.mjs', [
-    '--request', '明日方舟2000元左右，队伍成熟、限定和抽卡资源优先，用于实时回归',
+    '--request', valueAfter('--request', '明日方舟2000元左右，队伍成熟、限定和抽卡资源优先，用于实时回归'),
     '--out', artifactPath, '--report-out', reportPath, '--task-space', taskSpace,
-    '--limit', '3', '--batches', '1', '--details-per-platform', '1', '--display-per-platform', '1', '--recommendations', '2', '--backups', '1',
+    '--limit', '3', '--batches', '1', '--details-per-platform', valueAfter('--details-per-platform', '1'), '--display-per-platform', '3', '--recommendations', '2', '--backups', '1',
   ], 600000);
   if (!fs.existsSync(artifactPath)) throw new Error(`arknights runner did not emit artifact: ${execution.stderr || execution.stdout}`);
   const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
   if (!execution.ok || artifact.quality_gate?.redo_required !== false) throw new Error(`arknights full stack failed: ${execution.stderr || execution.stdout}`);
-  const listing = artifact.recommendations?.[0] ?? Object.values(artifact.platform_shortlists ?? {}).flatMap((value) => value?.qualified ?? value?.recommendations ?? [])[0];
+  const listing = artifact.recommendations?.[0] ?? artifact.pending_verification?.[0] ?? artifact.rankings?.[0];
   return {
     game: 'arknights', skill: 'skills/game-account-arknights', listing_id: listing?.listing_id ?? listing?.id ?? null,
     price_cny: listing?.price ?? null, url: listing?.url ?? null,
     list_operation: 'pxb7/arknights-list + pzds/arknights-list', detail_operation: 'pxb7/arknights-detail + pzds/arknights-detail',
     evaluator: 'skills/game-account-arknights/scripts/score-listings.mjs', finalizer: 'skills/game-account-arknights/scripts/finalize-selection-run.mjs',
     final_score: listing?.final_score ?? null, confidence: listing?.confidence ?? null, quality_gate: 'passed', cleanup: 'passed',
+    recommendation_status: listing?.recommendation_gate?.status ?? 'unknown', pending_verification_count: artifact.pending_verification?.length ?? 0,
   };
 }
 

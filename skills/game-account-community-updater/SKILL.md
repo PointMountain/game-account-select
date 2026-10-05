@@ -8,7 +8,7 @@ argument-hint: "[skill path] [evidence json]"
 
 ## 作用
 
-为已有游戏 skill 刷新社区证据，避免本地估值机制落后。它负责记录来源、覆盖、失败项、共识和局限，不直接改评分权重，除非用户确认后再走规则更新。
+为已有游戏 skill 刷新社区证据，记录来源、覆盖、失败项、共识和局限。明日方舟的结构化主张可参与按玩法评分；用户已授权自动优化时，满足当前独立证据、固定回归与可回滚要求后继续规则更新，并展示实际变更。
 
 ## 执行前准备
 
@@ -35,7 +35,7 @@ node skills/game-account-community-updater/scripts/update-community-evidence.mjs
 安全刷新模式：
 
 1. 由 ego-ops 治理查询并用 ego-browser 获取少量高信号材料；同一刷新目标复用一个 task space，优先复用矩阵中的已验证 operation。没有对应 operation 时只能按 ego-ops 受控探索并记录 coverage gap，不能切换其它查询软件。
-2. 把来源整理为 evidence JSON。
+2. 按 `plan-community-refresh.mjs` 生成的玩法与干员缺口取证，把已读内容整理为 schema_version 1 evidence JSON。仅更新日期或增加标题链接不算证据刷新完成。
 3. 运行脚本写入快照或输出到临时目录。
 
 ## 输出

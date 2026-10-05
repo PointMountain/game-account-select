@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "game": "Arknights",
+  "version_context": "CN-2026-10-01-public-guides-version-unconfirmed",
+  "updated_at": "2026-10-05",
+  "community_confidence": "low",
+  "source_coverage": {
+    "bilibili": "limited",
+    "prts": "available",
+    "hypergryph": "not_checked"
+  },
+  "sources": [
+    {
+      "id": "bili-BV1UyaB6BEZA",
+      "title": "【超大杯之争】明日方舟全六星三模式超大杯榜",
+      "url": "https://www.bilibili.com/video/BV1UyaB6BEZA/",
+      "publisher": "虎杖-悠悠",
+      "published_at": "2026-10-01T09:00:04.000Z",
+      "observed_at": "2026-10-05T01:45:39.330Z",
+      "content_kind": "body",
+      "excerpt": "具体权重 肉鸽35% 日常25% 高难20% 合约20%",
+      "version_context": "CN-2026-10-01-public-guides-version-unconfirmed",
+      "note": "已读公开简介并查看封面；混合加权榜无法直接拆为三个玩法的单项评分，未读完整字幕。"
+    },
+    {
+      "id": "bili-BV1wfaB6FE8U",
+      "title": "明日方舟前50六星个人向强度榜单",
+      "url": "https://www.bilibili.com/video/BV1wfaB6FE8U/",
+      "publisher": "抱小老虎的伯爵",
+      "published_at": "2026-10-01T09:43:15.000Z",
+      "observed_at": "2026-10-05T01:48:48.507Z",
+      "content_kind": "body",
+      "excerpt": "并不是说标签的个数就一定等于评分",
+      "version_context": "CN-2026-10-01-public-guides-version-unconfirmed",
+      "note": "已读公开简介及词条定义；未取得完整逐人榜单与各玩法练度条件。"
+    },
+    {
+      "id": "prts-collaboration-roster",
+      "title": "分类:联动干员",
+      "url": "https://prts.wiki/w/%E5%88%86%E7%B1%BB:%E8%81%94%E5%8A%A8%E5%B9%B2%E5%91%98",
+      "publisher": "PRTS",
+      "published_at": null,
+      "observed_at": "2026-10-05T01:53:24.213Z",
+      "content_kind": "official_data",
+      "excerpt": "本分类共含有29个页面，以下显示其中29个。",
+      "version_context": "CN-2026-10-01-public-guides-version-unconfirmed",
+      "note": "准官方Wiki的当前成员列表已逐项读取。分类页最后编辑时间不代表成员发布日期；仅更新获取类型名单，不用于强度共识。"
+    }
+  ],
+  "claims": [],
+  "consensus": {
+    "high_value_assets": [],
+    "medium_value_assets": [],
+    "low_value_or_trap_assets": [],
+    "risk_factors": [],
+    "key_teams": []
+  },
+  "query_log": [
+    {
+      "source": "bilibili",
+      "tool": "ego_browser",
+      "query": "明日方舟 强度榜",
+      "status": "limited",
+      "notes": "两个10月1日独立作者的公开简介已读；未形成逐玩法一致结论。"
+    },
+    {
+      "source": "prts",
+      "tool": "ego_browser",
+      "query": "分类:联动干员",
+      "status": "success",
+      "notes": "29个具名成员，替换8月2日的25人名单。"
+    }
+  ],
+  "limitations": [
+    "snapshot updated_at 只表示本次记录日期，不代表任何强度主张已验证。",
+    "claims 为空：当前没有满足逐玩法、逐干员、独立来源要求的机器评分覆盖。",
+    "主线活动、肉鸽和高难均需继续获取正文、字幕或清晰完整图表；此前8月强度值仅用于探索候选。",
+    "联动名单已更新为29名；限定卡池名单已于2026-10-05重新读取，仍为26名。获取名单不构成强度评价。"
+  ]
+}

@@ -42,12 +42,14 @@ export async function verifyCollabImages({ imageUrls, expectedNames }) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arknights-collab-ocr-'));
   try {
     const imagePaths = [];
+    const downloadedUrls = [];
     const downloadErrors = [];
     for (let index = 0; index < rosterUrls.length; index += 1) {
       const target = path.join(tempDir, `${index + 1}.png`);
       try {
         await download(rosterUrls[index], target);
         imagePaths.push(target);
+        downloadedUrls.push(rosterUrls[index]);
       } catch (error) {
         downloadErrors.push(error instanceof Error ? error.message : String(error));
       }
@@ -76,7 +78,7 @@ for imagePath in CommandLine.arguments.dropFirst() {
     const evidence = blocks.map((block) => {
       const [localPath, ...textLines] = block.trim().split('\n');
       const imageIndex = imagePaths.indexOf(localPath);
-      return { url: imageIndex >= 0 ? rosterUrls[imageIndex] : null, ocr_text: textLines.join('\n') };
+      return { url: imageIndex >= 0 ? downloadedUrls[imageIndex] : null, ocr_text: textLines.join('\n') };
     });
     const matchedNames = names.filter((name) => evidence.some((item) => matchesExpected(item.ocr_text, name)));
     return {

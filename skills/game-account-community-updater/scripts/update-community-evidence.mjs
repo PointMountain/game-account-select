@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { validateEvidence } from '../../game-account-toolkit/scripts/community-evidence.mjs';
 
 function parseArgs(argv) {
   const options = {};
@@ -63,6 +64,20 @@ ${listItems(consensus.low_value_or_trap_assets)}
 
 ${listItems(consensus.risk_factors)}
 
+### 阵容与装备
+
+${listItems(consensus.key_teams)}
+${listItems(consensus.signature_weapon_notes)}
+${listItems(consensus.duplicate_notes)}
+
+## 版本与逐项证据
+
+版本：${evidence.version_context ?? '未核实'}
+
+\`\`\`json
+${JSON.stringify({ version_context: evidence.version_context ?? null, sources, claims: evidence.claims ?? [], query_log: evidence.query_log ?? [] }, null, 2)}
+\`\`\`
+
 ## 局限
 
 ${listItems(limitations)}
@@ -87,6 +102,10 @@ if (!options.skill || !options.evidence) {
 const skillPath = path.resolve(options.skill);
 const evidencePath = path.resolve(options.evidence);
 const evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+if (evidence.schema_version != null) {
+  const validation = validateEvidence(evidence);
+  if (!validation.valid) throw new Error(`Invalid community evidence: ${validation.issues.join('; ')}`);
+}
 const gameName = inferGameName(skillPath);
 const rendered = renderEvidence(gameName, evidence);
 const repoWritePath = path.join(skillPath, 'references/community-evidence.md');
@@ -103,6 +122,13 @@ if (!options.out && !fs.existsSync(path.join(skillPath, 'SKILL.md'))) {
   process.exit(1);
 }
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+// JSON is the runtime source; Markdown remains its reviewable companion.
+if (evidence.schema_version === 1) {
+  const jsonPath = path.join(path.dirname(outputPath), 'community-evidence.json');
+  const temporary = `${jsonPath}.${process.pid}.tmp`;
+  fs.writeFileSync(temporary, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
+  fs.renameSync(temporary, jsonPath);
+}
 fs.writeFileSync(outputPath, rendered);
 
 const report = {

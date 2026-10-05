@@ -21,7 +21,7 @@ argument-hint: "[raw run artifact | collect | status | verify]"
 1. 调用 game-account-preflight；离线 JSON 分析不要求浏览器可用。需要复查页面才进入 toolkit 的 ego-ops/ego-browser 链路。
 2. 复原目标 skill、输入、原始错误、平台/社区尝试、真实耗时、输出与 evaluator 结果。缺字段放 missing_fields，降低置信度。
 3. Troubleshooting：把 runtime、empty_result、platform_coverage、output_format、valuation、risk、quality_gate 等问题定位到责任层，输出 evidence 与 suggested_targets。
-4. 默认产出建议与知识候选；用户已要求实现时继续当前授权，添加正反例并修改对应责任文件。个别版本/用户反馈不能直接成为永久估值规则。
+4. 默认产出建议与知识候选；用户已授权维护时，交付后读取 `repair-plan` 并在当前会话继续复现、补丁、回归，不能停在生成报告。估值改动需当前独立来源、同批候选对比和受保护的原测试；个别用户偏好仍属 run_only。
 5. 修改后运行目标验证与 game-account-skill-evaluator；低分、阻塞或 redo_required 回到诊断。需要声称 applied 时走学习闭环固定门禁并保留当前凭据。
 6. 将 applied、verified_existing、proposed/deferred 分开交付；队列延期不会洗掉本轮 raw artifact 的阻塞项。
 

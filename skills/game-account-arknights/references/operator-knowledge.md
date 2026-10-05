@@ -2,7 +2,7 @@
 
 updated_at: 2026-08-02
 
-机器可读事实以 `operator-value-map.json` 为准。知识表把以下字段严格分离：
+`operator-value-map.json` 保存基础事实与历史估值；当前玩法覆盖来自 `community-evidence.json`，逐项通过来源与日期检查后生效。见 [当前证据流程](current-evidence-workflow.md)。历史表日期不代表当前有效。知识表把以下字段严格分离：
 
 ```yaml
 operator:

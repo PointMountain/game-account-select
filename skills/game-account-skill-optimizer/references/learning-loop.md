@@ -17,6 +17,10 @@ npm run learn:status
 
 ## 2. 诊断与补丁
 
+明日方舟 runner 收尾自动 collect，并保存 `.repair-plan.json`；Agent 按本轮维护授权在交付后执行其中任务。`repair-plan` 只是执行清单，不会偷偷启动模型、创建聊天或安排后台工作。清单包含本地全队列，先处理当前运行相关问题，其他任务保持原状态。
+
+collect 保存内容寻址的修改前对象 `.harness/learning-objects/`。责任范围需要新增辅助文件时，在补丁前用 `prepare --id <id> --target skills/...` 扩展完整回滚范围；重复 `--target` 可加入多个文件。旧队列缺对象时仅能从哈希完全匹配的 `--baseline-source` 恢复，不能拿修改后文件伪造基线。
+
 根据 finding ID 回到原 artifact 复现。明确改哪个责任文件，加入有行为断言的正反例；能在修复前运行失败用例时先保存失败输出。先检查责任边界：页面解析、游戏规则、输出契约或质量门禁。
 
 用户预算、偏好、目标、权重、区服与风险容忍度仍属 run_only。知识候选只说明“值得验证”；估值变化必须满足目标游戏的当前证据门槛。平台能力升级仍需 ego-ops/ego-browser 实测与矩阵校验。
@@ -28,13 +32,23 @@ npm run learn:verify -- --id <candidate-id>
 npm run learn:apply -- --id <candidate-id> --reason '修复了字段归属并通过正反例'
 ```
 
+自动估值更新加 `--comparison .harness/same-candidate-comparison.json`，其中 comparisons 包含至少三种画像、各自 before/after 的同一组唯一账号 id；验证凭据绑定对比文件哈希。本地脚本验证集合一致性，Agent负责审查分数变化及理由是否合理。
+
 verify 要求至少一个建议责任文件变化、至少一个回归 fixture/test 变化，并固定运行 `npm run verify:skills`。artifact 中的 validation_commands 仅供人审阅，程序不执行。凭据的 log_path 指向本地测试输出，失败时读取定位原因。通过后状态为 validated；apply 只登记已完成的补丁，不生成代码、不提交 Git。没有通过或文件指纹变化，apply 拒绝。
+
+已捕获基线中的 fixtures、tests、evals 和 validate 脚本必须保持原样；新增正反例证明行为，不能改低原通过标准。明日方舟机器估值主张还需当前独立来源；修改知识表实战字段时新值必须与受支持主张匹配。离线通过不能证明文字来源真实性，Agent仍需审查原文及适用版本，并保存同批账号在三类画像下的前后分数、次序、主推荐资格和理由。
 
 apply 输出 `artifact_reference`。把它合并到本轮对应的 knowledge_update_candidate，保留原有 id、证据与 source_scope，再运行 finalizer。只有当前本地队列中 applied 的匹配凭据才计入“已应用”；裸 applied/accepted/merged 会触发 `self-improve-applied-evidence-missing` 并要求重做。
 
 已存在机制的复核使用 verified_existing；待验证用 proposed。验证后改变源码、文档或 changelog 要重新 verify。新运行再次发现已验证问题会重开 proposed，并取得新的修改前基线。
 
 ## 4. 停止、重开与交付
+
+```bash
+node skills/game-account-skill-optimizer/scripts/learning-loop.mjs rollback --id <id> --reason '回归发现问题'
+```
+
+rollback 恢复凭据中 changed_targets 的修改前内容，移除其中新建文件。先校验所有目标当前哈希和原对象，再执行；遇后续人工编辑、路径或对象异常则整批拒绝。范围以 prepare 的完整责任文件清单为准，不声称恢复整个仓库。恢复后状态为 proposed，需重新验证。
 
 ```bash
 node skills/game-account-skill-optimizer/scripts/learning-loop.mjs defer --id <id> --reason '需要当前版本独立证据'

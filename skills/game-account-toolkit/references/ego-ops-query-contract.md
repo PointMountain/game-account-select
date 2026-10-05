@@ -6,6 +6,7 @@
 
 1. 读取 `ego-ops/SKILL.md` 和本机 `experience.local.md`；文件不存在时记录 `local_experience: missing`，不得杜撰经验。
 2. 从 `ego-ops/references/sites/index.md` 只路由一个目标站点，再读取该站点 index 和一个目标 operation，同时核对仓库 support matrix。没有 operation、矩阵未标 `verified` 或知识漂移时，正常筛选记录 `exploration_required` / capability gap 并 fail closed；只有维护者显式 `--allow-exploration` 才能进入只读探索。
+   - 本机 ego-ops 缺某个已验证操作时，可读取 toolkit `ego-operations/knowledge/references/sites/` 中附带的已实测副本；报告记录实际知识路径与哈希。显式 `GAME_ACCOUNT_EGO_OPS_DIR` 和外部已有的漂移文件均不使用此补齐路径。
 3. 建立任务卡：目标、站点、operation、唯一对象、允许动作、禁止动作、风险、成功标准、停止条件、task space 处置。
 4. 一次筛选运行只创建一个命名 task space。所有列表、详情与交叉验证复用该空间。
 

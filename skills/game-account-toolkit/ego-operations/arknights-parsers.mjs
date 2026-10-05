@@ -36,6 +36,11 @@ function namesAfter(text, pattern) {
   return match ? match[1].split(/[，,、；;|/]/).map(clean).filter(Boolean) : [];
 }
 
+function skinNames(value) {
+  // Resource tails and punctuation inside skin names are not additional skins.
+  return String(value ?? '').split(/[，,、；;|\n]/).map(clean).filter((name) => name && !/^(?:合成玉|源石|龙门币|精二|六星)\s*\d/.test(name));
+}
+
 function tags(text, patterns) {
   const values = [];
   for (const pattern of patterns) {
@@ -104,7 +109,7 @@ function pzdsSummary(text) {
       orundum: numberMatch(value, /合成玉(\d+)/),
       originitePrime: numberMatch(value, /源石(\d+)/),
     },
-    skins: namesAfter(value, /(?:联名时装|特典时装)[：:]([^；;]+)/),
+    skins: skinNames(value.match(/(?:联名时装|特典时装)[：:]([^；;]+)/)?.[1]),
   };
 }
 
@@ -203,6 +208,7 @@ function parsePxb7Detail(raw) {
     ],
     status: {
       productCode: text.match(/【([A-Z0-9]{6,})】/)?.[1] ?? null,
+      officialVerification: /官方验号/.test(text),
       verifiedAt: text.match(/该账号于(\d{4}年\d{2}月\d{2}日)完成验号/)?.[1] ?? null,
       sourceStatus: operators.sixStar.length || operators.elite2.length ? 'success' : 'partial',
     },
@@ -281,7 +287,8 @@ function parsePzdsDetail(raw) {
       level: numberValue(bracketField(description, '等级')),
       sixStar: numberValue(bracketField(description, '六星干员数量')) ?? numberMatch(details.title, /(?:^|[，,；;])\s*六星(\d+)/),
       limitedSixStar: numberValue(bracketField(description, '限定六星干员数量')) ?? numberMatch(details.title, /限定六星(\d+)/),
-      elite2: numberValue(bracketField(description, '精二六星数量')),
+      elite2: numberMatch(details.title, /(?:^|[，,；;])\s*精二(\d+)/),
+      elite2SixStar: numberValue(bracketField(description, '精二六星数量')),
       skins: numberMatch(details.title, /时装(\d+)\s*\(/) ?? (skins.length || null),
       orundum: numberValue(bracketField(description, '合成玉')), originitePrime: numberValue(bracketField(description, '源石')),
     },

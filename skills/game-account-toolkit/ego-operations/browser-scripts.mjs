@@ -268,10 +268,10 @@ function semanticSearch(options) {
         if (followed.changed) await new Promise((resolve) => setTimeout(resolve, 1800));
       } else followed = { term: followMatch, error: 'exact_visible_match_not_found' };
     }
-    const links = Array.from(document.querySelectorAll('a[href]')).map((anchor) => ({
+    const links = Array.from(document.querySelectorAll('a[href]')).filter((anchor) => anchor.getClientRects().length && !anchor.closest('header, nav, [role="navigation"]')).map((anchor) => ({
       text: (anchor.innerText || anchor.getAttribute('aria-label') || '').replace(/\\s+/g, ' ').trim().slice(0, 240),
       url: anchor.href
-    })).filter((item) => item.text && /^https?:\\/\\//i.test(item.url));
+    })).filter((item) => item.text && /^https?:\\/\\//i.test(item.url) && (!matchTexts.length || matchTexts.some(term => item.text.includes(term))) && !/\\/(?:account|message|history|passport)(?:\\/|$)/i.test(new URL(item.url).pathname));
     const unique = [...new Map(links.map((item) => [item.url, item])).values()].slice(0, ${limit});
     const matches = matchTexts.map((term) => {
       const nodes = Array.from(document.querySelectorAll('body *')).filter((node) => {

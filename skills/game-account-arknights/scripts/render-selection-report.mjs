@@ -66,6 +66,7 @@ function limitedCompletion(row) {
 }
 
 function tierLabel(row) {
+  if (row?.recommendation_gate?.eligible === false) return row.hard_filter_passed === false ? '不满足条件' : '待核实';
   const tier = String(row?.recommendation_tier ?? '');
   if (/best_value|cross_platform_best_value/.test(tier)) return '性价比';
   if (/qualifying|primary/.test(tier)) return '符合';
@@ -86,7 +87,7 @@ function collabText(row) {
   const declared = number(value.declared_count ?? countValue(row, 'collab'));
   const rosterCount = named ?? observed;
   const roster = rosterCount == null ? `名单未完整披露/${required}` : `名单核验 ${rosterCount}/${required}`;
-  const verified = value.complete === true ? '已确认全齐' : value.verification_status ? text(value.verification_status) : '未确认全齐';
+  const verified = value.complete === true ? (row.recommendation_gate?.knowledge_checks?.some((check) => check.context === 'collection' && check.status !== 'verified') ? '名单时效待核实' : '名单齐全') : value.verification_status ? text(value.verification_status) : '未确认全齐';
   const declaredPart = declared == null ? '' : `；平台口径 ${declared}`;
   return `${roster}（${verified}）${declaredPart}`;
 }
@@ -143,6 +144,7 @@ function skinText(row) {
 }
 
 function gapText(row) {
+  if (row?.recommendation_gate?.eligible === false) return (row.recommendation_gate.gaps ?? []).slice(0, 4).map(text).join('；') || '关键依据未核实';
   if (row?.hard_filter_passed === true) return '硬条件通过；仍需终验绑定/专精/模组';
   const reasons = Array.isArray(row?.hard_filter_reasons) ? row.hard_filter_reasons : [];
   const concerns = Array.isArray(row?.concerns) ? row.concerns : [];
@@ -152,8 +154,8 @@ function gapText(row) {
     if (range) return `合成玉不在 ${Number(range[1]).toLocaleString('zh-CN')}–${Number(range[2]).toLocaleString('zh-CN')}`;
     const minimum = String(value).match(/^orundum:(\d+)\+$/);
     if (minimum) return `合成玉不足 ${Number(minimum[1]).toLocaleString('zh-CN')}`;
-    if (value === 'collab_complete:true') return '联动 25 人名单未确认全齐';
-    if (value === 'limited_complete:true') return '限定寻访 26 人名单未确认全齐';
+    if (value === 'collab_complete:true') return `联动 ${collabCompletion(row).required_count ?? '当前'} 人名单未确认全齐`;
+    if (value === 'limited_complete:true') return `限定寻访 ${limitedCompletion(row).required_count ?? '当前'} 人名单未确认全齐`;
     return value;
   };
   const budgetGap = row?.budget_tier === 'excluded_price' ? '价格在本轮画像区间外' : null;
@@ -226,15 +228,16 @@ function budgetLayerRows(artifact, limit = 5) {
     ...(Array.isArray(artifact.recommendations) ? artifact.recommendations : []),
     ...(Array.isArray(artifact.backup_listings) ? artifact.backup_listings : []),
     ...platformRows,
-  ]).filter((row) => row?.hard_filter_passed === true && isInsidePrimaryBudget(row, budget));
+  ]).filter((row) => row?.hard_filter_passed === true && row?.recommendation_gate?.eligible !== false && isInsidePrimaryBudget(row, budget));
   const near = uniqueRows([
     ...(Array.isArray(artifact.near_match_listings) ? artifact.near_match_listings : []),
     ...platformRows,
-  ]).filter((row) => row?.hard_filter_passed !== true && isInsidePrimaryBudget(row, budget)).slice(0, limit);
+    ...(Array.isArray(artifact.pending_verification) ? artifact.pending_verification : []),
+  ]).filter((row) => (row?.hard_filter_passed !== true || row?.recommendation_gate?.eligible === false) && isInsidePrimaryBudget(row, budget)).slice(0, limit);
   const breakthrough = uniqueRows([
     ...(Array.isArray(artifact.budget_breakthrough_listings) ? artifact.budget_breakthrough_listings : []),
     ...platformRows.filter((row) => row?.hard_filter_passed === true && !isInsidePrimaryBudget(row, budget)),
-  ]).slice(0, limit);
+  ]).filter((row) => row?.recommendation_gate?.eligible !== false).slice(0, limit);
   return { budget, exact, near, breakthrough };
 }
 
