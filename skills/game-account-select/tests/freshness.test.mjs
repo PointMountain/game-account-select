@@ -14,7 +14,7 @@ function fixture({ evidence, signals }) {
   fs.writeFileSync(path.join(dir, 'data/community-evidence.json'), JSON.stringify(evidence));
   return root;
 }
-const today = new Date('2026-11-09T00:00:00Z');
+const today = new Date('2026-11-09T12:00:00');
 const namedSignal = (as_of) => [{ id: 'limited', label: '限定', objective: 'rarity', names: ['A'], scale: 1, as_of }];
 
 test('fresh evidence with a current supported claim allows high confidence', () => {

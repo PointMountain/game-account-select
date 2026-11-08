@@ -20,7 +20,8 @@ export function checkFreshness(game, { today = new Date(), root = skillRoot } = 
   if (!fs.existsSync(path.join(dir, 'game.json'))) {
     return { game, status: 'missing', refresh_required: true, max_confidence: 'low', reasons: ['game directory not found; add it first (workflow: 新增游戏或站点)'], targets: [] };
   }
-  const now = dateOf(today.toISOString());
+  // Use the local calendar day so "attempted today" matches the user's day, not UTC.
+  const now = dateOf(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
   const config = JSON.parse(fs.readFileSync(path.join(dir, 'game.json'), 'utf8'));
   const evidencePath = path.join(dir, 'data', 'community-evidence.json');
   const evidence = fs.existsSync(evidencePath) ? JSON.parse(fs.readFileSync(evidencePath, 'utf8')) : {};
@@ -80,7 +81,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
     console.log('Usage: freshness.mjs --game <slug> [--today YYYY-MM-DD]\nExit 0 = fresh or already attempted today; exit 3 = refresh required before screening.');
     process.exit(game ? 0 : 2);
   }
-  const result = checkFreshness(game, { today: value('--today') ? new Date(`${value('--today')}T00:00:00Z`) : new Date() });
+  const result = checkFreshness(game, { today: value('--today') ? new Date(`${value('--today')}T12:00:00`) : new Date() });
   console.log(JSON.stringify(result, null, 2));
   process.exitCode = result.refresh_required ? 3 : 0;
 }
