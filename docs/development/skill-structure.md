@@ -1,16 +1,31 @@
 # Skill 结构与使用
 
-用户主动找号使用 `game-account-select`；单个账号估值使用对应游戏 skill；复盘和实现改进使用 `game-account-skill-optimizer`；新游戏和证据刷新分别使用 generator / updater。
+仓库只维护一个 skill：`skills/game-account-select/`。用户找号、比价、看单个账号都从它进入。
 
-每个 `SKILL.md` 保留职责、输入输出、主要步骤、硬约束和按场景引用。平台流程、评分对象结构和维护操作放 references；复现放 test-fixtures / tests；可执行能力放 scripts。入口以 100 行为维护上限，超过时按真正的条件分支拆分，而不是删掉关键约束。
-
-依赖来自 [dependencies.json](../../skills/dependencies.json)。`required` 与 `game_required` 是可执行闭包；`conditional` 仅在新游戏/过期证据等分支触发。闭包允许 runtime 的 optimizer/evaluator 相互调用；evaluator 的既有递归保护仍负责执行边界。安装组合必须含完整 required 闭包。
-
-```bash
-npm run list:skills -- --profile arknights
-npm run dev:context -- --files skills/game-account-arknights/scripts/score-listings.mjs
-npm run learn:collect -- --input /absolute/path/run.json
-npm run learn:status
+```text
+skills/game-account-select/
+  SKILL.md                     入口：画像 → 覆盖 → 查询 → 初筛 → 交付 → 写回
+  scripts/                     profile / preflight / query / cleanup / shortlist / parsers
+  references/
+    operations.json            operation 清单（query.mjs 的执行入口）
+    sites/<site>/              站点共享事实 + operations/<game>-list|detail.md
+    games/<game>/              看什么、常见坑、game.json、evidence、refresh-evidence
+    workflow.md ops-model.md knowledge-schema.md global-agents-prompt.md
+  tests/                       离线回归与 fixtures
 ```
 
-新增游戏继续由 generator 创建，自动继承 `game_required`；生成模板同步使用相同质量与学习契约。root `skills/llms.txt` 仅作发现索引，不能取代 SKILL.md。本地 symlink 安装从当前 checkout 读取；复制安装需要发布后重新安装才能获得改动。
+入口以 100 行为上限；按条件分支的细节放 references，可执行事实放 scripts / tests。
+
+## 新增游戏或站点
+
+1. 游戏：建 `references/games/<game>/`（`index.md`、`game.json`、`evidence.md`、`operations/refresh-evidence.md`），在 `games/index.md` 登记。`game.json` 的名字必须对照真实列表资产名核对，未核对的写进 `name_mapping_checked.unverified`。
+2. 站点 × 游戏：在 `sites/<site>/operations/` 新建 `status: documented` 的操作文件，同步 `sites/<site>/index.md` 与 `operations.json`；真实跑通后才改 `verified` 并填 `last_verified`。
+3. 运行 `npm run verify:skills`；`verify-harness` 会检查 manifest ↔ 知识文件 ↔ 索引一致性。
+
+```bash
+npm run list:skills
+npm run dev:context -- --files skills/game-account-select/references/games/arknights/game.json
+npm run shortlist -- --profile /tmp/profile.json --listings /tmp/pxb7.json /tmp/pzds.json --markdown
+```
+
+本地 symlink 安装（`npm run link:skills`）从当前 checkout 读取；复制安装需要重新安装才能获得改动。

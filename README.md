@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="skills/"><img src="https://img.shields.io/badge/Agent_Skills-11-42766B?style=flat-square" alt="11 个 Agent Skills" /></a>
+  <a href="skills/game-account-select/SKILL.md"><img src="https://img.shields.io/badge/Agent_Skill-1-42766B?style=flat-square" alt="1 个 Agent Skill" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-D9795D?style=flat-square" alt="MIT License" /></a>
 </p>
 
@@ -37,10 +37,10 @@ Game Account Select 是一套给 Codex、Claude Code 等支持 Agent Skills 的�
 [![最近提交](https://img.shields.io/github/last-commit/PointMountain/game-account-select?style=flat-square&color=42766B)](https://github.com/PointMountain/game-account-select/commits/main/)
 [![待处理 Issues](https://img.shields.io/github/issues/PointMountain/game-account-select?style=flat-square&color=D9795D)](https://github.com/PointMountain/game-account-select/issues)
 
-- [x] 11 个技能，一次安装即可配齐。
-- [x] 明日方舟、绝区零、鸣潮、异环的账号评估与比较。
+- [x] 一个技能 `game-account-select`，经验按「交易网站 × 游戏」积累，新增游戏只加数据目录。
+- [x] 明日方舟、绝区零、鸣潮、异环的账号筛选与比较。
 - [x] 按预算和偏好找号，返回带来源的候选清单。
-- [x] 社区资料刷新、新游戏技能生成、运行复盘与回归检查。
+- [x] 每次运行后把可复用的站点/游戏经验写回，只有真实成功才记为已验证。
 - [x] 四款游戏均支持螃蟹和盼之的列表搜索、详情读取与跨平台比较。
 
 想看最近在忙什么，可以翻翻 [更新记录](changelogs/)、[项目动态](https://github.com/PointMountain/game-account-select/pulse) 或 [待办与讨论](https://github.com/PointMountain/game-account-select/issues)。
@@ -54,38 +54,25 @@ Game Account Select 是一套给 Codex、Claude Code 等支持 Agent Skills 的�
 准备好 **Node.js 22+**，在终端执行，按提示选择你使用的 Agent：
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select --skill '*'
+npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
 ```
 
-这会安装全部 11 个技能。完成后，新开一个 Agent 会话就可以使用。
+只有这一个技能。完成后，新开一个 Agent 会话就可以使用。
 
-**第一次在线找号**，还需要配置 [ego lite](https://lite.ego.app/) 浏览器，并安装或链接 `ego-browser`、`ego-ops` 技能及对应平台的操作知识。可以先把这句话发给 Agent，按检查结果补齐环境：
+**第一次在线找号**，还需要配置 [ego lite](https://lite.ego.app/) 浏览器，并安装或链接 `ego-browser`、`ego-ops` 技能。可以先把这句话发给 Agent，按检查结果补齐环境：
 
 ```text
-用 game-account-preflight 检查找号环境，包括 Node.js、git、gh、
+用 game-account-select 检查找号环境，包括 Node.js、git、gh、
 ego-ops 和 ego-browser，告诉我还需要准备什么。
 ```
 
-四款游戏的双平台操作知识已收录在[配套 ego-ops 版本](https://github.com/PointMountain/jacky-skills/tree/98cd060110c630c78d7e1282e7834dd359aa171b/harness/ego-ops)。安装或更新时，让 Agent 一并检查这些操作是否齐全。
-
-<details>
-<summary>按需安装 / 更新技能</summary>
-
-使用交互式安装器选择技能：
-
-```bash
-npx skills add https://github.com/PointMountain/game-account-select
-```
-
-单游戏评估请一起选择：对应游戏技能、`game-account-toolkit`、`game-account-preflight`、`game-account-skill-optimizer`、`game-account-skill-evaluator` 和 `game-account-community-updater`。要让 Agent 主动找号，再加上 `game-account-select`。
+四款游戏在两个平台的查询操作已经随技能一起提供，不用另外安装。
 
 更新已安装的技能：
 
 ```bash
 npx skills update
 ```
-
-</details>
 
 ## 试着这样问
 
@@ -112,7 +99,7 @@ npx skills update
 把链接、截图或卖家描述一起发过去：
 
 ```text
-用 game-account-zenless-zone-zero 看看这个绝区零账号，卖家报价 800 元。
+用 game-account-select 看看这个绝区零账号，卖家报价 800 元。
 我想接手后就有两队能玩，也想留些抽卡资源。
 帮我看看阵容搭配、专属音擎和绑定情况，这个价格值得考虑吗？
 
@@ -126,7 +113,7 @@ npx skills update
 </p>
 
 ```text
-用 game-account-wuthering-waves 比较下面三个鸣潮账号。
+用 game-account-select 比较下面三个鸣潮账号。
 我喜欢的角色是今汐，优先看她的队伍和专武，再看看剩余抽卡资源。
 按适合我的程度排个序，说说每个号的取舍。
 
@@ -170,8 +157,8 @@ npx skills update
 想找其他游戏，可以直接说：
 
 ```text
-用 game-account-skill-generator 为 <游戏名> 创建账号评估技能，
-补齐社区资料并通过质量检查后，帮我看看账号。
+用 game-account-select 帮我接入 <游戏名>：先建游戏经验目录，
+对照真实列表核对角色名，再试跑螺蟹和盼之的查询。
 ```
 
 ## 项目架构
@@ -180,32 +167,30 @@ npx skills update
   <img src="assets/readme-architecture.png" width="100%" alt="看板娘把需求卡、游戏图鉴与报告卡连接成一条协作流程" />
 </p>
 
-可以把这 11 个技能想成一支分工明确的小队：主入口听懂你的需求，浏览器工具找资料，游戏技能看懂账号，最后一起把推荐清单检查好。
+一个技能负责整条流程；经验分两本册子放：「站点」记下每个交易网站怎么查、字段怎么读，「游戏」记下该看哪些资产、有哪些坑。
 
 ```mermaid
 flowchart TD
-    Request["你的需求与账号材料"] --> Select["game-account-select · 组织本轮筛选"]
-    Select --> Runtime["preflight + toolkit · 准备环境与整理资料"]
-    Runtime --> Browser["ego-ops → ego-browser · 读取平台与社区"]
-    Runtime -. "已有账号材料" .-> Games
-    Browser --> Games["四个游戏技能 · 角色、配队、资源与风险评估"]
-    Extend["generator + community-updater · 扩展游戏与更新资料"] -.-> Games
-    Games --> Finalizer["游戏 Finalizer · 组装报告"]
-    Finalizer --> Review["optimizer + evaluator · 检查结果与复盘"]
-    Review --> Report["带来源与待确认事项的推荐清单"]
-    Review -. "需要补证时" .-> Select
+    Request["你的需求与账号材料"] --> Profile["本轮画像 · 预算、必须有、区服（不保存）"]
+    Profile --> Query["ego-ops → ego-browser · 按站点经验查列表与详情"]
+    Sites["站点经验 · sites/&lt;site&gt;"] -.-> Query
+    Query --> Shortlist["初筛 · 硬条件、预算分档、缺失字段"]
+    Games["游戏经验 · games/&lt;game&gt;"] -.-> Shortlist
+    Shortlist --> Report["带来源与待确认事项的推荐清单"]
+    Report -. "可复用经验写回" .-> Sites
+    Report -. "可复用经验写回" .-> Games
     classDef mint fill:#e8f3ed,stroke:#42766b,color:#183b34
     classDef coral fill:#fcece4,stroke:#d9795d,color:#643c2e
-    class Select,Runtime,Browser,Games,Extend mint
-    class Request,Finalizer,Review,Report coral
+    class Profile,Query,Shortlist mint
+    class Request,Sites,Games,Report coral
 ```
 
 | 想了解哪一块 | 从这里看起 |
 | --- | --- |
-| 一次找号怎样开始、怎样交付 | [主筛选技能](skills/game-account-select/SKILL.md) |
-| 各个游戏如何评估账号 | [明日方舟](skills/game-account-arknights/SKILL.md) · [绝区零](skills/game-account-zenless-zone-zero/SKILL.md) · [鸣潮](skills/game-account-wuthering-waves/SKILL.md) · [异环](skills/game-account-neverness-to-everness/SKILL.md) |
-| 浏览器、资料和模块怎样配合 | [架构说明](docs/development/architecture.md) |
-| 怎样修改技能并验证效果 | [开发流程](docs/development/workflow.md) · [学习闭环](skills/game-account-skill-optimizer/references/learning-loop.md) |
+| 一次找号怎样开始、怎样交付 | [技能入口](skills/game-account-select/SKILL.md) · [筛选流程](skills/game-account-select/references/workflow.md) |
+| 各个交易网站怎么查 | [站点经验](skills/game-account-select/references/sites/index.md) |
+| 各个游戏该看什么 | [游戏经验](skills/game-account-select/references/games/index.md) |
+| 经验怎样写回、怎样验证 | [OPS 模型](skills/game-account-select/references/ops-model.md) · [开发流程](docs/development/workflow.md) |
 
 <details>
 <summary>更多用法：刷新版本评价 / 本地开发</summary>
@@ -213,15 +198,14 @@ flowchart TD
 想结合新版本重新看角色和装备价值：
 
 ```text
-用 game-account-community-updater 更新绝区零的社区资料，
+用 game-account-select 刷新绝区零的社区证据，
 再看看前面几个账号的推荐顺序有没有变化。
 ```
 
-在仓库中列出技能、查看安装组合，或链接本地修改：
+在仓库中查看技能，或链接本地修改：
 
 ```bash
 npm run list:skills
-npm run list:profiles
 npm run link:skills
 ```
 
@@ -233,7 +217,7 @@ npm run verify:skills
 npm run unlink:skills
 ```
 
-详细步骤见 [开发流程](docs/development/workflow.md) 与 [环境准备清单](skills/game-account-preflight/references/preflight-checklist.md)。
+详细步骤见 [开发流程](docs/development/workflow.md) 与 [Skill 结构](docs/development/skill-structure.md)。
 
 </details>
 

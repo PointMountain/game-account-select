@@ -17,7 +17,7 @@ test('query policy scans source while leaving raw run evidence outside the polic
     const token = ['ji', 'na'].join('');
     fs.mkdirSync(path.join(temporary, '.harness'));
     fs.writeFileSync(path.join(temporary, '.harness', 'evidence.json'), JSON.stringify({ public_image_path: token }));
-    const validate = () => spawnSync(process.execPath, [path.join(temporary, 'skills/game-account-toolkit/scripts/validate-query-stack.mjs')], { encoding: 'utf8' });
+    const validate = () => spawnSync(process.execPath, [path.join(temporary, 'skills/game-account-select/tests/validate-query-stack.mjs')], { encoding: 'utf8' });
     const evidenceRun = validate();
     assert.equal(evidenceRun.status, 0, evidenceRun.stderr);
     fs.writeFileSync(path.join(temporary, 'policy-negative.json'), JSON.stringify({ forbidden_transport: token }));
