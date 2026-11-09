@@ -1,233 +1,184 @@
 <p align="center">
-  <img src="assets/readme-avatar.png" width="112" height="112" alt="Game Account Select mascot: a mint-haired anime character holding a character card" />
+  <img src="assets/readme-hero-v3.png" width="100%" alt="Account cards, folders and a magnifying glass arranged beside a shortlist" />
 </p>
 
 <h1 align="center">Game Account Select</h1>
 
 <p align="center">
-  <strong>Find an account that feels like yours.</strong><br />
-  Give your AI a wishlist. Let it find listings, compare prices, and check teams.
+  <strong>Turn your wishlist into a comparison you can understand.</strong><br />
+  One Agent Skill to find listings, read details, and weigh the tradeoffs.
 </p>
 
 <p align="center">
   <a href="README.md">简体中文</a> · <strong>English</strong><br />
-  <a href="#project-status">Status</a> · <a href="#install">Install</a> · <a href="#try-a-prompt">Usage</a> · <a href="#supported-games">Games</a> · <a href="#project-architecture">Architecture</a> · <a href="https://github.com/PointMountain/game-account-select/issues">Feedback</a>
+  <a href="#quick-start">Quick start</a> · <a href="#coverage">Coverage</a> · <a href="#how-it-works">How it works</a> · <a href="#extend-and-develop">Develop</a>
 </p>
 
 <p align="center">
   <a href="skills/game-account-select/SKILL.md"><img src="https://img.shields.io/badge/Agent_Skill-1-42766B?style=flat-square" alt="1 Agent Skill" /></a>
+  <a href="https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml"><img src="https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml/badge.svg?branch=main" alt="CI on main" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-D9795D?style=flat-square" alt="MIT License" /></a>
 </p>
 
-<p align="center">
-  <img src="assets/readme-hero.png" width="100%" alt="Anime illustration of the mascot choosing a character card beside a magnifying glass and comparison notebook" />
-</p>
+Tell your agent which game you want, your budget, and the characters or risks that matter to you. It searches for accounts and returns a sourced shortlist with the details that still need checking.
 
-Game Account Select is a game-account screening skill for tools that support Agent Skills, such as Codex and Claude Code. Share your game, budget, and favorite characters to get a comparison with listing links, prices, recommendations, and questions to ask the seller.
-
-## Project Status
+## What you can do
 
 <p align="center">
-  <img src="assets/readme-status.png" width="100%" alt="The mascot pins a completed card onto a studio progress board" />
+  <img src="assets/readme-scenarios-v4.webp" width="100%" alt="Illustrated scenes for finding, reviewing, and comparing accounts" />
 </p>
 
-The project is available as a single **Agent Skill**, with repository version **v0.1.0** and four games integrated. Follow development through the links below.
+| What you can do | What to give the agent |
+| --- | --- |
+| **Find an account** | Game, budget, server, must-have assets, and preferences |
+| **Review one account** | A listing link, screenshots, or seller description, plus your goals |
+| **Compare accounts** | Several links or account descriptions and your priorities |
 
-[![CI on main](https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml/badge.svg?branch=main)](https://github.com/PointMountain/game-account-select/actions/workflows/verify-game-account-skills.yml)
-[![Last commit](https://img.shields.io/github/last-commit/PointMountain/game-account-select?style=flat-square&color=42766B)](https://github.com/PointMountain/game-account-select/commits/main/)
-[![Open issues](https://img.shields.io/github/issues/PointMountain/game-account-select?style=flat-square&color=D9795D)](https://github.com/PointMountain/game-account-select/issues)
-
-- [x] One skill, `game-account-select`, with experience organised by trading site and game; a new game is a new data folder.
-- [x] Account evaluation and comparison for Arknights, ZZZ, Wuthering Waves, and NTE.
-- [x] Searches guided by your budget and preferences, with sources for each candidate.
-- [x] Reusable site and game lessons are written back after each run; only real successes count as verified.
-- [x] Listing search, detail reads, and comparisons across PXB7 and PZDS for all four games.
-
-See the [changelog](changelogs/), [project activity](https://github.com/PointMountain/game-account-select/pulse), and [issues](https://github.com/PointMountain/game-account-select/issues) for ongoing work.
-
-## Install
+## Quick start
 
 <p align="center">
-  <img src="assets/readme-install.png" width="100%" alt="The mascot unpacks skill cards and prepares her computer and tools" />
+  <img src="assets/readme-setup-v4.webp" width="100%" alt="A browser, terminal, and checklist representing the setup" />
 </p>
 
-With **Node.js 22+** installed, run this command and choose your agent when prompted:
+Prepare **Node.js 22+, git, and gh**, plus the [ego lite](https://lite.ego.app/) browser. Online searches also require discoverable `ego-browser` and `ego-ops` skills. Install this repository's single skill:
 
 ```bash
 npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
 ```
 
-That is the only skill. Start a new agent session after installation.
+Choose your agent when prompted, then start a new session. To update, run `npx skills update`. An installation agent can consult the [optional global-instruction prompt](skills/game-account-select/references/global-agents-prompt.md); writing global instructions requires your explicit permission.
 
-**For online searches**, set up the [ego lite](https://lite.ego.app/) browser and install or link the `ego-browser` and `ego-ops` skills. Start with this prompt to check what you need:
+For a first run, ask the agent to check the environment:
 
 ```text
-Use game-account-select to check my account-search setup, including
-Node.js, git, gh, ego-ops, and ego-browser. Tell me what to prepare next.
+Use game-account-select to check whether Node.js, git, gh,
+ego-ops, and ego-browser are ready for an account search.
 ```
 
-Site operations for all four games on both platforms ship with the skill.
-
-Update an installed skill:
-
-```bash
-npx skills update
-```
-
-## Try a prompt
-
-### Find me an account
-
-<p align="center">
-  <img src="assets/readme-search.png" width="100%" alt="The mascot explores account cards with a wishlist and magnifying glass" />
-</p>
-
-Include your **game, budget, server, and priorities**:
+Then try a request:
 
 ```text
 Use game-account-select to find an Arknights account on the official
 CN server for up to CNY 1,500. I care most about limited and collab
 operators; enough progression for daily play is fine.
-Compare listings on PXB7 and PZDS. Include prices, highlights, links,
-and questions I should ask each seller.
+Compare PXB7 and PZDS listings, with prices, links, highlights,
+and risks that still need checking.
 ```
 
-### Is this one worth a look?
-
-<p align="center">
-  <img src="assets/readme-evaluate.png" width="100%" alt="The mascot reviews one account card with its characters, equipment, and resources" />
-</p>
-
-Attach screenshots or paste the listing link or seller's description:
+<details>
+<summary>More examples: review one account or compare several</summary>
 
 ```text
 Use game-account-select to review this ZZZ account at CNY 800.
-I'd like two playable teams and some pulls saved for later.
-Check the team options, signature W-Engines, and account bindings.
-Is it worth considering at this price?
-
+I want two playable teams and some pulls saved for later.
+Check teams, signature W-Engines, and bindings, and tell me what
+is still missing.
 Account details: <paste a link or description, or attach screenshots>
 ```
 
-### Help me choose between these
-
-<p align="center">
-  <img src="assets/readme-compare.png" width="100%" alt="The mascot compares three account dossiers and marks her favorite" />
-</p>
-
 ```text
-Use game-account-select to compare these three accounts.
+Use game-account-select to compare these three Wuthering Waves accounts.
 Jinhsi is my favorite, so prioritize her team and signature weapon,
-then look at the remaining pulls. Rank them for me and explain
-the tradeoffs.
-
+then look at the remaining pulls. Explain the tradeoffs in your ranking.
 Account A: <link or details>
 Account B: <link or details>
 Account C: <link or details>
 ```
 
+</details>
+
+## Coverage
+
+<p align="center">
+  <img src="assets/readme-games-v4.webp" width="100%" alt="Four field-guide cards depicting different fictional game worlds" />
+</p>
+
+| Game | PXB7 | PZDS | What to examine |
+| --- | --- | --- | --- |
+| [Arknights](skills/game-account-select/references/games/arknights/index.md) | List · detail | List · detail | Limited and collab operators, progression, skins, resources |
+| [Zenless Zone Zero](skills/game-account-select/references/games/zenless-zone-zero/index.md) | List · detail | List · detail | Agents, Mindscapes, signature W-Engines, teams, resources |
+| [Wuthering Waves](skills/game-account-select/references/games/wuthering-waves/index.md) | List · detail | List · detail | Resonators, Resonance Chains, signature weapons, teams, resources |
+| [Neverness to Everness](skills/game-account-select/references/games/neverness-to-everness/index.md) | List · detail | List · detail | S characters, Arcs, awakenings, resources, account type |
+
+All 16 site operations were rechecked against live pages on **2026-11-09**. Listings and pages change, so each run checks them again. See the [site index](skills/game-account-select/references/sites/index.md) and operation files for current status; unverified combinations are not silently bypassed.
+
+> As of **2026-11-09**, community strength snapshots for all four games are historical. The skill checks freshness before screening and attempts a refresh when needed. If that refresh is incomplete, it reports the data date and caps recommendation confidence at `medium`. Current strength or team claims require evidence from at least two independent authors published within seven days.
+
 ## What you get
 
 <p align="center">
-  <img src="assets/readme-report.png" width="100%" alt="The mascot presents an organized recommendation report with cards and a checklist" />
+  <img src="assets/readme-report-v4.webp" width="100%" alt="Account cards and a comparison checklist with source and risk markers" />
 </p>
 
-A comparison built around what matters to you:
+A shortlist shaped by your request: prices and original links, asset highlights, budget tiers, listing and platform verification times, risks, and missing fields. Each platform has its own section; coverage gaps remain visible when there are no suitable results.
 
-| Your question | What the report includes |
-| --- | --- |
-| How much, and where? | Listing price, platform, and original link |
-| Does it fit my wishlist? | Characters, teams, equipment, progression, and pulls |
-| Which should I pick? | Ranking, each account's strengths, and price differences |
-| What should I ask the seller? | Bindings, identity verification, inspection details, and missing screenshots or data |
+A score is an **initial ordering**, not a valuation or transaction guarantee. Count-only accounts without named assets remain pending, and unknown hard conditions do not count as satisfied. The agent does not buy, pay, or contact sellers for you.
 
-Keep the conversation going with “raise my budget to CNY 2,000,” “I care more about skins,” or “take a closer look at the second one.”
-
-## Supported games
-
-<p align="center">
-  <img src="assets/readme-games.png" width="100%" alt="Four adventure field guides surround the mascot, representing four game worlds" />
-</p>
-
-All four games support finding accounts, reading listing details, and comparing candidates on **both PXB7 and PZDS**. You can also provide account details for a direct review.
-
-| Game | What it checks | Online search |
-| --- | --- | --- |
-| **Arknights** | Limited and collab operators, progression, masteries, modules, skins, resources | PXB7, PZDS |
-| **Zenless Zone Zero** | Agents, Mindscapes, signature W-Engines, teams, Polychrome and tapes | PXB7, PZDS |
-| **Wuthering Waves** | Resonators, Resonance Chains, signature weapons, teams, pulls | PXB7, PZDS |
-| **Neverness to Everness** | S characters, S Arcs, awakenings, resources, account type | PXB7, PZDS |
-
-For another game, try:
-
-```text
-Use game-account-select to add <game>: create its game folder,
-check character names against real listings, then try the PXB7
-and PZDS queries.
+```mermaid
+flowchart LR
+    Candidate["Candidate account"] --> Check{"Check requirements and fields"}
+    Check -- "Confirmed and named assets available" --> Ranked["Budget tiers and initial ranking"]
+    Check -- "Missing, conflicting, or unmet" --> Pending["Pending or near match"]
+    Ranked --> Result["Results by platform"]
+    Pending --> Result
 ```
 
-## Project Architecture
+## How it works
 
 <p align="center">
-  <img src="assets/readme-architecture.png" width="100%" alt="The mascot connects request cards, game field guides, and report cards into a workflow" />
+  <img src="assets/readme-workflow-v3.png" width="100%" alt="A site page and a game asset note feed into a shared checklist" />
 </p>
 
-One skill runs the whole flow. Experience lives in two notebooks: **sites** record how each trading site is queried and read, **games** record which assets matter and the usual traps.
+One skill handles the flow. Experience is organised under two stable keys: **sites** describe how to query and read each marketplace; **games** describe assets, evidence, and common traps.
 
 ```mermaid
 flowchart TD
-    Request["Your request and account details"] --> Profile["Run-only profile · budget, must-haves, server (not saved)"]
-    Profile --> Query["ego-ops → ego-browser · list and detail pages per site"]
-    Sites["Site experience · sites/&lt;site&gt;"] -.-> Query
-    Query --> Shortlist["Shortlist · hard filters, budget tiers, missing fields"]
-    Games["Game experience · games/&lt;game&gt;"] -.-> Shortlist
-    Shortlist --> Report["Recommendations with sources and seller questions"]
-    Report -. "write back lessons" .-> Sites
-    Report -. "write back lessons" .-> Games
-    classDef mint fill:#e8f3ed,stroke:#42766b,color:#183b34
-    classDef coral fill:#fcece4,stroke:#d9795d,color:#643c2e
-    class Profile,Query,Shortlist mint
-    class Request,Sites,Games,Report coral
+    Request["Your request"] --> Profile["Run-only profile: budget, preferences, requirements"]
+    Profile --> Freshness{"Does game evidence need a refresh?"}
+    Freshness -- "Yes" --> Refresh["Try to refresh; disclose the date and confidence cap if incomplete"]
+    Freshness -- "No" --> Coverage
+    Refresh --> Coverage{"Is the site × game operation verified?"}
+    Coverage -- "Yes" --> Query["ego-ops + ego-browser: lists and details"]
+    Coverage -- "No" --> Gap["Record the coverage gap"]
+    Sites["Site experience: sites/" ] -.-> Coverage
+    Games["Game experience: games/" ] -.-> Freshness
+    Games -.-> Shortlist
+    Query --> Shortlist["Initial ranking, budget tiers, pending checks"]
+    Shortlist --> Report["Sourced comparison with risks"]
+    Gap --> Report
+    Report -. "reusable site facts" .-> Sites
+    Report -. "reusable game knowledge" .-> Games
 ```
 
-| Curious about… | Start here |
-| --- | --- |
-| How a search starts and delivers results | [Skill entry](skills/game-account-select/SKILL.md) · [Workflow](skills/game-account-select/references/workflow.md) |
-| How each trading site is queried | [Sites](skills/game-account-select/references/sites/index.md) |
-| What to look for in each game | [Games](skills/game-account-select/references/games/index.md) |
-| How lessons are written back and validated | [OPS model](skills/game-account-select/references/ops-model.md) · [Development workflow](docs/development/workflow.md) |
+Your budget, preferences, and profile are used for the current run and are not written into shared experience. The agent evaluates the evidence before writing reusable site or game knowledge; only real successes update verification dates. This is a skill workflow, not background monitoring or an enforcement hook.
 
-<details>
-<summary>More: refresh game advice / local development</summary>
+## Extend and develop
 
-To revisit character and equipment value after an update:
+For a new game, start with its game directory, signal table, and evidence-refresh operation. For a new site or site × game combination, add the corresponding list/detail operations and manifest entries. New page structures may also need parser changes and tests. See [adding a game or site](skills/game-account-select/references/workflow.md#新增游戏或站点).
 
 ```text
-Use game-account-select to refresh the ZZZ community
-evidence, then check whether my earlier account ranking changes.
+skills/game-account-select/
+├── SKILL.md                  Entry point and run protocol
+├── scripts/                  Profile, freshness, queries, shortlist, cleanup
+├── references/
+│   ├── sites/<site>/         Site facts and per-game list/detail operations
+│   └── games/<game>/         Assets, risks, signals, and evidence
+└── tests/                    Offline regressions and parser fixtures
 ```
 
-From a local checkout, list the skill, or link your edits:
+Local development and verification:
 
 ```bash
 npm run list:skills
-npm run link:skills
-```
-
-Validate changes with the first two commands. Use the last one when you want to remove local links:
-
-```bash
+npm run dev:context -- --files skills/game-account-select/scripts/shortlist.mjs
 npm run dev:check
 npm run verify:skills
-npm run unlink:skills
 ```
 
-See the [development workflow](docs/development/workflow.md) and [skill structure](docs/development/skill-structure.md) for details.
-
-</details>
+Changes to site operations or parsers also require a real ego-browser run and task-space cleanup; an offline pass alone does not prove live behavior. See the [development workflow](docs/development/workflow.md), [verification boundaries](docs/development/verification.md), and [OPS model](skills/game-account-select/references/ops-model.md).
 
 ---
 
-Have a question or a game you'd like to add? [Open an issue](https://github.com/PointMountain/game-account-select/issues) with the game, what you're looking for, and what happened.
+Found a problem or want to add a game? [Open an issue](https://github.com/PointMountain/game-account-select/issues).
 
 [MIT License](LICENSE) · Made for your next adventure.

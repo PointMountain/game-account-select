@@ -117,7 +117,7 @@ function parseBudget(text, assumptions) {
 function detectObjective(text) {
   const signals = {
     collector: /限定|联动|稀缺|收藏|保值|绝版/.test(text),
-    combat: /战力|强度|高难|开荒|推图|肉鸽|危机合约|养成|练度|(?:队伍|阵容).{0,8}(?:成熟|成型|完整|能推图)/.test(text),
+    combat: /战力|强度|高难|开荒|推图|肉鸽|危机合约|养成|练度|虚狩|(?:队伍|阵容).{0,8}(?:成熟|成型|完整|能推图)/.test(text),
     resource: /资源|抽数|合成玉|源石|寻访|黄票/.test(text),
     skins: /皮肤|时装/.test(text),
     price: /性价比|便宜|划算|低价/.test(text),
@@ -244,7 +244,7 @@ export function parseSelectionProfile(input) {
 
   const clarificationRequired = [];
   if (budget.target == null && budget.primary_max == null) clarificationRequired.push('budget');
-  if (objective === 'balanced' && !signals.price) clarificationRequired.push('objective');
+  if (objective === 'balanced' && !signals.price) assumptions.push('未指定主要偏好，暂按均衡目标筛选');
   const primaryObjectiveCount = ['collector', 'combat', 'resource'].filter((key) => signals[key]).length;
   const explicitlyUndecidedObjective = /(?:没想好|还没想好|不确定|不知道|纠结).{0,18}(?:收藏|限定|联动|战力|强度|资源|抽卡).{0,18}(?:优先|为主|怎么选|选哪个)|(?:收藏|限定|联动|战力|强度|资源|抽卡).{0,10}(?:还是|或是).{0,10}(?:收藏|限定|联动|战力|强度|资源|抽卡).{0,10}(?:优先|为主|怎么选|选哪个)/.test(sourceText);
   if (primaryObjectiveCount > 1 && explicitlyUndecidedObjective) {

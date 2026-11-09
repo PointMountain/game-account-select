@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
   "game": "wuthering-waves",
+  "last_refresh_attempt": {
+    "date": "2026-11-09",
+    "outcome": "partial",
+    "note": "本次检索社区并查看一条来源，未核实当前版本及两个独立作者的同一观点；历史快照未更新。"
+  },
   "version_context": "unverified",
   "sources": [],
   "claims": [],

@@ -16,10 +16,17 @@ function fixture({ evidence, signals }) {
 }
 const today = new Date('2026-11-09T12:00:00');
 const namedSignal = (as_of) => [{ id: 'limited', label: '限定', objective: 'rarity', names: ['A'], scale: 1, as_of }];
+const currentEvidence = () => ({
+  updated_at: '2026-11-07', version_context: '3.4',
+  sources: ['one', 'two'].map((id) => ({ id, publisher: id, url: `https://example.invalid/${id}`,
+    published_at: '2026-11-06T00:00:00Z', observed_at: '2026-11-07T00:00:00Z',
+    content_kind: 'body', excerpt: 'Synthetic evidence.', version_context: '3.4' })),
+  claims: [{ id: 'claim', subject: 'A', status: 'supported', as_of: '2026-11-06', version_context: '3.4', contexts: ['story'], source_ids: ['one', 'two'] }],
+});
 
 test('fresh evidence with a current supported claim allows high confidence', () => {
   const root = fixture({
-    evidence: { updated_at: '2026-11-07', version_context: '3.4', claims: [{ status: 'supported', as_of: '2026-11-06' }] },
+    evidence: currentEvidence(),
     signals: namedSignal('2026-11-07'),
   });
   const result = checkFreshness('demo', { today, root });
@@ -28,12 +35,39 @@ test('fresh evidence with a current supported claim allows high confidence', () 
   assert.equal(result.max_confidence, 'high');
 });
 
+test('a claim needs two independent recent authors before evidence is fresh', () => {
+  for (const mutate of [
+    (evidence) => { evidence.sources[1].publisher = evidence.sources[0].publisher; },
+    (evidence) => { evidence.sources[1].published_at = '2026-10-01'; },
+    (evidence) => { evidence.sources = []; },
+    (evidence) => { evidence.sources[1].url = evidence.sources[0].url; },
+    (evidence) => { evidence.claims[0].contexts = []; },
+  ]) {
+    const evidence = currentEvidence();
+    mutate(evidence);
+    const root = fixture({ evidence, signals: namedSignal('2026-11-07') });
+    const result = checkFreshness('demo', { today, root });
+    assert.equal(result.status, 'stale');
+    assert.equal(result.refresh_required, true);
+    assert.equal(result.max_confidence, 'medium');
+  }
+});
+
+test('a recent snapshot without a current claim still requires a refresh', () => {
+  const root = fixture({ evidence: { updated_at: '2026-11-09', version_context: '3.4', claims: [] }, signals: namedSignal('2026-11-09') });
+  const result = checkFreshness('demo', { today, root });
+  assert.equal(result.status, 'stale');
+  assert.equal(result.refresh_required, true);
+  assert.equal(result.max_confidence, 'medium');
+  assert.ok(result.targets.includes('claims'));
+});
+
 test('old snapshot, unconfirmed version and stale roster all require refresh before screening', () => {
   const root = fixture({ evidence: { updated_at: '2026-08-03', version_context: 'unverified', claims: [] }, signals: namedSignal('2026-08-03') });
   const result = checkFreshness('demo', { today, root });
   assert.equal(result.refresh_required, true);
   assert.equal(result.max_confidence, 'medium');
-  assert.deepEqual(result.targets.sort(), ['evidence', 'signal:limited', 'version']);
+  assert.deepEqual(result.targets.sort(), ['claims', 'evidence', 'signal:limited', 'version']);
 });
 
 test('a refresh attempt logged today stops repeated refreshes but keeps the confidence cap', () => {
@@ -44,6 +78,17 @@ test('a refresh attempt logged today stops repeated refreshes but keeps the conf
   const result = checkFreshness('demo', { today, root });
   assert.equal(result.status, 'stale_refresh_attempted_today');
   assert.equal(result.refresh_required, false);
+  assert.equal(result.max_confidence, 'medium');
+});
+
+test('future-dated snapshots and attempts do not prevent a needed refresh', () => {
+  const evidence = currentEvidence();
+  evidence.updated_at = '2026-11-10';
+  evidence.last_refresh_attempt = { date: '2026-11-10', outcome: 'failed' };
+  const root = fixture({ evidence, signals: namedSignal('2026-11-10') });
+  const result = checkFreshness('demo', { today, root });
+  assert.equal(result.status, 'stale');
+  assert.equal(result.refresh_required, true);
   assert.equal(result.max_confidence, 'medium');
 });
 

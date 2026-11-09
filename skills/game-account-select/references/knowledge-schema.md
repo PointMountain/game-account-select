@@ -42,6 +42,12 @@ last_verified: null  # 只有 verified 才填真实成功日期
 
 名单有时效性时加 `as_of`；只是历史快照的，加 `confidence: historical`。
 
+## 证据与资产完整性
+
+- `data/community-evidence.json` 的当前主张需要 `id`、`subject`、`status: supported`、`as_of`、`version_context`、非空玩法 `contexts` 和 `source_ids`。每个引用的来源需要 `id`、`url`、`publisher`、`published_at`、`observed_at`、`content_kind`、`excerpt` 和相同的 `version_context`。
+- 新鲜度检查只接受原始发布日期在 7 天内、可读正文/字幕/图表或官方数据、至少两位不同作者支持的主张。只有检索标题、观察时间或单一作者不足以标为当前主张。
+- 商品的 `status.assetRosterComplete: true` 只在完整资产名单被真实核实后填写；`sourceStatus: success` 不代表名单完整。没有完整名单时，无法证实排除项不存在。
+
 ## 每次任务后的自动写回
 
 1. 对照成功标准判定本次结果：完整成功、部分完成、失败，或没有新事实。

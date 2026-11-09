@@ -14,6 +14,27 @@ const dateOf = (value) => {
   return match ? new Date(`${match[0]}T00:00:00Z`) : null;
 };
 const ageDays = (date, today) => (date ? Math.floor((today - date) / DAY) : null);
+const withinWindow = (date, today) => {
+  const age = ageDays(date, today);
+  return age !== null && age >= 0 && age <= MAX_AGE_DAYS;
+};
+
+function hasCurrentEvidence(claim, evidence, today) {
+  if (!claim?.id || !claim.subject || claim.status !== 'supported' || claim.version_context !== evidence.version_context
+    || !Array.isArray(claim.contexts) || !claim.contexts.some((context) => typeof context === 'string' && context.trim())
+    || !withinWindow(dateOf(claim.as_of), today)) return false;
+  const sources = Array.isArray(evidence.sources) ? evidence.sources : [];
+  const usable = (Array.isArray(claim.source_ids) ? claim.source_ids : []).map((id) => sources.find((source) => source.id === id)).filter((source) => {
+    const published = dateOf(source?.published_at);
+    const observed = dateOf(source?.observed_at);
+    return source && /^https?:\/\//.test(source.url ?? '') && typeof source.publisher === 'string' && source.publisher.trim()
+      && ['body', 'transcript', 'article_image', 'official_data'].includes(source.content_kind)
+      && String(source.excerpt ?? '').trim() && source.version_context === evidence.version_context
+      && withinWindow(published, today) && observed && observed <= today && published <= observed;
+  });
+  return new Set(usable.map((source) => source.publisher.trim().toLowerCase())).size >= 2
+    && new Set(usable.map((source) => source.url)).size >= 2;
+}
 
 export function checkFreshness(game, { today = new Date(), root = skillRoot } = {}) {
   const dir = path.join(root, 'references', 'games', game);
@@ -31,14 +52,12 @@ export function checkFreshness(game, { today = new Date(), root = skillRoot } = 
   const reasons = [];
   const targets = [];
   const snapshotAge = ageDays(snapshotDate, now);
-  if (snapshotAge === null) { reasons.push('community evidence has no date'); targets.push('evidence'); }
+  if (snapshotAge === null || !Number.isFinite(snapshotAge)) { reasons.push('community evidence has no valid date'); targets.push('evidence'); }
+  else if (snapshotAge < 0) { reasons.push('community evidence date is in the future'); targets.push('evidence'); }
   else if (snapshotAge > MAX_AGE_DAYS) { reasons.push(`community evidence is ${snapshotAge} days old (> ${MAX_AGE_DAYS})`); targets.push('evidence'); }
 
-  const currentClaims = (evidence.claims ?? []).filter((claim) => {
-    const age = ageDays(dateOf(claim.as_of), now);
-    return claim.status === 'supported' && age !== null && age <= MAX_AGE_DAYS;
-  });
-  if (!currentClaims.length) reasons.push('no supported claim within the freshness window');
+  const currentClaims = (evidence.claims ?? []).filter((claim) => hasCurrentEvidence(claim, evidence, now));
+  if (!currentClaims.length) { reasons.push('no supported claim within the freshness window'); targets.push('claims'); }
   if (!evidence.version_context || /unverified|unconfirmed/.test(evidence.version_context)) {
     reasons.push(`game version not confirmed (${evidence.version_context ?? 'missing'})`);
     targets.push('version');
@@ -46,7 +65,7 @@ export function checkFreshness(game, { today = new Date(), root = skillRoot } = 
 
   const signals = config.signals.filter((signal) => signal.names).map((signal) => {
     const age = ageDays(dateOf(signal.as_of), now);
-    return { id: signal.id, label: signal.label, as_of: signal.as_of ?? null, age_days: age, stale: age === null || age > MAX_AGE_DAYS };
+    return { id: signal.id, label: signal.label, as_of: signal.as_of ?? null, age_days: age, stale: age === null || !Number.isFinite(age) || age < 0 || age > MAX_AGE_DAYS };
   });
   for (const signal of signals.filter((item) => item.stale)) {
     reasons.push(`${signal.label} list is ${signal.age_days ?? 'undated'}${signal.age_days === null ? '' : ' days old'}`);
@@ -55,7 +74,7 @@ export function checkFreshness(game, { today = new Date(), root = skillRoot } = 
 
   const attempt = evidence.last_refresh_attempt ?? null;
   const attemptAge = ageDays(dateOf(attempt?.date), now);
-  const recentlyAttempted = attemptAge !== null && attemptAge < 1;
+  const recentlyAttempted = attemptAge === 0;
   const stale = targets.length > 0;
   return {
     game,
