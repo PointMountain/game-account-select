@@ -2,24 +2,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { discoverSkills, dependencyClosure } from './lib/harness.mjs';
+import { discoverSkills, SKILL } from './lib/harness.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skills = discoverSkills(root);
-const config = JSON.parse(fs.readFileSync(path.join(root, 'skills/dependencies.json'), 'utf8'));
-const profiles = JSON.parse(fs.readFileSync(path.join(root, 'skills/install-profiles.json'), 'utf8')).profiles;
 const errors = [];
-for (const skill of skills) {
-  for (const dependency of dependencyClosure([skill], config)) {
-    if (!skills.includes(dependency)) errors.push(`${skill}: missing dependency ${dependency}`);
-  }
-}
-for (const profile of profiles) {
-  const missing = dependencyClosure(profile.skills, config).filter((name) => !profile.skills.includes(name));
-  if (missing.length) errors.push(`${profile.name}: incomplete dependency closure: ${missing.join(', ')}`);
-}
-const documents = ['AGENTS.md', 'CLAUDE.md', 'CONTEXT.md'];
+if (skills.length !== 1 || skills[0] !== SKILL) errors.push(`expected exactly one skill (${SKILL}), found: ${skills.join(', ')}`);
+
+const skillRoot = path.join(root, 'skills', SKILL);
+const documents = ['AGENTS.md', 'CLAUDE.md', 'CONTEXT.md', 'README.md', 'README.en.md'].filter((file) => fs.existsSync(path.join(root, file)));
 function walk(directory) {
+  if (!fs.existsSync(path.join(root, directory))) return;
   for (const entry of fs.readdirSync(path.join(root, directory), { withFileTypes: true })) {
     const relative = `${directory}/${entry.name}`;
     if (entry.isDirectory()) walk(relative);
@@ -28,10 +21,9 @@ function walk(directory) {
 }
 walk('docs/development');
 walk('docs/adr');
-for (const skill of skills) {
-  documents.push(`skills/${skill}/SKILL.md`);
-  walk(`skills/${skill}/references`);
-}
+walk(`skills/${SKILL}`);
+
+const operationStatus = (text) => text.match(/^status:\s*(\S+)/m)?.[1] ?? 'verified';
 for (const file of documents) {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   const limit = file.endsWith('/SKILL.md') ? 100 : ['AGENTS.md', 'CLAUDE.md'].includes(file) ? 80 : null;
@@ -42,8 +34,33 @@ for (const file of documents) {
     if (!target || /^(?:[a-z]+:|\/)/i.test(target)) continue;
     if (!fs.existsSync(path.resolve(root, path.dirname(file), target))) errors.push(`${file}: broken link ${target}`);
   }
+  if (/\/operations\/[^/]+\.md$/.test(file)) {
+    const status = operationStatus(text);
+    const verified = text.match(/^last_verified:\s*(\S+)/m)?.[1];
+    if (!['documented', 'partial', 'verified'].includes(status)) errors.push(`${file}: unknown status ${status}`);
+    if (status === 'verified' && !/^\d{4}-\d{2}-\d{2}$/.test(verified ?? '')) errors.push(`${file}: verified operation needs a real last_verified date`);
+    if (status !== 'verified' && verified && verified !== 'null') errors.push(`${file}: ${status} operation must not carry a success date`);
+  }
 }
+
+// Every site index lists its operation files; every manifest operation for a known site has knowledge.
+const manifest = JSON.parse(fs.readFileSync(path.join(skillRoot, 'references/operations.json'), 'utf8'));
+for (const operation of manifest.operations.filter((item) => !['dynamic', 'generic'].includes(item.site))) {
+  const slug = operation.id.split('/')[1];
+  const file = path.join(skillRoot, 'references/sites', operation.site, 'operations', `${slug}.md`);
+  if (!fs.existsSync(file)) { errors.push(`operations.json: ${operation.id} has no site operation file`); continue; }
+  const index = fs.readFileSync(path.join(skillRoot, 'references/sites', operation.site, 'index.md'), 'utf8');
+  if (!index.includes(`(operations/${slug}.md)`)) errors.push(`sites/${operation.site}/index.md: missing link to ${slug}`);
+  const status = operationStatus(fs.readFileSync(file, 'utf8'));
+  if (operation.availability === 'verified' && status !== 'verified') errors.push(`${operation.id}: manifest says verified but knowledge is ${status}`);
+}
+for (const game of fs.readdirSync(path.join(skillRoot, 'references/games'), { withFileTypes: true }).filter((entry) => entry.isDirectory())) {
+  for (const required of ['index.md', 'game.json', 'operations/refresh-evidence.md']) {
+    if (!fs.existsSync(path.join(skillRoot, 'references/games', game.name, required))) errors.push(`games/${game.name}: missing ${required}`);
+  }
+}
+
 const index = fs.readFileSync(path.join(root, 'skills/llms.txt'), 'utf8').split('\n').filter(Boolean).map((line) => line.split(':')[0]);
-for (const skill of skills) if (index.filter((name) => name === skill).length !== 1) errors.push(`llms.txt: expected one entry for ${skill}`);
+if (index.join() !== SKILL) errors.push(`llms.txt: expected a single ${SKILL} entry`);
 if (errors.length) { console.error(errors.join('\n')); process.exitCode = 1; }
-else console.log(`Harness verified: ${skills.length} skill entries, ${profiles.length} dependency-closed profiles, ${documents.length} linked documents`);
+else console.log(`Harness verified: 1 skill, ${manifest.operations.length} operations, ${documents.length} linked documents`);

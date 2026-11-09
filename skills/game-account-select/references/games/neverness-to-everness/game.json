@@ -1,0 +1,52 @@
+{
+  "game": "neverness-to-everness",
+  "label": "异环",
+  "aliases": [
+    "异环",
+    "Neverness to Everness",
+    "NTE"
+  ],
+  "servers": [
+    "官服",
+    "B服"
+  ],
+  "signals": [
+    {
+      "id": "s-characters",
+      "label": "S 角色数",
+      "objective": "rarity",
+      "regex": "S角色(\\d+)",
+      "scale": 12,
+      "note": "仅数量，未具名不得作主推理由"
+    },
+    {
+      "id": "s-arcs",
+      "label": "S 弧盘数",
+      "objective": "combat",
+      "regex": "S弧盘(\\d+)",
+      "scale": 24
+    },
+    {
+      "id": "awakening",
+      "label": "觉醒节点",
+      "objective": "progression",
+      "regex": "(\\d)觉",
+      "scale": 10,
+      "sum": true
+    },
+    {
+      "id": "ring-stone",
+      "label": "环石",
+      "objective": "resources",
+      "regex": "环石(\\d+)",
+      "scale": 20000
+    }
+  ],
+  "risk": {
+    "positive": [],
+    "negative": [
+      "已绑定TAP",
+      "完美账号"
+    ]
+  }
+}

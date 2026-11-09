@@ -8,13 +8,13 @@
 2. **计划**：小改动在当前任务记下文件与验收即可。跨层改动生成任务卡：
 
    ```bash
-   npm run dev:plan -- --task fix-evidence --goal '缺证据不计已应用' --acceptance '虚假 applied 被门禁拒绝，合法凭据通过' --files skills/game-account-skill-optimizer/scripts/analyze-run.mjs
+   npm run dev:plan -- --task wuwa-pzds-detail --goal '鸣潮盼之详情可读' --acceptance '真实详情页解析出声骸与角色，task space 已清理' --files skills/game-account-select/references/sites/pzds/operations/wuthering-waves-detail.md
    ```
 
    `.harness/tasks/` 是本地执行记录。已关联 Issue 的工作在卡片填写编号；共享规格继续使用 GitHub Issues。新的外部发布遵循本轮授权。需要版本管理的设计决策放 `docs/adr/`，实施记录放 `changelogs/`。
 3. **实现**：先跑受影响边界的基线，再做最小完整切片：输入 → 行为 → 验证。变更范围改变时更新任务卡和验证范围。
 4. **验证**：`npm run dev:check` 按实际 Git 改动运行离线门禁。交付前 `npm run verify:skills`。平台操作变更再完成 live smoke 和精确清理；遇阻塞保留未验证范围。
-5. **回流**：复发故障在改动前 `learn:collect`；保留通用正反例，修复后 `learn:verify`、`learn:apply`。无有效改进时如实记录 pending/verified_existing。
+5. **回流**：可复用的站点/游戏经验按 OPS 写回协议落到唯一归属文件；复发故障先在 `skills/game-account-select/tests/` 留正反例再修。没有真实成功就不更新 `last_verified`。
 6. **交付**：任务卡更新完成状态和证据；changelog 记录问题、行为、验证及限制。报告实际本地/远端状态。
 
 ## 多 Agent 协作
@@ -25,4 +25,4 @@
 
 ## 控制上下文成本
 
-AGENTS.md 是索引，SKILL.md 是调用入口，references 是按场景细节；脚本/fixture 是可执行事实。新增规则先找现有所有者，避免在每个 skill 复制一遍。修复文档矛盾时删除过期副本，并让验证器覆盖可机器检查的约束。
+AGENTS.md 是索引，SKILL.md 是调用入口，references 是按场景细节；脚本/fixture 是可执行事实。新增规则先找现有所有者（站点还是游戏），避免两处复制。修复文档矛盾时删除过期副本，并让验证器覆盖可机器检查的约束。

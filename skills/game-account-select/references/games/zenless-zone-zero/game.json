@@ -1,0 +1,104 @@
+{
+  "game": "zenless-zone-zero",
+  "label": "绝区零",
+  "aliases": [
+    "绝区零",
+    "ZZZ",
+    "Zenless Zone Zero"
+  ],
+  "servers": [
+    "官服",
+    "B服",
+    "国际服"
+  ],
+  "signals": [
+    {
+      "id": "void-hunters",
+      "label": "虚狩",
+      "objective": "combat",
+      "names": [
+        "星见雅",
+        "仪玄",
+        "叶瞬光",
+        "蕾米埃尔"
+      ],
+      "scale": 4,
+      "as_of": "2026-08-03",
+      "note": "3.1 名单，版本变化后刷新"
+    },
+    {
+      "id": "limited",
+      "label": "限定 S 代理人",
+      "objective": "rarity",
+      "names": [
+        "艾莲",
+        "朱鸢",
+        "青衣",
+        "简",
+        "凯撒",
+        "柏妮思",
+        "月城柳",
+        "莱特",
+        "星见雅",
+        "耀嘉音",
+        "伊芙琳",
+        "扳机",
+        "薇薇安",
+        "仪玄",
+        "叶瞬光",
+        "浮波柚叶",
+        "南宫羽",
+        "琉音",
+        "橘福福",
+        "卢西娅",
+        "千夏",
+        "照",
+        "希希芙",
+        "席德",
+        "爱芮",
+        "蕾米埃尔",
+        "维琳娜",
+        "诺姆",
+        "希格莉德"
+      ],
+      "scale": 8,
+      "as_of": "2026-08-03",
+      "confidence": "historical"
+    },
+    {
+      "id": "signature",
+      "label": "专属音擎",
+      "objective": "combat",
+      "signature": "data/signature-engines.json",
+      "scale": 4
+    },
+    {
+      "id": "polychrome",
+      "label": "菲林",
+      "objective": "resources",
+      "field": "resources.polychrome",
+      "scale": 16000
+    },
+    {
+      "id": "tapes",
+      "label": "加密母带",
+      "objective": "resources",
+      "field": "resources.encryptedMasterTape",
+      "scale": 100
+    }
+  ],
+  "risk": {
+    "positive": [
+      "邮箱未绑定",
+      "邮箱未实名",
+      "未绑定TAP",
+      "未绑定PSN",
+      "提供换绑码"
+    ],
+    "negative": [
+      "邮箱不出售",
+      "已绑定PSN",
+      "已绑定TAP"
+    ]
+  }
+}

@@ -1,5 +1,18 @@
 # README 视觉素材
 
+2026-11-10 使用 OpenAI Images API 的 `gpt-image-2.6-sunburst` 生成六张宽幅插画。纸张、版画和手绘线条贯穿账号比较、使用场景与站点 × 游戏的工作方式；生成参数和提示词分别见 [首页与工作方式](readme-art-prompts-v3.md)、[补充插画](readme-art-prompts-v4.md)。
+
+| 文件 | 用途 |
+| --- | --- |
+| [readme-hero-v3.png](readme-hero-v3.png) | 中英文 README 共用的首页插画 |
+| [readme-workflow-v3.png](readme-workflow-v3.png) | 站点经验与游戏经验汇入候选清单的说明插画 |
+| [readme-scenarios-v4.webp](readme-scenarios-v4.webp) | 找号、单号评估和多号比较 |
+| [readme-setup-v4.webp](readme-setup-v4.webp) | 浏览器、终端和运行环境准备 |
+| [readme-games-v4.webp](readme-games-v4.webp) | 四种虚构游戏世界，提示当前覆盖的四款游戏 |
+| [readme-report-v4.webp](readme-report-v4.webp) | 带来源、缺口和风险标记的候选报告 |
+
+2026-11-09 的过渡版使用内置 `image_gen` 生成，接口没有提供可核实的模型 ID；其提示词保留在 [readme-art-prompts-v2.md](readme-art-prompts-v2.md)。以下为更早一版的素材与生成记录。
+
 2026-09-05 使用内置 `image_gen` 生成；先确定原创角色，再以首版头像为角色与画风参考制作介绍图和分区插画。当前头像已修订为满版方形，背景延伸到四角。
 
 | 文件 | 用途 |
@@ -15,7 +28,7 @@
 | [readme-games.png](readme-games.png) | 游戏支持：四本不同世界的冒险图鉴 |
 | [readme-architecture.png](readme-architecture.png) | 架构引导：需求、资料、游戏图鉴与报告 |
 
-视觉方向：原创薄荷发看板娘、珊瑚色耳机与星星发夹、奶油纸色，结合角色卡、放大镜与比较清单。图片里的卡片与人物为说明性插画。
+早期视觉方向：原创薄荷发看板娘、珊瑚色耳机与星星发夹、奶油纸色，结合角色卡、放大镜与比较清单。图片里的卡片与人物为说明性插画。
 
 排版参考 [Cherry Studio](https://github.com/CherryHQ/cherry-studio) 和 [LobeHub](https://github.com/lobehub/lobehub) 的居中品牌区、语言导航与折叠内容组织方式；文案和插画为本项目重新创作。
 

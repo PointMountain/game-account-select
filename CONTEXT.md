@@ -1,54 +1,36 @@
 # Game account selection domain
 
-This repository implements a verifiable workflow for finding, evaluating, comparing, and presenting game-account listings. It contains game-specific valuation skills and a shared execution stack.
+This repository ships one agent skill, `game-account-select`, that screens game-account listings on trading sites for a user's request. Experience is organised along two keys — the trading **site** and the **game** — so adding a game or site means adding a data directory, not a new skill.
 
 ## Canonical terms
 
-### Game skill
+### Site
 
-A `game-account-<game>` skill owns durable valuation knowledge for one game: independent base dimensions, risk and missing-data penalties, community evidence, sample regressions, and a reusable listing evaluator. It must not persist a user's budget or preferences.
+A trading website (currently `pxb7`, `pzds`). `references/sites/<site>/index.md` holds facts shared across that site's games (game IDs, URL shapes, field names, rate limits, health checks). Each `operations/<game>-list|detail.md` is one verified or documented ego-ops operation.
 
-### Shared selection stack
+### Game
 
-The selector, toolkit, preflight, generator, evaluator, optimizer, and community updater form the shared selection stack. They own orchestration, browser routing, evidence capture, quality gates, and future-skill generation. They do not own game-specific rankings.
+`references/games/<game>/` holds durable, user-independent screening knowledge: what assets matter, common traps, risk signals, the `game.json` signal table the shortlist script reads, and dated community evidence.
+
+### Operation status
+
+`documented` (written down, never run), `partial` (ran with gaps), `verified` (succeeded end-to-end; carries `last_verified`). The query runner refuses non-verified operations (`operation_documented_only`). Files without a status are legacy verified files.
 
 ### Selection profile
 
-The normalized, run-only interpretation of the current user's budget, priorities, hard conditions, server preferences, and risk tolerance. It may alter dynamic ranking, but it is never durable game knowledge.
+The normalized, run-only interpretation of the current request: budget, must-haves, weights, server, risk tolerance. It drives the shortlist but is never persisted.
 
-### Verified operation
+### Shortlist
 
-An `ego-ops` operation whose site scope, parameters, extraction boundary, and output schema have been observed and validated through `ego-browser`. A platform/game route is supported only while such an operation exists and passes the query-stack checks.
+`scripts/shortlist.mjs` applies hard filters, scores listings from `game.json` signals plus price efficiency, splits by budget tier and site, and lists missing fields instead of rewarding them. It is a screening aid; the agent still reads details before recommending.
 
-### Operation support matrix
+### Writeback
 
-The explicit list of game/platform/list-or-detail combinations backed by verified operations. Missing matrix entries are unsupported, not implicitly available and not permission to use another browser tool.
-
-### Run artifact
-
-The raw, auditable JSON record of one selection or evaluation run. It contains the selection profile, platform attempts, normalized evidence, provenance, coverage gaps, recommendations, knowledge candidates, and quality-gate state.
-
-### Deterministic finalizer
-
-A script that converts a run artifact into the user-facing report, optimizer/evaluator sidecars, self-improve closeout, quality gate, and delivery contract. Given equivalent business data, it must produce a stable report body and report hash; runtime timestamps remain metadata.
-
-### Delivery contract
-
-The machine-readable instruction that binds the generated report body, SHA-256 hash, rendered listing identifiers, and required sections. The final response must preserve this generated output instead of replacing it with an unverified handwritten shortlist.
-
-### Quality gate
-
-The combined optimizer and evaluator decision. Blocking provenance, coverage, scoring, or delivery failures set `redo_required`; only a passing gate is releasable.
-
-### Learning candidate and verification receipt
-
-A local learning candidate aggregates a target skill / optimizer finding across distinct runs. Its baseline captures pre-change file hashes. A verification receipt binds changed targets, changed regressions, the fixed offline suite outcome, and the current repository source digest. Only an applied candidate with a matching current receipt counts as a new improvement; a future run reproducing its finding reopens it. Local learning state lives in ignored `.harness/`; durable fixtures and decisions remain in Git.
+After a run, reusable facts go to exactly one owner: site behaviour → the site operation or site index; game judgement → the game directory. Only real successes update `last_verified`. See `references/ops-model.md`.
 
 ## Invariants
 
-- All live page access and data acquisition route through `ego-ops` operations executed by `ego-browser`.
-- Legacy query stacks and unverified browser fallbacks are outside the active query path.
-- A game may share the full evaluation and delivery contract without claiming unsupported platform operations.
-- Unknown progression or equipment fields receive zero positive credit and remain visible as missing evidence.
-- Stable game facts may be proposed for durable knowledge; run-only preferences and unverified valuation changes may not be persisted.
-- Offline evaluator regressions, raw-artifact finalization, and operation/query-stack validation are separate public test seams.
+- All live page access routes through `ego-ops` operations executed by `ego-browser`; no other browser or fetch stack.
+- Unsupported site × game combinations are reported as coverage gaps, never filled by a fallback.
+- Unknown or missing fields receive zero positive credit and stay visible.
+- Run-only preferences and unverified valuation changes are never persisted.

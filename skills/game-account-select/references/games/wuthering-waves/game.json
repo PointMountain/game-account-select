@@ -1,0 +1,89 @@
+{
+  "game": "wuthering-waves",
+  "label": "鸣潮",
+  "aliases": [
+    "鸣潮",
+    "Wuthering Waves",
+    "WuWa"
+  ],
+  "servers": [
+    "官服",
+    "B服",
+    "国际服"
+  ],
+  "signals": [
+    {
+      "id": "high-limited",
+      "label": "高价值限定",
+      "objective": "combat",
+      "names": [
+        "绯雪",
+        "爱弥斯",
+        "琳奈",
+        "莫宁",
+        "奥古斯塔",
+        "卡提希娅",
+        "守岸人",
+        "嘉贝莉娜",
+        "仇远",
+        "弗洛洛",
+        "尤诺"
+      ],
+      "scale": 4,
+      "as_of": "2026-05-16",
+      "confidence": "historical"
+    },
+    {
+      "id": "mid-limited",
+      "label": "中价值限定",
+      "objective": "rarity",
+      "names": [
+        "今汐",
+        "赞妮",
+        "菲比",
+        "珂莱塔",
+        "椿",
+        "长离",
+        "忌炎",
+        "维里奈",
+        "坎特蕾拉",
+        "折枝",
+        "吟霖"
+      ],
+      "scale": 6,
+      "as_of": "2026-05-16",
+      "confidence": "historical"
+    },
+    {
+      "id": "astrite",
+      "label": "星声",
+      "objective": "resources",
+      "regex": "星声[：:\\s]*(\\d+)",
+      "scale": 16000
+    }
+  ],
+  "standard_traps": [
+    "凌阳",
+    "卡卡罗",
+    "鉴心",
+    "安可"
+  ],
+  "risk": {
+    "positive": [
+      "未绑定Wegame",
+      "未绑定TAP"
+    ],
+    "negative": [
+      "已绑定TAP",
+      "已绑定Wegame",
+      "换绑冷却"
+    ]
+  },
+  "name_mapping_checked": {
+    "date": "2026-11-09",
+    "source": "pxb7/pzds 真实详情资产名",
+    "unverified": [
+      "仇远"
+    ]
+  }
+}

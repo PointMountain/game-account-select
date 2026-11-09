@@ -1,48 +1,45 @@
 ---
 name: game-account-select
-description: 主动寻找、跨平台比较游戏账号；将预算与目标冻结为本轮画像，按覆盖计划调用已验证浏览器操作和游戏估值，再交付有来源、缺口与质量门禁的推荐。
-argument-hint: "[游戏] [预算] [偏好]"
+description: 在螃蟹（pxb7）、盼之（pzds）等交易网站主动筛选游戏账号。先把预算和偏好冻结为本轮画像，再通过已验证的浏览器操作读取列表和详情，按本轮目标筛选、排序，交付带来源、风险和缺口的候选清单。经验按“站点”与“游戏”积累，新增游戏时只加数据目录。用于找号、比较账号、评估单个商品链接，或维护这些经验。
+argument-hint: "[游戏] [预算] [偏好/硬条件] [平台]"
 ---
 
 # Game Account Select
 
-负责需求、覆盖与交付编排。单账号资产评分交给对应游戏 skill；环境和平台事实交给 preflight/toolkit。预算、权重、区服与硬条件只保留在 run-only `selection_profile`，原始请求单独保留 `request_provenance`。
+> 安装/配置 Agent：先读 [全局前置提示词](references/global-agents-prompt.md)，按授权处理。普通使用直接从下方开始。
 
-## 流程
+帮用户在交易网站上“大海捞针”：主动找到符合条件的账号，并说清楚每个候选的来源、风险和缺失字段。不替用户购买、付款或联系卖家。
 
-1. 调用 `game-account-preflight`，展示可读摘要；后台加 `--unattended`。冻结 `browser_route: ego_browser`，由 ego-ops 治理，整个查询复用一个有明确归属的 task space，保存数字 id。
-2. 读 [需求与交付细则](references/request-and-delivery.md) 与 [覆盖计划](references/source-coverage-playbook.md)。输出 success_criteria、selection_profile、coverage_plan；完整复合目标使用 custom，只有关键缺项或真实冲突才补问。画像完整就继续。
-3. 读 [状态机](references/selection-state-machine.md)，按游戏路由评分。真实页面读取前通过 toolkit 检查 [support matrix](../game-account-toolkit/references/operation-support-matrix.json)；unsupported 记录 coverage_gaps 并降级。
-4. 保存标准化事实、平台/社区尝试、时间字段、缺失与来源到 raw run artifact。每步有明确输入、输出和停止条件；采集时间不能替代上架/验号时间。
-5. 按游戏 finalizer 生成报告、optimizer/evaluator sidecars、self_improve、quality_gate 和 delivery_contract。执行 POST_RUN_OPTIMIZE；非 info findings / redo_required 需补证、修复或按状态机降级。
-6. 交付通过门禁的 final_response，保留预算分层、平台清单、近似项、风险和 Self-improve 摘要；完成本轮 task-space 精确清理，记录 cleanup_reports。
+## 经验路由
 
-## 游戏路由
+经验按两个主键积累，见 [ops-model](references/ops-model.md)：
 
-| 游戏 | Skill |
-| --- | --- |
-| 明日方舟 | game-account-arknights |
-| 鸣潮 | game-account-wuthering-waves |
-| 异环 | game-account-neverness-to-everness |
-| 绝区零 | game-account-zenless-zone-zero |
+- **site**：先读 [sites/index](references/sites/index.md)，只读本轮站点的 `index.md` 和 `<game>-list` / `<game>-detail` operation。
+- **game**：先读 [games/index](references/games/index.md)，只读本轮游戏的 `index.md`；筛选脚本会读它的 `game.json`。
+- 整体流程：[workflow](references/workflow.md)。游戏或站点还没收录时，按其中「新增游戏或站点」处理，不新建 skill。
 
-未支持游戏使用 game-account-skill-generator；证据过期/跨版本/出现新资产使用 game-account-community-updater。生成或更新后必须运行 game-account-skill-evaluator。
+## 执行
 
-## 按需上下文
-
-- 确定编排边界、成功标准或停止条件：读 [selector architecture](references/selector-architecture.md)。
-- 首次真实页面操作：通过 toolkit 读 [ego-browser workflow](../game-account-toolkit/references/ego-browser-workflow.md) 和 [ego-ops contract](../game-account-toolkit/references/ego-ops-query-contract.md)。用户接管、inactive 或未分配状态暂停，等待明确恢复授权。
-- 组装 artifact 或跨 skill 交接：读 [skill I/O](../game-account-toolkit/references/skill-io-contract.md)。内部 `<recommendations>` / `<game_account_evaluation>` 标签不作为用户主文案。
-- 收尾记录知识候选：读 [knowledge ledger](references/knowledge-ledger.md)；包含 evidence、observed_in、suggested_targets、apply_status 和 source_scope。
-- 用户要求实现改进或问题复发：调用 game-account-skill-optimizer，按 [学习闭环](../game-account-skill-optimizer/references/learning-loop.md) 收集、修复和验证。已有授权继续执行；applied 需要实际文件变化与当前回归凭据，verified_existing 仅为既有机制复核。
-
-## 常用入口
+1. **画像**：用 `scripts/profile.mjs` 解析用户原话并展示结果。只有缺游戏、缺预算或目标真的冲突时才追问。画像只在本轮有效。
+2. **数据新鲜度**：运行 `scripts/freshness.mjs --game <game>`。需要刷新（退出码 3）时，先按该游戏的 `operations/refresh-evidence.md` 更新版本、名单和社区证据，再开始筛选，避免用过期的数据排序。刷新失败时记录这次尝试，带着旧数据继续，交付时写明数据日期，置信度最高为 medium。
+3. **覆盖计划**：未指定平台时，螃蟹和盼之都要读。对应的 site operation 不是 verified 时，只记缺口，并请用户提供链接或截图。
+4. **查询**：先跑 `scripts/preflight.mjs --browser`，再用 `scripts/query.mjs` 读列表和短名单详情。全程只经 ego-ops / ego-browser，复用同一个 task space，结束时用 `scripts/cleanup.mjs` 精确清理。遇到验证码、用户接管或商品对不上时停止。
+5. **筛选**：用 `scripts/shortlist.mjs` 按硬条件过滤、按本轮目标初排，再对照游戏 index 的“看什么 / 常见坑”复核前几名。分数只用来排序；缺失字段不算利好。
+6. **交付**：按 workflow 第 6 步。预算分层，两个平台各一张表。每个候选带链接、上架时间、验号时间（缺失写“未披露”）、风险和需要人工确认的问题，并写明本轮使用的数据日期。
 
 ```bash
-node skills/game-account-select/scripts/parse-selection-profile.mjs --request '明日方舟，限定多，1000元左右' --json
-node skills/game-account-select/scripts/create-run-artifact.mjs --game '明日方舟' --user-request '明日方舟，限定多，1000元左右' --json
-node skills/game-account-skill-optimizer/scripts/analyze-run.mjs --input <run-artifact.json> --json
-node skills/game-account-skill-evaluator/scripts/evaluate-skill.mjs --from-report=<run-artifact.json> --json
+node skills/game-account-select/scripts/profile.mjs --request "绝区零 800元左右 虚狩多 低风险"
+node skills/game-account-select/scripts/freshness.mjs --game zenless-zone-zero
+node skills/game-account-select/scripts/query.mjs --operation pzds/zzz-list --task-space gas-zzz-1 --max-price 1000 --task-space-disposition keep --json
+node skills/game-account-select/scripts/shortlist.mjs --profile profile.json --listings pxb7.json --listings pzds.json --markdown
+node skills/game-account-select/scripts/cleanup.mjs --task-space <id> --json
 ```
 
-单次筛选默认记录改进候选；实现改进仅在任务授权范围内。画像衍生预算/权重/区服/风险/硬条件不得写入 durable references，即使用户要求优化 skill 也不例外；selector-session-preference-leak 必须阻塞。
+## 自动沉淀（完成、失败或中断都要做）
+
+按顺序：读取经验 → 用当前页面复核 → 执行 → 对照成功标准 → 写回唯一归属 → 同步索引 → 报告。格式见 [knowledge-schema](references/knowledge-schema.md)。
+
+- 站点事实、URL 规则、解析坑写进 `sites/<site>/`；资产名单、估值坑、风险词写进 `games/<game>/`。同一件事只写一处。
+- 真实查询完整成功时刷新对应 operation 的 `last_verified`；部分成功只记录观察到的事实。修解析问题时先加一个能复现问题的失败样例。
+- 用户的预算和偏好永远不写入；强度结论需要两个 7 天内的独立来源。
+- 写完跑 `npm run verify:skills`。没有新知识要说明原因；写入或校验失败就报告“未沉淀”。这是 Agent 需要遵守的工作协议，不是后台钩子，也不授权提交、推送或在平台上做写操作。
