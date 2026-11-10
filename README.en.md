@@ -40,19 +40,21 @@ Tell your agent which game you want, your budget, and the characters or risks th
   <img src="assets/readme-setup-v4.webp" width="100%" alt="A browser, terminal, and checklist representing the setup" />
 </p>
 
-Prepare **Node.js 22+, git, and gh**, plus the [ego lite](https://lite.ego.app/) browser. Online searches also require discoverable `ego-browser` and `ego-ops` skills. Install this repository's single skill:
+Prepare **Node.js 22+ and Git 2.25+**. Online searches require the [ego lite](https://lite.ego.app/) browser and the `ego-browser` and `ego-ops` skills. Choose the same agent and installation scope for each:
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
+npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select" --copy
+npx skills add https://github.com/wangjs-jacky/jacky-skills/tree/main/harness/ego-ops --skill "ego-ops" --copy
+npx skills add https://github.com/citrolabs/ego-lite --skill "ego-browser" --copy
 ```
 
-Choose your agent when prompted, then start a new session. To update, run `npx skills update`. An installation agent can consult the [optional global-instruction prompt](skills/game-account-select/references/global-agents-prompt.md); writing global instructions requires your explicit permission.
+Install ego lite and complete its first-run setup; it may already install the `ego-browser` skill for your agent. Start a new session after installation. See [installation and standalone use](skills/game-account-select/references/installation.md) for paths, platform support, and preflight checks. To update, run `npx skills update`; first back up any knowledge you maintained after installation. `gh` is only needed for project development and PRs. An installation agent can consult the [optional global-instruction prompt](skills/game-account-select/references/global-agents-prompt.md); writing global instructions requires your explicit permission.
 
 For a first run, ask the agent to check the environment:
 
 ```text
-Use game-account-select to check whether Node.js, git, gh,
-ego-ops, and ego-browser are ready for an account search.
+Use game-account-select to check whether Node.js, the ego-ops and
+ego-browser skills, and the browser command are ready for an account search.
 ```
 
 Then try a request:

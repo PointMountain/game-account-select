@@ -22,7 +22,7 @@ S 角色强度、S 弧盘套装适配、关键觉醒 awakening 节点、账号�
 3. 强度或配队结论需要至少两位独立作者，原始发布日期都在 7 天内，版本和玩法一致。转述同一作者算同源；有分歧就保留分歧，不覆盖。
 4. 按 [knowledge-schema](../../../knowledge-schema.md) 写回：名单和信号改 `game.json`，来源与局限写 `evidence.md`，机器证据写 `data/community-evidence.json`。不要只改 `updated_at` 来“刷新”旧结论。
 5. 不论成功与否，都在 `data/community-evidence.json` 写 `last_refresh_attempt: { date, outcome: refreshed|partial|failed, note }`。当天已经尝试过时，freshness 不再要求重复刷新（状态为 `stale_refresh_attempted_today`），但置信度上限仍是 medium。只有真的拿到新证据时，才更新 `updated_at`、`version_context` 和信号的 `as_of`。
-6. 跑 `npm run verify:skills`；如果是在筛选中途刷新的，把同一批候选改前、改后的 shortlist 排序都写进报告。
+6. 跑 `node "$GAME_ACCOUNT_SKILL_DIR/scripts/verify.mjs"`；开发仓库再跑完整 `npm run verify:skills`。如果是在筛选中途刷新的，把同一批候选改前、改后的 shortlist 排序都写进报告。
 
 ## 成功标准
 

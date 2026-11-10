@@ -1,7 +1,7 @@
 ---
 site: pxb7
 operation: arknights-list
-last_verified: 2026-11-09
+last_verified: 2026-11-10
 ---
 
 ## 检查点

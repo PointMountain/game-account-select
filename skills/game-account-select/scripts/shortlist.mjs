@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkFreshness } from './freshness.mjs';
+import { isEntrypoint } from './runtime.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NON_ASSET_TERMS = new Set(['官服', 'B服', '渠道服', '国际服', '螃蟹', '盼之', 'pxb7', 'pzds', '交易猫', '淘手游', '闲鱼', '包赔', '验号']);
@@ -300,7 +301,7 @@ function listingsFrom(file) {
   return rows.flatMap((row) => (row?.data ? [].concat(row.data) : [row]));
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isEntrypoint(import.meta.url)) {
   const args = process.argv.slice(2);
   const value = (flag) => { const i = args.indexOf(flag); return i < 0 ? null : args[i + 1]; };
   const files = args.flatMap((arg, i) => (args[i - 1] === '--listings' ? [arg] : []));

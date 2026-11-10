@@ -12,7 +12,7 @@
 | `games/<game>/index.md` | 要看哪些资产、常见坑 |
 | `games/<game>/game.json` | 筛选脚本用的名单、字段信号和风险词 |
 | `games/<game>/evidence.md`、`data/` | 社区证据快照与客观名单数据 |
-| `.harness/`、`experience.local.md`、`local/` | 单次运行与原始证据（ignored） |
+| 私有运行目录、`experience.local.md`、`local/` | 单次运行与原始证据（仓库 `.harness/` 已忽略；独立安装时确认目录私有） |
 
 ## 站点 operation（query.mjs 的消费 schema，不要改结构）
 
@@ -55,10 +55,10 @@ last_verified: null  # 只有 verified 才填真实成功日期
 3. 真实查询完整成功时，刷新对应站点 operation 的 `last_verified`；内容没变时只改日期。
 4. 部分执行只记录观察到的事实和待核实项，不刷新日期。登录失效或等待授权不写成平台缺陷。
 5. 修复了解析问题时，先加一个能复现问题的失败样例（`tests/` 或 `scripts/tests/`），再改代码。不改低已有的断言。
-6. 跑 `npm run verify:skills`，然后报告写回了哪些文件、证据范围是什么。没有新知识要说明原因；写入或校验失败就报告“未沉淀”。
+6. 跑 `node "$GAME_ACCOUNT_SKILL_DIR/scripts/verify.mjs"`；开发仓库再跑 `npm run verify:skills`。报告写回了哪些文件、证据范围是什么。没有新知识要说明原因；写入或校验失败就报告“未沉淀”。
 
 迁移日不是验证日。被新证据推翻的结论要降级并移除成功日期。
 
 ## 私有信息
 
-凭据、Cookie、签名 URL、卖家联系方式、完整商品响应和用户原话都不写入共享经验；原始证据只引用 `.harness/...` 的相对路径。
+凭据、Cookie、签名 URL、卖家联系方式、完整商品响应和用户原话都不写入共享经验；原始证据只保存在私有运行目录。

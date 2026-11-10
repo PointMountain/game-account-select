@@ -1,7 +1,7 @@
 ---
 site: pzds
 operation: arknights-detail
-last_verified: 2026-11-09
+last_verified: 2026-11-10
 ---
 
 ## 检查点
