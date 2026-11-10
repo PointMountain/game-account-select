@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isEntrypoint } from './runtime.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const MAX_AGE_DAYS = 7;
@@ -92,7 +93,7 @@ export function checkFreshness(game, { today = new Date(), root = skillRoot } = 
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isEntrypoint(import.meta.url)) {
   const args = process.argv.slice(2);
   const value = (flag) => { const i = args.indexOf(flag); return i < 0 ? null : args[i + 1]; };
   const game = value('--game');

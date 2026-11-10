@@ -28,7 +28,7 @@ function unique(values) {
 
 function usage() {
   return [
-    'Usage: node skills/game-account-select/scripts/cleanup.mjs [options]',
+    'Usage: node <skill-dir>/scripts/cleanup.mjs [options]',
     '',
     'Completes exact ego-browser task spaces owned by the current query and audits leftover query processes.',
     'It never discovers or closes unrelated task spaces, and never kills processes unless --kill is passed.',

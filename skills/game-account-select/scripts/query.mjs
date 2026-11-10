@@ -36,7 +36,7 @@ function valuesAfter(flag) {
 
 function usage() {
   return [
-    'Usage: node skills/game-account-select/scripts/query.mjs --operation <site/name> --task-space <name> [options]',
+    'Usage: node <skill-dir>/scripts/query.mjs --operation <site/name> --task-space <name> [options]',
     '',
     'Runs one read-only ego-ops-governed operation through ego-browser.',
     '',

@@ -1,11 +1,13 @@
 # 筛选流程
 
-主动找号按本文从头到尾执行。每一步都有输入、输出和停止条件；本轮产物放在 `.harness/runs/<run-id>/`（已 ignored）。
+主动找号按本文从头到尾执行。先按[安装指南](installation.md)将 `GAME_ACCOUNT_SKILL_DIR` 指向实际加载的 Skill 目录，并创建 `GAME_ACCOUNT_RUN_DIR` 指向的本轮私有运行目录。仓库内可用已忽略的 `.harness/runs/<run-id>/`；独立安装时使用系统临时目录或已确认忽略的目录。
+
+下方命令使用 POSIX shell 写法；PowerShell 中用 `$env:GAME_ACCOUNT_SKILL_DIR` 和 `$env:GAME_ACCOUNT_RUN_DIR`。
 
 ## 1. 需求与画像
 
 ```bash
-node skills/game-account-select/scripts/profile.mjs --request "<用户原话>" > .harness/runs/<id>/profile.json
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/profile.mjs" --request "<用户原话>" > "$GAME_ACCOUNT_RUN_DIR/profile.json"
 ```
 
 - 单独保留用户原话；推导出的阈值只写进 profile，不覆盖原话。预算、权重、区服、风险容忍度和硬条件都是 `persistence_scope: run_only`，**永远不写进 references**。
@@ -15,8 +17,11 @@ node skills/game-account-select/scripts/profile.mjs --request "<用户原话>" >
 
 ## 2. 数据新鲜度（筛选前必做）
 
+需要在线刷新或查询时，在刷新前先通过浏览器预检，再加载 `ego-ops` 与 `ego-browser`；缺少依赖时暂停网页操作。只处理已有资料时可运行不带 `--browser` 的预检。
+
 ```bash
-node skills/game-account-select/scripts/freshness.mjs --game <game>   # 退出码 3 = 需要先刷新
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/preflight.mjs" --browser --json  # 仅在线任务需要
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/freshness.mjs" --game <game>   # 退出码 3 = 需要先刷新
 ```
 
 - 脚本会检查本游戏的社区证据快照日期、版本是否确认、`game.json` 里各名单信号的 `as_of`，以及 7 天内有没有有效主张。
@@ -36,10 +41,9 @@ node skills/game-account-select/scripts/freshness.mjs --game <game>   # 退出�
 ## 4. 查询
 
 ```bash
-node skills/game-account-select/scripts/preflight.mjs --browser --json
-node skills/game-account-select/scripts/query.mjs --operation pxb7/<game>-list --task-space gas-<game>-<ts> --max-price <元> --limit 20 --task-space-disposition keep --json > .harness/runs/<id>/pxb7-list.json
-node skills/game-account-select/scripts/query.mjs --operation pxb7/<game>-detail --input <url|id> --task-space <同一数字 id> --task-space-disposition keep --json > .harness/runs/<id>/pxb7-detail-<id>.json
-node skills/game-account-select/scripts/cleanup.mjs --task-space <数字 id> --json
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/query.mjs" --operation pxb7/<game>-list --task-space gas-<game>-<ts> --max-price <元> --limit 20 --task-space-disposition keep --json > "$GAME_ACCOUNT_RUN_DIR/pxb7-list.json"
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/query.mjs" --operation pxb7/<game>-detail --input <url|id> --task-space <同一数字 id> --task-space-disposition keep --json > "$GAME_ACCOUNT_RUN_DIR/pxb7-detail-<id>.json"
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/cleanup.mjs" --task-space <数字 id> --json
 ```
 
 - 动态页面只经 ego-ops 治理、ego-browser 执行。一次筛选只建一个 task space，多平台、多详情都复用它，并保存返回的数字 id。
@@ -50,7 +54,7 @@ node skills/game-account-select/scripts/cleanup.mjs --task-space <数字 id> --j
 ## 5. 筛选与排序
 
 ```bash
-node skills/game-account-select/scripts/shortlist.mjs --profile profile.json --listings pxb7-list.json --listings pzds-list.json --listings pxb7-detail-*.json --markdown
+node "$GAME_ACCOUNT_SKILL_DIR/scripts/shortlist.mjs" --profile "$GAME_ACCOUNT_RUN_DIR/profile.json" --listings "$GAME_ACCOUNT_RUN_DIR/pxb7-list.json" --listings "$GAME_ACCOUNT_RUN_DIR/pzds-list.json" --listings "$GAME_ACCOUNT_RUN_DIR/pxb7-detail-<id>.json" --markdown
 ```
 
 - 脚本先按硬条件（必须有的资产、区服）过滤，再按本轮 priorities 和 `games/<game>/game.json` 的信号打分。打分只用来排序，不代表账号价值。
@@ -79,5 +83,5 @@ node skills/game-account-select/scripts/shortlist.mjs --profile profile.json --l
 
 1. **游戏**：建 `references/games/<slug>/`，写 `game.json`（aliases、servers、signals、risk，结构参照现有游戏）、`index.md`（看什么 / 常见坑）和 `operations/refresh-evidence.md`。没有证据的名单不要写，可以先只写 field/regex 信号。
 2. **站点 operation**：在 [operations.json](operations.json) 加 `<site>/<slug>-list|detail`（entry、expected_signals、`availability: exploration_only`），在 `sites/<site>/operations/` 写 `status: documented` 的文件，并在站点 index 里链接。若解析器不支持该游戏，补 `scripts/parsers/` 和对应测试。
-3. **受控探索**：用 `--allow-exploration` 做只读的真实查询。成功后把 operation 改为 `status: verified`、填实际日期，把 operations.json 的 availability 改为 `verified`，再跑 `npm run verify:skills`。
+3. **受控探索**：用 `--allow-exploration` 做只读的真实查询。成功后把 operation 改为 `status: verified`、填实际日期，把 operations.json 的 availability 改为 `verified`，再跑 `node "$GAME_ACCOUNT_SKILL_DIR/scripts/verify.mjs"`；开发仓库还要运行完整 `npm run verify:skills`。
 4. 新站点还要建 `sites/<site>/index.md`（域名、别名、URL 规则、限流、边界），并加进 [platform-priority.json](platform-priority.json)。

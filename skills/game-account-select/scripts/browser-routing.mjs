@@ -10,6 +10,7 @@ function skipped(reason) {
 export function resolveBrowserRoute({
   needsBrowser,
   unattended,
+  egoBrowser,
 }) {
   if (!needsBrowser) {
     return {
@@ -33,17 +34,12 @@ export function resolveBrowserRoute({
   }
 
   return {
-    browserAccessOk: true,
-    egoBrowser: {
-      ok: true,
-      assumed_ready: true,
-      validation: 'first_browser_operation',
-      found: 'configured ego-browser route',
-    },
+    browserAccessOk: Boolean(egoBrowser?.ok),
+    egoBrowser: egoBrowser ?? { ok: false, found: null },
     route: {
       requested: true,
       mode: unattended ? 'unattended' : 'interactive',
-      status: 'ready',
+      status: egoBrowser?.ok ? 'runtime_unverified' : 'missing_executable',
       selected_transport: 'ego_browser',
       query_governance: 'ego_ops',
       operation_knowledge: 'progressive_read',
@@ -52,9 +48,9 @@ export function resolveBrowserRoute({
       task_space_required: true,
       cleanup_policy: 'complete_task_space',
       control_handoff_policy: 'pause_until_explicit_user_confirmation',
-      unattended_safe: true,
-      requires_user_presence_now: false,
-      authorization_may_recur: false,
+      unattended_safe: null,
+      requires_user_presence_now: null,
+      authorization_may_recur: true,
     },
   };
 }

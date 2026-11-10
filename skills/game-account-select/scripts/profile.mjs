@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isEntrypoint } from './runtime.mjs';
 
 const PRESETS = {
   balanced: { rarity: 20, combat: 25, progression: 15, resources: 15, skins: 5, price_efficiency: 20 },
@@ -280,10 +281,10 @@ export function parseSelectionProfile(input) {
 }
 
 function usage() {
-  console.error('Usage: node parse-selection-profile.mjs --request <text> [--json]');
+  console.error('Usage: node <skill-dir>/scripts/profile.mjs --request <text> [--json]');
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (isEntrypoint(import.meta.url)) {
   const args = process.argv.slice(2);
   const index = args.findIndex((arg) => arg === '--request');
   const inline = args.find((arg) => arg.startsWith('--request='));

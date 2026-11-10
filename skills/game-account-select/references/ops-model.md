@@ -9,7 +9,7 @@
   - `game`（[games/](games/index.md)）：与站点无关的游戏知识，如要看哪些资产、常见坑、风险词、社区证据和 refresh-evidence operation。
 - 归类规则：只在某个站点成立的事实归 site；换一个站点仍成立的归 game；“某游戏在某站怎么读”的归 site operation，并在 game index 里链接。跨站跨游戏的流程归 [workflow](workflow.md)。
 - 别名：螃蟹 → pxb7；盼之 → pzds；游戏别名写在 game.json 的 `aliases`。
-- 实例：单次 run、商品、用户画像放在 `.harness/`（ignored），不进入共享经验。
+- 实例：单次 run、商品、用户画像放在私有运行目录（仓库 `.harness/` 已忽略），不进入共享经验。
 - 超出范围：购买、付款、联系卖家；与账号筛选无关的通用浏览器经验（归 ego-ops）。
 
 ## 首批 operations

@@ -1,10 +1,8 @@
 #!/usr/bin/env node
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resolveBrowserRoute } from './browser-routing.mjs';
+import { findExecutable, findSkill } from './dependencies.mjs';
 
 const args = new Set(process.argv.slice(2));
 const wantsJson = args.has('--json');
@@ -14,24 +12,9 @@ const needsBrowser = args.has('--browser') || unattended;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 
-function commandExists(command, versionArgs = ['--version']) {
-  const which = spawnSync('sh', ['-lc', `command -v ${command}`], { encoding: 'utf8' });
-  if (which.status !== 0) return { ok: false, found: null };
-  const version = spawnSync(command, versionArgs, { encoding: 'utf8' });
-  return {
-    ok: true,
-    found: (version.stdout || version.stderr || which.stdout).trim().split('\n')[0]
-  };
-}
-
 function checkGameAccountSkill(skillName) {
-  const candidates = [
-    path.join(os.homedir(), '.agents/skills', skillName, 'SKILL.md'),
-    path.join(os.homedir(), '.codex/skills', skillName, 'SKILL.md'),
-    path.join(os.homedir(), '.claude/skills', skillName, 'SKILL.md')
-  ];
-  const found = candidates.find((candidate) => fs.existsSync(candidate));
-  return { ok: Boolean(found), found };
+  const invokedRoot = process.argv[1] ? path.resolve(path.dirname(process.argv[1]), '..') : path.resolve(__dirname, '..');
+  return findSkill(skillName, { skillRoot: invokedRoot });
 }
 
 const checks = [];
@@ -46,10 +29,10 @@ checks.push({
 });
 
 for (const command of ['git', 'gh']) {
-  const result = commandExists(command);
+  const result = findExecutable(command);
   checks.push({
     name: command,
-    required: true,
+    required: false,
     ok: result.ok,
     found: result.found,
     required_for: command === 'git' ? 'repository workflow' : 'pull requests and CI checks',
@@ -60,6 +43,7 @@ for (const command of ['git', 'gh']) {
 const browser = resolveBrowserRoute({
   needsBrowser,
   unattended,
+  egoBrowser: needsBrowser ? findExecutable('ego-browser') : null,
 });
 
 if (needsBrowser) {
@@ -70,13 +54,22 @@ if (needsBrowser) {
     ok: egoOpsSkill.ok,
     found: egoOpsSkill.found,
     required_for: 'query task cards, progressive site-operation knowledge, authorization boundaries, verification, and success-only knowledge writeback',
-    action: egoOpsSkill.ok ? 'none' : 'Install or link ego-ops before dynamic platform or community queries.'
+    action: egoOpsSkill.ok ? 'none' : 'Install ego-ops in a project or user skill directory; see references/installation.md.'
+  });
+  const egoBrowserSkill = checkGameAccountSkill('ego-browser');
+  checks.push({
+    name: 'ego-browser skill',
+    required: true,
+    ok: egoBrowserSkill.ok,
+    found: egoBrowserSkill.found,
+    required_for: 'browser usage and task-space instructions',
+    action: egoBrowserSkill.ok ? 'none' : 'Install the ego-browser skill; see references/installation.md.'
   });
   checks.push({
     name: 'ego-browser route',
     required: true,
     ok: browser.browserAccessOk,
-    found: browser.route.selected_transport,
+    found: browser.egoBrowser.found,
     detail: {
       query_governance: 'ego_ops',
       runtime_validation: browser.route.runtime_validation,
@@ -84,7 +77,8 @@ if (needsBrowser) {
       cleanup_policy: browser.route.cleanup_policy,
     },
     required_for: 'isolated, login-aware platform and community browser access',
-    action: 'none; validate the runtime on the first ego-browser operation and follow its install guide only if that operation fails.'
+    action: browser.browserAccessOk ? 'none; validate the runtime on the first browser operation.'
+      : 'Install ego lite, complete onboarding, and make ego-browser available on PATH; see references/installation.md.'
   });
 }
 

@@ -40,19 +40,21 @@
   <img src="assets/readme-setup-v4.webp" width="100%" alt="浏览器、终端和清单组成的环境准备插画" />
 </p>
 
-准备 **Node.js 22+、git、gh**，以及 [ego lite](https://lite.ego.app/) 浏览器；在线查询还需要可发现的 `ego-browser` 和 `ego-ops` 技能。然后安装本仓库唯一的 Skill：
+准备 **Node.js 22+ 和 Git 2.25+**。在线查询需要 [ego lite](https://lite.ego.app/) 浏览器及 `ego-browser`、`ego-ops` 两个依赖 Skill。选择同一个 Agent 和安装范围，分别安装：
 
 ```bash
-npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select"
+npx skills add https://github.com/PointMountain/game-account-select --skill "game-account-select" --copy
+npx skills add https://github.com/wangjs-jacky/jacky-skills/tree/main/harness/ego-ops --skill "ego-ops" --copy
+npx skills add https://github.com/citrolabs/ego-lite --skill "ego-browser" --copy
 ```
 
-按提示选择 Agent，安装后开启一个新会话。需要更新时运行 `npx skills update`。安装 Agent 可以参考[可选的全局前置提示词](skills/game-account-select/references/global-agents-prompt.md)；写入全局指令需要你的明确授权。
+安装 ego lite 并由用户完成首次初始化；它可能已为 Agent 安装 `ego-browser` Skill。安装后开启一个新会话。路径、系统支持和预检方式见[安装与独立使用](skills/game-account-select/references/installation.md)。需要更新时运行 `npx skills update`，并先备份安装后自行维护的经验。`gh` 仅用于项目开发与 PR。安装 Agent 可以参考[可选的全局前置提示词](skills/game-account-select/references/global-agents-prompt.md)；写入全局指令需要你的明确授权。
 
 第一次使用可以先让 Agent 检查环境：
 
 ```text
-用 game-account-select 检查我的找号环境，看看 Node.js、git、gh、
-ego-ops 和 ego-browser 是否准备好了。
+用 game-account-select 检查我的找号环境，看看 Node.js、
+ego-ops、ego-browser Skill 和浏览器命令是否准备好了。
 ```
 
 然后试试：
